@@ -1,0 +1,135 @@
+{
+    "messages": {
+        "about": "COMPAS IFC provides an interface for working with IFC files."
+    },
+    "menubar": [
+        {
+            "type": "menu",
+            "text": "COMPAS IFC",
+            "items": [
+                {
+                    "type": "action",
+                    "text": "About",
+                    "action": "about"
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "action",
+                    "text": "OpenGL Version",
+                    "action": "opengl_version"
+                },
+                {
+                    "type": "action",
+                    "text": "GLSL Version",
+                    "action": "glsl_version"
+                }
+            ]
+        },
+        {
+            "type": "menu",
+            "text": "View",
+            "items": [
+                {
+                    "type": "radio",
+                    "items": [
+                        {
+                            "type": "action",
+                            "text": "Shaded",
+                            "checked": true,
+                            "action": "view_shaded"
+                        },
+                        {
+                            "type": "action",
+                            "text": "Ghosted",
+                            "checked": false,
+                            "action": "view_ghosted"
+                        },
+                        {
+                            "type": "action",
+                            "text": "Wireframe",
+                            "checked": false,
+                            "action": "view_wireframe"
+                        },
+                        {
+                            "type": "action",
+                            "text": "Lighted",
+                            "checked": false,
+                            "action": "view_lighted"
+                        }
+                    ]
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "action",
+                    "text": "Capture",
+                    "action": "view_capture"
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "action",
+                    "text": "Front",
+                    "action": "view_front"
+                },
+                {
+                    "type": "action",
+                    "text": "Right",
+                    "action": "view_right"
+                },
+                {
+                    "type": "action",
+                    "text": "Top",
+                    "action": "view_top"
+                },
+                {
+                    "type": "action",
+                    "text": "Perspective",
+                    "action": "view_perspective"
+                }
+            ]
+        },
+        {
+            "type": "menu",
+            "text": "Model",
+            "items": [
+                {
+                    "type": "action",
+                    "text": "New",
+                    "action": "new_model"
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "action",
+                    "text": "Load",
+                    "action": "load_model"
+                },
+                {
+                    "type": "action",
+                    "text": "Save",
+                    "action": "save_model"
+                },
+                {
+                    "type": "action",
+                    "text": "Save As ...",
+                    "action": "saveas_model"
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "action",
+                    "text": "Export Model",
+                    "action": "export_model"
+                }
+            ]
+        }
+    ],
+    "toolbar": []
+}

@@ -9,6 +9,13 @@ compas_ifc
 .. toctree::
     :maxdepth: 1
 
+    compas_ifc.attributes
+    compas_ifc.entities
+    compas_ifc.helpers
+    compas_ifc.model
+    compas_ifc.representation
+    compas_ifc.resources
+    compas_ifc.viewer
 
 """
 

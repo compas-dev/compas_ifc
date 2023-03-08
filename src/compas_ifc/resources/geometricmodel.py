@@ -1,0 +1,240 @@
+from compas.geometry import Point
+from compas.geometry import Box
+
+# from compas.geometry import Polyline
+from compas.geometry import Line
+from compas_occ.brep import BRep
+
+from compas_ifc.resources.geometry import IfcDirection_to_vector, IfcProfileDef_to_curve
+
+from typing import List
+
+
+def IfcAdvancedBrep_to_brep(advanced_brep) -> BRep:
+    """
+    Convert an IFC AdvancedBrep [advancedbrep]_ to a COMPAS brep.
+
+    """
+    pass
+
+
+def IfcAdvancedBrepWithVoids_to_brep(advanced_brep_with_voids) -> BRep:
+    """
+    Convert an IFC AdvancedBrepWithVoids [advancedbrepwithvoids]_ to a COMPAS brep.
+
+    """
+    pass
+
+
+def IfcBlock_to_box(block) -> Box:
+    """
+    Convert an IFC Block [block]_ to a COMPAS box.
+
+    """
+    pass
+
+
+def IfcBooleanClippingResult_to_brep(boolean_clipping_result) -> BRep:
+    """
+    Convert an IFC BooleanClippingResult [booleanclippingresult]_ to a COMPAS brep.
+
+    """
+    return IfcBooleanResult_to_brep(boolean_clipping_result)
+
+
+def IfcBooleanResult_to_brep(boolean_result) -> BRep:
+    """
+    Convert an IFC BooleanResult [booleanresult]_ to a COMPAS brep.
+
+    """
+    br = boolean_result
+
+    print(br.FirstOperand.is_a())
+    print(br.SecondOperand.is_a())
+    print(br.Operator)
+    print()
+
+    # First Operand
+
+    if br.FirstOperand.is_a("IfcBooleanResult"):
+        A = IfcBooleanResult_to_brep(br.FirstOperand)
+
+    elif br.FirstOperand.is_a("IfcExtrudedAreaSolid"):
+        A = IfcExtrudedAreaSolid_to_brep(br.FirstOperand)
+
+    else:
+        raise NotImplementedError
+
+    # Second Operand
+
+    if br.SecondOperand.is_a("IfcBoxedHalfSpace"):
+        B = IfcBoxedHalfSpace(br.SecondOperand)
+
+    elif br.SecondOperand.is_a("IfcPolygonalBoundedHalfSpace"):
+        B = IfcPolygonalBoundedHalfSpace_to_brep(br.SecondOperand)
+
+    else:
+        raise NotImplementedError
+
+    print(A, B)
+
+    if br.Operator == "UNION":
+        C: BRep = A + B
+
+    elif br.Operator == "INTERSECTION":
+        C: BRep = A & B
+
+    elif br.Operator == "DIFFERENCE":
+        C: BRep = A - B
+
+    else:
+        raise NotImplementedError
+
+    C.sew()
+    C.fix()
+    C.make_solid()
+
+    return C
+
+
+def IfcIndexedPolyCurve_to_lines(axis) -> List[Line]:
+    """
+    Convert an IFC Axis [axis]_ to a COMPAS polyline.
+
+    """
+    lines = []
+    points = IfcCartesianPointList(axis.Points)
+    for segment in axis.Segments:
+        start, end = segment.wrappedValue
+        start -= 1
+        end -= 1
+        lines.append(Line(points[start], points[end]))
+    return lines
+
+
+def IfcBoundingBox_to_box(bounding_box) -> Box:
+    """
+    Convert an IFC BoundingBox [boundingbox]_ to a COMPAS box.
+
+    """
+    a = Point(*bounding_box.Corner.Coordinates)
+    b = a + [bounding_box.XDim, bounding_box.YDim, 0]
+    box = Box.from_corner_corner_height(a, b, bounding_box.ZDim)
+    return box
+
+
+def IfcBoxedHalfSpace(boxed_half_space) -> BRep:
+    bhs = boxed_half_space
+    print(bhs.BaseSurface)
+    print(bhs.Enclosure)
+    print(bhs.AgreementFlag)
+
+
+def IfcCartesianPointList(cartesian_point_list) -> List[Point]:
+    return [Point(*p) for p in cartesian_point_list.CoordList]
+
+
+def IfcExtrudedAreaSolid_to_brep(extruded_area_solid) -> BRep:
+    eas = extruded_area_solid
+    profile = IfcProfileDef_to_curve(eas.SweptArea)
+    vector = IfcDirection_to_vector(eas.ExtrudedDirection)
+    vector.scale(eas.Depth)
+    brep = BRep.from_extrusion(profile, vector)
+    brep.sew()
+    brep.fix()
+    brep.make_solid()
+    return brep
+
+
+def IfcFacetedBrep_to_brep(faceted_brep) -> BRep:
+    pass
+
+
+def IfcFacetedBrepWithVoids_to_brep(faceted_brep_with_voids) -> BRep:
+    # fbwv = faceted_brep_with_voids
+    pass
+
+
+def IfcIndexedPolygonalFaceSet_to_brep() -> BRep:
+    pass
+
+
+def IfcPolygonalBoundedHalfSpace_to_brep(polygonal_bounded_half_space):
+    pbhs = polygonal_bounded_half_space
+    print(pbhs.Position)
+    print(pbhs.PolygonalBoundary)
+    print(pbhs.BaseSurface)
+
+
+def IfcPolygonalFaceSet_to_brep(polygonal_face_set) -> BRep:
+    pfs = polygonal_face_set
+
+    xyz = pfs.Coordinates.CoordList
+    vertices = [[float(x), float(y), float(z)] for x, y, z in xyz]
+    faces = [[i - 1 for i in face.CoordIndex] for face in pfs.Faces]
+    polygons = [[vertices[index] for index in face] for face in faces]
+    brep = BRep.from_polygons(polygons)
+
+    brep.sew()
+    brep.fix()
+    brep.make_solid()
+
+    return brep
+
+
+def IfcTessellatedFaceSet_to_brep(tessellated_face_set) -> BRep:
+    tfs = tessellated_face_set
+
+    if tfs.is_a("IfcTriangulatedFaceSet"):
+        return IfcTriangulatedFaceSet_to_brep(tfs)
+
+    if tfs.is_a("IfcPolygonalFaceSet"):
+        return IfcPolygonalFaceSet_to_brep(tfs)
+
+    raise NotImplementedError
+
+
+def IfcTriangulatedFaceSet_to_brep(triangulated_face_set) -> BRep:
+    tfs = triangulated_face_set
+
+    xyz = tfs.Coordinates.CoordList
+    vertices = [[float(x), float(y), float(z)] for x, y, z in xyz]
+    faces = [[a - 1, b - 1, c - 1] for a, b, c in tfs.CoordIndex]
+    triangles = [[vertices[index] for index in face] for face in faces]
+    brep = BRep.from_polygons(triangles)
+
+    brep.sew()
+    brep.fix()
+    brep.make_solid()
+
+    return brep
+
+
+# # IfcTessellationItem_to_mesh
+# def tessellation_to_mesh(item) -> Mesh:
+#     """
+#     Convert a tessellation item to a Mesh.
+
+#     """
+#     mesh = Mesh()
+#     mesh.update_default_face_attributes(colour=None)
+
+#     face_color = {}
+
+#     if item.HasColours:
+#         colourmap = item.HasColours[0]
+#         for index, face in zip(
+#             colourmap.ColourIndex,
+#             colourmap.MappedTo.Faces,
+#         ):
+#             fid = face.id()
+#             colour = colourmap.Colours.ColourList[index - 1]
+#             face_color[fid] = Color(*colour)
+
+#     for face in item.Faces:
+#         vertices = []
+#         for index in face.CoordIndex:
+#             x, y, z = item.Coordinates.CoordList[index - 1]
+#             vertices.append(mesh.add_vertex(x=x, y=y, z=z))
+#         mesh.add_face(vertices, colour=face_color.get(face.id()))
+#     return mesh

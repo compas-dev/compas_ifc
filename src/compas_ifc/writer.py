@@ -1,0 +1,257 @@
+import ifcopenshell
+from .entities.entity import Entity
+from ifcopenshell.api import run
+from .resources.representation import write_body_representation
+
+
+class IFCWriter(object):
+    """
+    A class for writing IFC files.
+
+    Parameters
+    ----------
+    model : :class:`compas_ifc.model.Model`
+        The model to which the writer belongs.
+
+    Attributes
+    ----------
+    model : :class:`compas_ifc.model.Model`
+        The model to which the writer belongs.
+    file : :class:`ifcopenshell.file`
+        The IFC file to which the model is being written to.
+    default_context : :class:`ifcopenshell.entity_instance`
+        The default context of the model. Created if it does not exist.
+    default_body_context : :class:`ifcopenshell.entity_instance`
+        The default body context of the model. Created if it does not exist.
+    default_project : :class:`ifcopenshell.entity_instance`
+        The default project of the model. Created if it does not exist.
+    default_site : :class:`ifcopenshell.entity_instance`
+        The default site of the model. Created if it does not exist.
+    default_building : :class:`ifcopenshell.entity_instance`
+        The default building of the model. Created if it does not exist.
+    default_building_storey : :class:`ifcopenshell.entity_instance`
+        The default building storey of the model. Created if it does not exist.
+
+    """
+
+    def __init__(self, model):
+        self.file = None
+        self.model = model
+        self._entitymap = {}
+        self._default_context = None
+        self._default_body_context = None
+        self._default_project = None
+        self._default_site = None
+        self._default_building = None
+        self._default_building_storey = None
+
+    @property
+    def default_context(self):
+        # TODO: allow loading of existing contexts
+        if not self._default_context:
+            self._default_context = run("context.add_context", self.file, context_type="Model")
+        return self._default_context
+
+    @property
+    def default_body_context(self):
+        # TODO: allow loading of existing contexts
+        if not self._default_body_context:
+            self._default_body_context = run(
+                "context.add_context",
+                self.file,
+                context_type="Model",
+                context_identifier="Body",
+                target_view="MODEL_VIEW",
+                parent=self.default_context,
+            )
+        return self._default_body_context
+
+    @property
+    def default_project(self):
+        if not self._default_project:
+            if not self.model.projects:
+                self._default_project = run(
+                    "root.create_entity", self.file, ifc_class="IfcProject", name="Default Project"
+                )
+            else:
+                self._default_project = self.write_entity(self.model.projects[0])
+        return self._default_project
+
+    @property
+    def default_site(self):
+        if not self._default_site:
+            if not self.model.sites:
+                self._default_site = run("root.create_entity", self.file, ifc_class="IfcSite", name="Default Site")
+                run(
+                    "aggregate.assign_object",
+                    self.file,
+                    product=self._default_site,
+                    relating_object=self.default_project,
+                )
+            else:
+                self._default_site = self.write_entity(self.model.sites[0])
+        return self._default_site
+
+    @property
+    def default_building(self):
+        if not self._default_building:
+            if not self.model.buildings:
+                self._default_building = run(
+                    "root.create_entity", self.file, ifc_class="IfcBuilding", name="Default Building"
+                )
+                run(
+                    "aggregate.assign_object",
+                    self.file,
+                    product=self._default_building,
+                    relating_object=self.default_site,
+                )
+            else:
+                self._default_building = self.write_entity(self.model.buildings[0])
+        return self._default_building
+
+    @property
+    def default_building_storey(self):
+        if not self._default_building_storey:
+            if not self.model.building_storeys:
+                self._default_building_storey = run(
+                    "root.create_entity", self.file, ifc_class="IfcBuildingStorey", name="Default Storey"
+                )
+                run(
+                    "aggregate.assign_object",
+                    self.file,
+                    product=self._default_building_storey,
+                    relating_object=self.default_building,
+                )
+            else:
+                self._default_building_storey = self.write_entity(self.model.building_storeys[0])
+        return self._default_building_storey
+
+    def reset(self):
+        """Resets the writer to start with a new ifc file."""
+        self.file = ifcopenshell.file()
+        self._entitymap = {}
+        self._default_context = None
+        self._default_body_context = None
+        self._default_project = None
+        self._default_site = None
+        self._default_building = None
+        self._default_building_storey = None
+
+    def export(self, entities, filepath: str) -> None:
+        """Exports the given entities to the ifc file."""
+        print("Exporting IFC file to: " + filepath)
+        self.reset()
+        # TODO: make this better
+        self.default_project
+
+        # TODO: make this better
+        for entity in self.model._inserted_entities:
+            if not entity.parent and self.model.building_storeys:
+                entity.parent = self.model.building_storeys[0]
+
+        for entity in entities:
+            for node in entity.traverse_branch():
+                self.write_entity(node)
+
+        for entity in entities:
+            for node in entity.traverse_branch():
+                self.write_relation(node)
+
+        self.file.write(filepath)
+        print("Done.")
+
+    def save(self, filepath: str) -> None:
+        """Writes the model as ifc file to the given filepath."""
+        print("Saving IFC file to: " + filepath)
+        self.reset()
+        # TODO: make this better
+        self.default_project
+
+        for entity in self.model.get_all_entities():
+            self.write_entity(entity)
+
+        for entity in self.model._inserted_entities:  # TODO: needs better api
+            self.write_relation(entity)
+
+        self.file.write(filepath)
+        print("Done.")
+
+    def write_relation(self, entity: Entity):
+        """Writes the relation of the given entity to the ifc file."""
+        if entity._entity:
+            # Entity from ifc file
+            self.trim_existing_relation(entity)
+        else:
+            # Entity created in memory
+            self.create_new_relation(entity)
+
+    def trim_existing_relation(self, entity: Entity) -> None:
+        """writes a existing parental relation to the ifc file, trimming the non existing children."""
+
+        if not entity.parent:
+            return
+
+        chilren_to_include = []
+        relation = None
+
+        # Modify the relation to only include the children that has been written to the ifc file.
+        if hasattr(entity, "contained_in_structure"):
+            relation = entity.contained_in_structure()
+            for child in relation["RelatedElements"]:
+                if child in self._entitymap:
+                    chilren_to_include.append(child)
+            relation["RelatedElements"] = chilren_to_include
+        elif hasattr(entity, "decomposes"):
+            relation = entity.decomposes()
+            for child in relation["RelatedObjects"]:
+                if child in self._entitymap:
+                    chilren_to_include.append(child)
+            relation["RelatedObjects"] = chilren_to_include
+        else:
+            raise Exception("Entity has no parent relation.")
+
+        self.write_entity(relation)
+
+    def create_new_relation(self, entity: Entity):
+        """Writes a new parental relation to the ifc file."""
+
+        # TODO: this needs accomodate other type of elements.
+        if entity.parent:
+            parent = self._entitymap[entity.parent]
+        else:
+            # If no parent is given, use the default building storey.
+            parent = self.default_building_storey
+
+        child = self._entitymap[entity]
+        run("spatial.assign_container", self.file, relating_structure=parent, product=child)
+
+    def write_entity(self, entity: Entity) -> None:
+        """Writes the given entity recursively with all its referencing attributes to the ifc file."""
+        if entity in self._entitymap:
+            return self._entitymap[entity]
+
+        attributes = {}
+        for key, value in entity.attributes.items():
+            if isinstance(value, Entity):
+                attributes[key] = self.write_entity(value)
+            elif isinstance(value, list) and value and isinstance(value[0], Entity):
+                attributes[key] = [self.write_entity(v) for v in value]
+            else:
+                attributes[key] = value
+
+        ifc_entity = self.file.create_entity(entity.ifc_type, **attributes)
+        self._entitymap[entity] = ifc_entity
+
+        if not entity._entity:
+            # Entity created in memory
+            self.write_entity_representation(entity)
+
+        return ifc_entity
+
+    def write_entity_pset(self, entity: Entity):
+        raise NotImplementedError()
+
+    def write_entity_representation(self, entity: Entity):
+        """Writes the representations of the given entity to the ifc file."""
+        if entity.body:
+            write_body_representation(self.file, entity.body, self._entitymap[entity], self.default_body_context)

@@ -32,7 +32,7 @@ setup(
     description="Package for working with IFC files.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/blockresearchgroup/compas_ifc",
+    url="https://github.com/compas-dev/compas_ifc",
     author="tom van mele",
     author_email="van.mele@arch.ethz.ch",
     license="MIT license",
