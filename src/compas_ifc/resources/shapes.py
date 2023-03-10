@@ -17,7 +17,9 @@ def create_IfcAxis2Placement3D(file, point=None, dir1=None, dir2=None):
     return axis2placement
 
 
-def create_IfcShapeRepresentation(file: ifcopenshell.file, item: ifcopenshell.entity_instance, context: ifcopenshell.entity_instance) -> ifcopenshell.entity_instance:
+def create_IfcShapeRepresentation(
+    file: ifcopenshell.file, item: ifcopenshell.entity_instance, context: ifcopenshell.entity_instance
+) -> ifcopenshell.entity_instance:
     """
     Create an IFC Shape Representation from an IFC item and a context.
     """
