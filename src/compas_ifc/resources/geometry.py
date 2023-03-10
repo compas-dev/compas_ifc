@@ -1,13 +1,13 @@
-from compas.geometry import Point
-from compas.geometry import Vector
-from compas.geometry import Line
-from compas.geometry import Plane
-from compas.geometry import Frame
-
-# from compas.geometry import Transformation
-
 # from compas_occ.geometry import OCCNurbsCurve
 from compas_occ.brep import BRepFace
+
+from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Vector
+
+# from compas.geometry import Transformation
 
 
 def IfcCartesianPoint_to_point(cartesian_point) -> Point:
@@ -133,7 +133,27 @@ def IfcProfileDef_to_curve(profile_def) -> BRepFace:
             return BRepFace.from_polygon(points)
 
         else:
-            raise NotImplementedError
-
+            raise NotImplementedError(pd)
+    elif pd.is_a("IfcArbitraryClosedProfileDef"):
+        return IfcCurve_to_face(pd.OuterCurve)
+    elif pd.is_a("IfcCompositeProfileDef"):
+        faces = []
+        for profile in pd.Profiles:
+            if profile.is_a("IfcArbitraryClosedProfileDef"):
+                faces.append(IfcCurve_to_face(profile.OuterCurve))
+            else:
+                raise NotImplementedError(profile)
+        return faces
     else:
-        raise NotImplementedError
+        raise NotImplementedError(pd)
+
+
+def IfcCurve_to_face(curve):
+    if curve.is_a("IfcIndexedPolyCurve"):
+        points = [(x, y, 0) for x, y in curve.Points[0]]
+        return BRepFace.from_polygon(points)
+    elif curve.is_a("IfcPolyline"):
+        points = [IfcCartesianPoint_to_point(pt) for pt in curve.Points]
+        return BRepFace.from_polygon(points)
+    else:
+        raise NotImplementedError(curve)

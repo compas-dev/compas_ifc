@@ -1,13 +1,15 @@
-from compas.geometry import Point
-from compas.geometry import Box
+from typing import List
 
-# from compas.geometry import Polyline
-from compas.geometry import Line
 from compas_occ.brep import BRep
 
-from compas_ifc.resources.geometry import IfcDirection_to_vector, IfcProfileDef_to_curve
-
-from typing import List
+# from compas.geometry import Polyline
+from compas.geometry import Box
+from compas.geometry import Line
+from compas.geometry import Point
+from compas.geometry import Transformation
+from compas_ifc.resources.geometry import IfcAxis2Placement3D_to_frame
+from compas_ifc.resources.geometry import IfcDirection_to_vector
+from compas_ifc.resources.geometry import IfcProfileDef_to_curve
 
 
 def IfcAdvancedBrep_to_brep(advanced_brep) -> BRep:
@@ -49,51 +51,37 @@ def IfcBooleanResult_to_brep(boolean_result) -> BRep:
     """
     br = boolean_result
 
-    print(br.FirstOperand.is_a())
-    print(br.SecondOperand.is_a())
-    print(br.Operator)
-    print()
-
     # First Operand
-
     if br.FirstOperand.is_a("IfcBooleanResult"):
         A = IfcBooleanResult_to_brep(br.FirstOperand)
-
     elif br.FirstOperand.is_a("IfcExtrudedAreaSolid"):
         A = IfcExtrudedAreaSolid_to_brep(br.FirstOperand)
-
     else:
         raise NotImplementedError
 
     # Second Operand
-
     if br.SecondOperand.is_a("IfcBoxedHalfSpace"):
         B = IfcBoxedHalfSpace(br.SecondOperand)
-
     elif br.SecondOperand.is_a("IfcPolygonalBoundedHalfSpace"):
         B = IfcPolygonalBoundedHalfSpace_to_brep(br.SecondOperand)
-
+    elif br.SecondOperand.is_a("IfcPolygonalFaceSet"):
+        B = IfcPolygonalFaceSet_to_brep(br.SecondOperand)
     else:
-        raise NotImplementedError
+        raise NotImplementedError(br.SecondOperand)
 
-    print(A, B)
-
+    # Operator
     if br.Operator == "UNION":
         C: BRep = A + B
-
     elif br.Operator == "INTERSECTION":
         C: BRep = A & B
-
     elif br.Operator == "DIFFERENCE":
         C: BRep = A - B
-
     else:
-        raise NotImplementedError
+        raise NotImplementedError(br.Operator)
 
     C.sew()
     C.fix()
     C.make_solid()
-
     return C
 
 
@@ -137,13 +125,31 @@ def IfcCartesianPointList(cartesian_point_list) -> List[Point]:
 def IfcExtrudedAreaSolid_to_brep(extruded_area_solid) -> BRep:
     eas = extruded_area_solid
     profile = IfcProfileDef_to_curve(eas.SweptArea)
-    vector = IfcDirection_to_vector(eas.ExtrudedDirection)
-    vector.scale(eas.Depth)
-    brep = BRep.from_extrusion(profile, vector)
-    brep.sew()
-    brep.fix()
-    brep.make_solid()
-    return brep
+
+    position = IfcAxis2Placement3D_to_frame(eas.Position)
+    transformation = Transformation.from_frame(position)
+
+    def _extrude(profile, eas):
+        vector = IfcDirection_to_vector(eas.ExtrudedDirection)
+        vector.scale(eas.Depth)
+        brep = BRep.from_extrusion(profile, vector)
+        brep.sew()
+        brep.fix()
+        brep.make_solid()
+        brep.transform(transformation)
+        return brep
+
+    if isinstance(profile, list):
+        extrusions = [_extrude(p, eas) for p in profile]
+        union = extrusions[0]
+        for e in extrusions[1:]:
+            union = union + e
+        union.sew()
+        union.fix()
+        union.make_solid()
+        return union
+    else:
+        return _extrude(profile, eas)
 
 
 def IfcFacetedBrep_to_brep(faceted_brep) -> BRep:

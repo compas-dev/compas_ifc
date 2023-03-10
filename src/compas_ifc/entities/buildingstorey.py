@@ -1,7 +1,7 @@
 from typing import List
-from compas_ifc.entities.spatialelement import SpatialElement
-from compas_ifc.entities.space import Space
+
 from compas_ifc.entities.buildingelements import Beam
+from compas_ifc.entities.buildingelements import BuildingElementProxy
 from compas_ifc.entities.buildingelements import Column
 from compas_ifc.entities.buildingelements import Door
 from compas_ifc.entities.buildingelements import Roof
@@ -9,7 +9,8 @@ from compas_ifc.entities.buildingelements import Slab
 from compas_ifc.entities.buildingelements import Stair
 from compas_ifc.entities.buildingelements import Wall
 from compas_ifc.entities.buildingelements import Window
-from compas_ifc.entities.buildingelements import BuildingElementProxy
+from compas_ifc.entities.space import Space
+from compas_ifc.entities.spatialelement import SpatialElement
 
 
 class BuildingStorey(SpatialElement):

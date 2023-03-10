@@ -1,8 +1,9 @@
+import ifcopenshell
+
 from compas.geometry import Box
-from compas.geometry import Sphere
 from compas.geometry import Cone
 from compas.geometry import Cylinder
-import ifcopenshell
+from compas.geometry import Sphere
 
 
 def create_IfcAxis2Placement3D(file, point=None, dir1=None, dir2=None):
@@ -16,9 +17,7 @@ def create_IfcAxis2Placement3D(file, point=None, dir1=None, dir2=None):
     return axis2placement
 
 
-def create_IfcShapeRepresentation(
-    file: ifcopenshell.file, item: ifcopenshell.entity_instance, context: ifcopenshell.entity_instance
-) -> ifcopenshell.entity_instance:
+def create_IfcShapeRepresentation(file: ifcopenshell.file, item: ifcopenshell.entity_instance, context: ifcopenshell.entity_instance) -> ifcopenshell.entity_instance:
     """
     Create an IFC Shape Representation from an IFC item and a context.
     """

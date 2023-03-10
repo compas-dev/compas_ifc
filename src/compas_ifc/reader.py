@@ -1,6 +1,8 @@
-import ifcopenshell
-from compas_ifc.entities.entity import Entity
 from typing import List
+
+import ifcopenshell
+
+from compas_ifc.entities.entity import Entity
 
 
 class IFCReader(object):

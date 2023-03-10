@@ -1,7 +1,8 @@
 from typing import List
-from compas_ifc.entities.spatialelement import SpatialElement
+
 from compas_ifc.entities.building import Building
 from compas_ifc.entities.geographicelement import GeographicElement
+from compas_ifc.entities.spatialelement import SpatialElement
 
 
 class Site(SpatialElement):

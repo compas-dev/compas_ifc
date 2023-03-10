@@ -1,7 +1,8 @@
-from compas_view2.objects import CollectionObject
 from compas_view2.collections import Collection
-from compas_ifc.representation import entity_body_geometry
+from compas_view2.objects import CollectionObject
+
 from compas_ifc.entities.entity import Entity
+from compas_ifc.representation import entity_body_geometry
 
 
 class EntityObject(CollectionObject):

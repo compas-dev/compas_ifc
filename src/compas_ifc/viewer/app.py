@@ -1,18 +1,18 @@
 import os
-from qtpy import QtWidgets
-from qtpy import QtCore
-from qt_material import apply_stylesheet
 
 from compas_view2.app import App
 from compas_view2.app import Controller
+from qt_material import apply_stylesheet
+from qtpy import QtCore
+from qtpy import QtWidgets
+
+from compas_ifc.attributes import attribute_enumeration_items
+from compas_ifc.attributes import is_attribute_enumeration
+from compas_ifc.entities.entity import Entity
+from compas_ifc.model import Model
 
 # i guess this import is to trigger registrations?
 from compas_ifc.viewer import objects  # noqa: F401
-
-from compas_ifc.model import Model
-from compas_ifc.entities.entity import Entity
-from compas_ifc.attributes import is_attribute_enumeration
-from compas_ifc.attributes import attribute_enumeration_items
 
 HERE = os.path.dirname(__file__)
 CONFIG = os.path.join(HERE, "config.json")

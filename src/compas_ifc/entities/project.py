@@ -1,14 +1,13 @@
 # from typing import Iterator
-from typing import List
 from typing import Dict
+from typing import List
 
-from compas.geometry import Vector
 from compas.geometry import Frame
-
-from compas_ifc.resources import IfcAxis2Placement3D_to_frame
+from compas.geometry import Vector
 from compas_ifc.entities.objectdefinition import ObjectDefinition
-from compas_ifc.entities.site import Site
 from compas_ifc.entities.site import Building
+from compas_ifc.entities.site import Site
+from compas_ifc.resources import IfcAxis2Placement3D_to_frame
 
 
 class Project(ObjectDefinition):

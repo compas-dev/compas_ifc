@@ -1,8 +1,8 @@
-from typing import List
 from typing import Dict
+from typing import List
 
-from compas_ifc.helpers import public_attributes
 from compas_ifc.entities.objectdefinition import ObjectDefinition
+from compas_ifc.helpers import public_attributes
 
 
 class Product(ObjectDefinition):

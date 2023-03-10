@@ -45,7 +45,7 @@ class Entity:
             self._ifc_type = "Ifc" + type(self).__name__  # NOTE: this is a bit fragile
             # self._declaration = self.model.schema.declaration_by_name(self._ifc_type)
             self._declaration = None
-
+            
     def __repr__(self):
         return "<{}:{}>".format(type(self).__name__, self._ifc_type)
 

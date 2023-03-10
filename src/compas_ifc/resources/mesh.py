@@ -1,5 +1,6 @@
-from compas.datastructures import Mesh
 import ifcopenshell
+
+from compas.datastructures import Mesh
 
 
 def mesh_to_IfcPolygonalFaceSet(file: ifcopenshell.file, mesh: Mesh) -> ifcopenshell.entity_instance:

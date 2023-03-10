@@ -1,5 +1,6 @@
-from .entity import Entity
 import ifcopenshell
+
+from .entity import Entity
 
 
 class Root(Entity):

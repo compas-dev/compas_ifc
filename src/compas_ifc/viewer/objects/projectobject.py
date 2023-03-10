@@ -1,4 +1,5 @@
 from compas_ifc.entities.project import Project
+
 from .entityobject import EntityObject
 
 

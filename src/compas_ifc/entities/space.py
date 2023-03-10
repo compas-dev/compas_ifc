@@ -1,6 +1,7 @@
 from typing import List
-from compas_ifc.entities.spatialelement import SpatialElement
+
 from compas_ifc.entities.buildingelements import BuildingElement
+from compas_ifc.entities.spatialelement import SpatialElement
 
 
 class Space(SpatialElement):

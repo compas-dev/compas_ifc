@@ -1,10 +1,10 @@
-from operator import mul
 from functools import reduce
+from operator import mul
 
-from compas.geometry import Point
-from compas.geometry import Vector
 from compas.geometry import Frame
+from compas.geometry import Point
 from compas.geometry import Transformation
+from compas.geometry import Vector
 
 
 def IfcLocalPlacement_to_transformation(placement) -> Transformation:

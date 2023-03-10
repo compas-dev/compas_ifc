@@ -18,12 +18,13 @@ Classes
 
 from typing import List
 
+from compas_ifc.entities.building import Building
+from compas_ifc.entities.buildingelements import BuildingElementProxy
+from compas_ifc.entities.buildingstorey import BuildingStorey
 from compas_ifc.entities.entity import Entity
 from compas_ifc.entities.project import Project
 from compas_ifc.entities.site import Site
-from compas_ifc.entities.building import Building
-from compas_ifc.entities.buildingstorey import BuildingStorey
-from compas_ifc.entities.buildingelements import BuildingElementProxy
+
 from .reader import IFCReader
 from .writer import IFCWriter
 

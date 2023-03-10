@@ -1,16 +1,16 @@
+from ifcopenshell.api import run
+
+from compas.datastructures import Mesh
 from compas.geometry import Box
-from compas.geometry import Sphere
 from compas.geometry import Cone
 from compas.geometry import Cylinder
-from compas.datastructures import Mesh
+from compas.geometry import Sphere
 
+from .mesh import mesh_to_IfcPolygonalFaceSet
 from .shapes import box_to_IfcBlock
-from .shapes import sphere_to_IfcSphere
 from .shapes import cone_to_IfcRightCircularCone
 from .shapes import cylinder_to_IfcRightCircularCylinder
-from .mesh import mesh_to_IfcPolygonalFaceSet
-
-from ifcopenshell.api import run
+from .shapes import sphere_to_IfcSphere
 
 
 def write_body_representation(file, body, ifc_entity, context):

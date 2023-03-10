@@ -1,6 +1,7 @@
 import ifcopenshell
-from .entities.entity import Entity
 from ifcopenshell.api import run
+
+from .entities.entity import Entity
 from .resources.representation import write_body_representation
 
 
@@ -70,9 +71,7 @@ class IFCWriter(object):
     def default_project(self):
         if not self._default_project:
             if not self.model.projects:
-                self._default_project = run(
-                    "root.create_entity", self.file, ifc_class="IfcProject", name="Default Project"
-                )
+                self._default_project = run("root.create_entity", self.file, ifc_class="IfcProject", name="Default Project")
             else:
                 self._default_project = self.write_entity(self.model.projects[0])
         return self._default_project
@@ -96,9 +95,7 @@ class IFCWriter(object):
     def default_building(self):
         if not self._default_building:
             if not self.model.buildings:
-                self._default_building = run(
-                    "root.create_entity", self.file, ifc_class="IfcBuilding", name="Default Building"
-                )
+                self._default_building = run("root.create_entity", self.file, ifc_class="IfcBuilding", name="Default Building")
                 run(
                     "aggregate.assign_object",
                     self.file,
@@ -113,9 +110,7 @@ class IFCWriter(object):
     def default_building_storey(self):
         if not self._default_building_storey:
             if not self.model.building_storeys:
-                self._default_building_storey = run(
-                    "root.create_entity", self.file, ifc_class="IfcBuildingStorey", name="Default Storey"
-                )
+                self._default_building_storey = run("root.create_entity", self.file, ifc_class="IfcBuildingStorey", name="Default Storey")
                 run(
                     "aggregate.assign_object",
                     self.file,
