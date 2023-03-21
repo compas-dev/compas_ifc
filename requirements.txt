@@ -1,1 +1,2 @@
 compas >=1.16
+qt-material
