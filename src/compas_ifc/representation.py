@@ -49,12 +49,11 @@ from compas.geometry import Scale
 from compas.geometry import Transformation
 from compas_ifc.entities.entity import Entity
 from compas_ifc.resources import IfcAxis2Placement3D_to_frame
-from compas_ifc.resources import IfcBooleanClippingResult_to_brep
 from compas_ifc.resources import IfcBoundingBox_to_box
 from compas_ifc.resources import IfcCartesianTransformationOperator3D_to_frame
 from compas_ifc.resources import IfcIndexedPolyCurve_to_lines
 from compas_ifc.resources import IfcLocalPlacement_to_transformation
-from compas_ifc.resources import IfcTessellatedFaceSet_to_brep
+from compas_ifc.resources import IfcShape_to_brep
 
 
 # this does not belong here
@@ -99,40 +98,12 @@ def entity_body_geometry(entity: Entity, include_fillings=False, context="Model"
         return bodies
 
     scale = entity.model.project.length_scale
-    scale = Scale.from_factors([scale, scale, scale])
-
+    scaled_placement = IfcLocalPlacement_to_transformation(entity._entity.ObjectPlacement, scale=scale)
     if representation.ContextOfItems.ContextType == context:
-        placement = IfcLocalPlacement_to_transformation(entity._entity.ObjectPlacement)
-
-        if representation.RepresentationType == "Tessellation":
-            for item in representation.Items:
-                brep = IfcTessellatedFaceSet_to_brep(item)
-                brep.transform(placement)
-                brep.transform(scale)
-                bodies.append(brep)
-
-        elif representation.RepresentationType == "MappedRepresentation":
-            for item in representation.Items:
-                mappedplacement = placement * IfcMappedItem_to_transformation(item)
-                for mappeditem in item.MappingSource.MappedRepresentation.Items:
-                    brep = IfcTessellatedFaceSet_to_brep(mappeditem)
-                    brep.transform(mappedplacement)
-                    brep.transform(scale)
-                    bodies.append(brep)
-
-        elif representation.RepresentationType == "Clipping":
-            for item in representation.Items:
-                brep = IfcBooleanClippingResult_to_brep(item)
-                # brep.transform(placement)
-                # brep.transform(scale)
-                # bodies.append(brep)
-
-        elif representation.RepresentationType == "SweptSolid":
-            for item in representation.Items:
-                print(dir(item))
-
-        else:
-            print(representation.RepresentationType)
+        for item in representation.Items:
+            brep = IfcShape_to_brep(item)
+            brep.transform(scaled_placement)
+            bodies.append(brep)
 
     if not bodies:
         return bodies
@@ -140,15 +111,13 @@ def entity_body_geometry(entity: Entity, include_fillings=False, context="Model"
     if hasattr(entity._entity, "HasOpenings"):
         for opening in entity._entity.HasOpenings:
             element = opening.RelatedOpeningElement
-            placement = IfcLocalPlacement_to_transformation(element.ObjectPlacement)
+            scaled_placement = IfcLocalPlacement_to_transformation(element.ObjectPlacement, scale=scale)
             for representation in element.Representation.Representations:
-                if representation.RepresentationIdentifier == "Reference":
-                    if representation.RepresentationType == "Tessellation":
-                        for item in representation.Items:
-                            brep = IfcTessellatedFaceSet_to_brep(item)
-                            brep.transform(placement)
-                            brep.transform(scale)
-                            voids.append(brep)
+                if temp.RepresentationIdentifier == "Body":
+                    for item in representation.Items:
+                        brep = IfcShape_to_brep(item)
+                        brep.transform(scaled_placement)
+                        voids.append(brep)
 
     if not voids:
         return bodies

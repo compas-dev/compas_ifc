@@ -11,6 +11,8 @@ from compas_ifc.resources.geometry import IfcAxis2Placement3D_to_frame
 from compas_ifc.resources.geometry import IfcDirection_to_vector
 from compas_ifc.resources.geometry import IfcProfileDef_to_curve
 
+from ifcopenshell import geom
+
 
 def IfcAdvancedBrep_to_brep(advanced_brep) -> BRep:
     """
@@ -197,7 +199,7 @@ def IfcTessellatedFaceSet_to_brep(tessellated_face_set) -> BRep:
     if tfs.is_a("IfcPolygonalFaceSet"):
         return IfcPolygonalFaceSet_to_brep(tfs)
 
-    raise NotImplementedError
+    raise NotImplementedError(tfs.is_a())
 
 
 def IfcTriangulatedFaceSet_to_brep(triangulated_face_set) -> BRep:
@@ -209,6 +211,19 @@ def IfcTriangulatedFaceSet_to_brep(triangulated_face_set) -> BRep:
     triangles = [[vertices[index] for index in face] for face in faces]
     brep = BRep.from_polygons(triangles)
 
+    brep.sew()
+    brep.fix()
+    brep.make_solid()
+
+    return brep
+
+
+def IfcShape_to_brep(ifc_shape) -> BRep:
+    settings = geom.settings()
+    settings.set(settings.USE_PYTHON_OPENCASCADE, True)
+    shape = geom.create_shape(settings, ifc_shape)
+
+    brep = BRep.from_shape(shape)
     brep.sew()
     brep.fix()
     brep.make_solid()

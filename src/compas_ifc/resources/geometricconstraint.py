@@ -7,7 +7,7 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 
 
-def IfcLocalPlacement_to_transformation(placement) -> Transformation:
+def IfcLocalPlacement_to_transformation(placement, scale=1) -> Transformation:
     """
     Convert an IFC LocalPlacement [localplacement]_ to a COMPAS transformation.
     This will resolve all relative placements into one transformation wrt the global coordinate system.
@@ -28,7 +28,7 @@ def IfcLocalPlacement_to_transformation(placement) -> Transformation:
             xaxis = Vector.Xaxis()
             yaxis = Vector.Yaxis()
 
-        point = Point(*Location.Coordinates)
+        point = Point(*Location.Coordinates) * scale
         frame = Frame(point, xaxis, yaxis)
         stack.append(frame)
 

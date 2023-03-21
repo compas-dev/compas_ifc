@@ -67,6 +67,9 @@ class Entity:
         self.set_attribute(key, value)
 
     def _collect_attributes(self):
+        if not self._entity:
+            return {}
+
         attributes = self._entity.get_info(
             recursive=False,
             include_identifier=False,
