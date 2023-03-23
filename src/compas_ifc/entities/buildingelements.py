@@ -81,6 +81,10 @@ class Door(BuildingElement):
     pass
 
 
+class Railing(BuildingElement):
+    pass
+
+
 class Stair(BuildingElement):
     pass
 
