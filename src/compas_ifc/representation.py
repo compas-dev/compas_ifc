@@ -98,7 +98,10 @@ def entity_body_geometry(entity: Entity, include_fillings=False, context="Model"
         return bodies
 
     scale = entity.model.project.length_scale
-    scaled_placement = IfcLocalPlacement_to_transformation(entity._entity.ObjectPlacement, scale=scale)
+    if entity._entity.ObjectPlacement:
+        scaled_placement = IfcLocalPlacement_to_transformation(entity._entity.ObjectPlacement, scale=scale)
+    else:
+        scaled_placement = Transformation()
     if representation.ContextOfItems.ContextType == context:
         for item in representation.Items:
             brep = IfcShape_to_brep(item)
@@ -111,7 +114,10 @@ def entity_body_geometry(entity: Entity, include_fillings=False, context="Model"
     if hasattr(entity._entity, "HasOpenings"):
         for opening in entity._entity.HasOpenings:
             element = opening.RelatedOpeningElement
-            scaled_placement = IfcLocalPlacement_to_transformation(element.ObjectPlacement, scale=scale)
+            if element.ObjectPlacement:
+                scaled_placement = IfcLocalPlacement_to_transformation(element.ObjectPlacement, scale=scale)
+            else:
+                scaled_placement = Transformation()
             for representation in element.Representation.Representations:
                 if temp.RepresentationIdentifier == "Body":
                     for item in representation.Items:
