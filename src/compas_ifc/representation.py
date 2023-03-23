@@ -131,9 +131,13 @@ def entity_body_geometry(entity: Entity, include_fillings=False, context="Model"
 
     shapes = []
     for A in bodies:
-        C: BRep = A - B
-        C.make_solid()
-        shapes.append(C)
+        try:
+            C: BRep = A - B
+            C.make_solid()
+            shapes.append(C)
+        except Exception:
+            shapes.append(A)
+            print("Warning: Failed to subtract voids from body.")
 
     return shapes
 
