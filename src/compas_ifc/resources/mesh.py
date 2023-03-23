@@ -9,7 +9,7 @@ def mesh_to_IfcPolygonalFaceSet(file: ifcopenshell.file, mesh: Mesh) -> ifcopens
     """
     vertices = []
     for _, attr in mesh.vertices(True):
-        vertices.append((attr["x"], attr["y"], attr["z"]))
+        vertices.append((float(attr["x"]), float(attr["y"]), float(attr["z"])))
     faces = []
     for fkey in mesh.faces():
         indexes = [i + 1 for i in mesh.face_vertices(fkey)]
