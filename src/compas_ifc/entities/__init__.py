@@ -171,6 +171,7 @@ from .buildingelements import Beam
 from .buildingelements import Column
 from .buildingelements import Door
 from .buildingelements import Roof
+from .buildingelements import Railing
 from .buildingelements import Slab
 from .buildingelements import Stair
 from .buildingelements import Wall
@@ -194,6 +195,7 @@ DEFAULT_ENTITY_TYPES = {
     "IfcColumn": Column,
     "IfcDoor": Door,
     "IfcRoof": Roof,
+    "IfcRailing": Railing,
     "IfcSlab": Slab,
     "IfcStair": Stair,
     "IfcWall": Wall,
