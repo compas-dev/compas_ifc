@@ -18,7 +18,10 @@ Classes
 
 from typing import List
 
+from compas_ifc.entities.element import Element
 from compas_ifc.entities.building import Building
+from compas_ifc.entities.buildingelements import BuildingElement
+from compas_ifc.entities.geographicelement import GeographicElement
 from compas_ifc.entities.buildingelements import BuildingElementProxy
 from compas_ifc.entities.buildingstorey import BuildingStorey
 from compas_ifc.entities.entity import Entity
@@ -76,6 +79,13 @@ class Model:
         self.reader = IFCReader(model=self, entity_types=entity_types)
         self.writer = IFCWriter(model=self)
         self._inserted_entities = set()
+        self._projects = None
+        self._sites = None
+        self._buildings = None
+        self._building_storeys = None
+        self._elements = None
+        self._building_elements = None
+        self._geographic_elements = None
         if filepath:
             self.open(filepath)
 
@@ -127,23 +137,45 @@ class Model:
 
     @property
     def projects(self) -> List[Project]:
-        return self.get_entities_by_type("IfcProject")
+        if self._projects is None:
+            self._projects = self.get_entities_by_type("IfcProject")
+        return self._projects
 
     @property
     def sites(self) -> List[Site]:
-        return self.get_entities_by_type("IfcSite")
+        if self._sites is None:
+            self._sites = self.get_entities_by_type("IfcSite")
+        return self._sites
 
     @property
     def buildings(self) -> List[Building]:
-        return self.get_entities_by_type("IfcBuilding")
+        if self._buildings is None:
+            self._buildings = self.get_entities_by_type("IfcBuilding")
+        return self._buildings
 
     @property
     def building_storeys(self) -> List[BuildingStorey]:
-        return self.get_entities_by_type("IfcBuildingStorey")
+        if self._building_storeys is None:
+            self._building_storeys = self.get_entities_by_type("IfcBuildingStorey")
+        return self._building_storeys
 
     @property
-    def elements(self) -> List[Building]:
-        return self.get_entities_by_type("IfcElement")
+    def elements(self) -> List[Element]:
+        if self._elements is None:
+            self._elements = self.get_entities_by_type("IfcElement")
+        return self._elements
+
+    @property
+    def building_elements(self) -> List[BuildingElement]:
+        if self._building_elements is None:
+            self._building_elements = self.get_entities_by_type("IfcBuildingElement")
+        return self._building_elements
+
+    @property
+    def geographic_elements(self) -> List[GeographicElement]:
+        if self._geographic_elements is None:
+            self._geographic_elements = self.get_entities_by_type("IfcGeographicElement")
+        return self._geographic_elements
 
     def insert(self, geometry, parent=None, name=None, description=None) -> BuildingElementProxy:
         """Insert a geometry into the model. The geometry will be wrapped in a building element proxy.
