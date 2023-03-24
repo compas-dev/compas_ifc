@@ -74,6 +74,7 @@ class IFCWriter(object):
                 self._default_project = run(
                     "root.create_entity", self.file, ifc_class="IfcProject", name="Default Project"
                 )
+                run("unit.assign_unit", self.file)
             else:
                 self._default_project = self.write_entity(self.model.projects[0])
         return self._default_project
