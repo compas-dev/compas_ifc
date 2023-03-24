@@ -16,23 +16,35 @@ from .shapes import sphere_to_IfcSphere
 
 
 def write_body_representation(file, body, ifc_entity, context):
-    if isinstance(body, Box):
-        shape = box_to_IfcBlock(file, body)
-    elif isinstance(body, Sphere):
-        shape = sphere_to_IfcSphere(file, body)
-    elif isinstance(body, Cone):
-        shape = cone_to_IfcRightCircularCone(file, body)
-    elif isinstance(body, Cylinder):
-        shape = cylinder_to_IfcRightCircularCylinder(file, body)
-    elif isinstance(body, Mesh):
-        shape = mesh_to_IfcPolygonalFaceSet(file, body)
-    elif isinstance(body, BRep):
-        shape = brep_to_ifc_advanced_brep(file, body)
-    else:
-        raise Exception("Unsupported body type.")
+    def _body_to_shape(body):
+        if isinstance(body, Box):
+            shape = box_to_IfcBlock(file, body)
+        elif isinstance(body, Sphere):
+            shape = sphere_to_IfcSphere(file, body)
+        elif isinstance(body, Cone):
+            shape = cone_to_IfcRightCircularCone(file, body)
+        elif isinstance(body, Cylinder):
+            shape = cylinder_to_IfcRightCircularCylinder(file, body)
+        elif isinstance(body, Mesh):
+            shape = mesh_to_IfcPolygonalFaceSet(file, body)
+        elif isinstance(body, BRep):
+            shape = brep_to_ifc_advanced_brep(file, body)
+        else:
+            raise Exception("Unsupported body type.")
+        return shape
 
-    if not isinstance(shape, list):
-        shape = [shape]
+    if isinstance(body, list):
+        shape = []
+        for b in body:
+            s = _body_to_shape(b)
+            if not isinstance(s, list):
+                shape.append(s)
+            else:
+                shape.extend(s)
+    else:
+        shape = _body_to_shape(body)
+        if not isinstance(shape, list):
+            shape = [shape]
 
     representation = file.create_entity(
         "IfcShapeRepresentation",
