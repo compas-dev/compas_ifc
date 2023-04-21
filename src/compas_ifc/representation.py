@@ -75,7 +75,7 @@ def IfcMappedItem_to_transformation(item) -> Transformation:
     return reduce(mul, matrices[::-1])
 
 
-def entity_body_geometry(entity: Entity, include_fillings=False, context="Model"):
+def entity_body_geometry(entity: Entity, context="Model"):
     """
     Construct the body geometry representations of an entity.
 
@@ -85,7 +85,6 @@ def entity_body_geometry(entity: Entity, include_fillings=False, context="Model"
 
     """
     bodies = []
-    voids = []
 
     representation = None
     if getattr(entity._entity, "Representation", None):
@@ -108,10 +107,17 @@ def entity_body_geometry(entity: Entity, include_fillings=False, context="Model"
             brep.transform(scaled_placement)
             bodies.append(brep)
 
-    if not bodies:
-        return bodies
+    return bodies
 
+
+def entity_opening_geometry(entity: Entity):
+    """
+    Construct the opening geometry representations of an entity.
+    """
+
+    voids = []
     if hasattr(entity._entity, "HasOpenings"):
+        scale = entity.model.project.length_scale
         for opening in entity._entity.HasOpenings:
             element = opening.RelatedOpeningElement
             if element.ObjectPlacement:
@@ -119,11 +125,25 @@ def entity_body_geometry(entity: Entity, include_fillings=False, context="Model"
             else:
                 scaled_placement = Transformation()
             for representation in element.Representation.Representations:
-                if temp.RepresentationIdentifier == "Body":
-                    for item in representation.Items:
-                        brep = IfcShape_to_brep(item)
-                        brep.transform(scaled_placement)
-                        voids.append(brep)
+                for item in representation.Items:
+                    brep = IfcShape_to_brep(item)
+                    brep.transform(scaled_placement)
+                    voids.append(brep)
+
+    return voids
+
+
+def entity_body_with_opening_geometry(entity: Entity, bodies=None, voids=None, context="Model"):
+    """
+    Construct the body geometry representations of an entity.
+
+    References
+    ----------
+    .. [1] :ifc:`body-geometry`
+
+    """
+    bodies = bodies or entity_body_geometry(entity, context=context)
+    voids = voids or entity_opening_geometry(entity)
 
     if not voids:
         return bodies

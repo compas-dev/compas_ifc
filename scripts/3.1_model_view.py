@@ -17,6 +17,6 @@ viewer = App(enable_sceneform=True)
 
 for entity in model.get_entities_by_type("IfcBuildingElement"):
     print("Converting to brep:", entity)
-    obj = viewer.add(Collection(entity.body), name=entity.name)
+    obj = viewer.add(Collection(entity.body_with_opening), name=entity.name)
 
 viewer.run()

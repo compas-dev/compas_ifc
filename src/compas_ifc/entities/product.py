@@ -25,6 +25,8 @@ class Product(ObjectDefinition):
         self._axis = None
         self._box = None
         self._body = None
+        self._opening = None
+        self._body_with_opening = None
 
     def classifications(self) -> List[Dict[str, str]]:
         """
@@ -121,3 +123,27 @@ class Product(ObjectDefinition):
     @body.setter
     def body(self, value):
         self._body = value
+
+    @property
+    def opening(self):
+        from compas_ifc.representation import entity_opening_geometry
+
+        if not self._opening:
+            self._opening = entity_opening_geometry(self)
+        return self._opening
+
+    @opening.setter
+    def opening(self, value):
+        self._opening = value
+
+    @property
+    def body_with_opening(self):
+        from compas_ifc.representation import entity_body_with_opening_geometry
+
+        if not self._body_with_opening:
+            self._body_with_opening = entity_body_with_opening_geometry(self, self.body, self.opening)
+        return self._body_with_opening
+
+    @body_with_opening.setter
+    def body_with_opening(self, value):
+        self._body_with_opening = value
