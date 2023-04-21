@@ -24,6 +24,10 @@ class Element(Product):
             relation = self.contained_in_structure()
             if relation:
                 self._parent = relation["RelatingStructure"]
+            else:
+                relation = self.decomposes()
+                if relation:
+                    self._parent = relation["RelatingObject"]
         return self._parent
 
     @parent.setter

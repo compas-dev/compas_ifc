@@ -133,7 +133,7 @@ def entity_opening_geometry(entity: Entity):
     return voids
 
 
-def entity_body_with_opening_geometry(entity: Entity, bodies=None, voids=None, context="Model"):
+def entity_body_with_opening_geometry(entity: Entity = None, bodies=None, voids=None, context="Model"):
     """
     Construct the body geometry representations of an entity.
 

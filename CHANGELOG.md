@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * `entity_body_geometry` no longer includes openings.
+* `parent` of `Element` will now also consider `decompose` relation.
 
 ### Removed
 
