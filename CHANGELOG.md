@@ -9,10 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `entity_opening_geometry`.
+* Added `entity_body_with_opening_geometry`.
+* Added `opening` attribute to `Product`.
+* Added `body_with_opening` attribute to `Product`.
+
 ### Changed
 
-### Removed
+* `entity_body_geometry` no longer includes openings.
 
+### Removed
 
 ## [0.2.0] 2023-03-21
 
@@ -21,4 +27,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Removed
-
