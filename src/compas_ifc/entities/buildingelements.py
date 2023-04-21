@@ -12,6 +12,12 @@ class BuildingElement(Element):
 
     """
 
+    def __init__(self, entity, model) -> None:
+        super().__init__(entity, model)
+        self._composite_body = None
+        self._composite_opening = None
+        self._composite_body_with_opening = None
+
     def is_contained(self) -> bool:
         """
         Verify that this building element is contained in a spatial structure.
@@ -49,6 +55,44 @@ class BuildingElement(Element):
 
         """
         return self.parent
+
+    @property
+    def building_element_parts(self):
+        return [part for part in self.children if part.is_a("IfcBuildingElementPart")]
+
+    @property
+    def composite_body(self):
+        bodies = []
+        for part in self.building_element_parts:
+            bodies.extend(part.body)
+        self._composite_body = bodies
+        return self._composite_body
+
+    @composite_body.setter
+    def composite_body(self, value):
+        self._composite_body = value
+
+    @property
+    def composite_opening(self):
+        voids = self.opening
+        for part in self.building_element_parts:
+            voids.extend(part.opening)
+        self._composite_opening = voids
+        return self._composite_opening
+
+    @property
+    def composite_body_with_opening(self):
+        from compas_ifc.representation import entity_body_with_opening_geometry
+
+        if not self._composite_body_with_opening:
+            self._composite_body_with_opening = entity_body_with_opening_geometry(
+                entity=self, bodies=self.composite_body, voids=self.composite_opening
+            )
+        return self._composite_body_with_opening
+
+    @composite_body_with_opening.setter
+    def composite_body_with_opening(self, value):
+        self._composite_body_with_opening = value
 
 
 class Beam(BuildingElement):
