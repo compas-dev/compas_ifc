@@ -19,8 +19,9 @@ class ObjectDefinition(Root):
 
     def decomposes(self):
         """Return the relation that decomposes this element."""
-        for rel in self._entity.Decomposes:
-            return self.model.reader.get_entity(rel)
+        if self not in self.model._inserted_entities:
+            for rel in self._entity.Decomposes:
+                return self.model.reader.get_entity(rel)
 
     @property
     def parent(self):
@@ -40,7 +41,11 @@ class ObjectDefinition(Root):
 
     @property
     def children(self):
-        return [entity for entity in self.model.get_entities_by_type("IfcObjectDefinition") if entity.parent == self]
+        children = [entity for entity in self.model.get_entities_by_type("IfcObjectDefinition") if entity.parent == self]
+        for entity in self.model._inserted_entities:
+            if entity.parent == self and entity not in children:
+                children.append(entity)
+        return children
 
     def traverse(self, recursive: bool = True):
         """Traverse children of this element.

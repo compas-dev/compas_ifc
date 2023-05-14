@@ -44,7 +44,7 @@ class Entity:
         else:
             self._ifc_type = "Ifc" + type(self).__name__  # NOTE: this is a bit fragile
             # self._declaration = self.model.schema.declaration_by_name(self._ifc_type)
-            self._declaration = None
+            self._declaration = self.model.schema.declaration_by_name(self._ifc_type)
 
     def __repr__(self):
         return "<{}:{}>".format(type(self).__name__, self._ifc_type)
@@ -68,7 +68,7 @@ class Entity:
 
     def _collect_attributes(self):
         if not self._entity:
-            return {}
+            return {attr.name(): None for attr in self._declaration.all_attributes()}
 
         attributes = self._entity.get_info(
             recursive=False,
@@ -86,6 +86,8 @@ class Entity:
 
     def _collect_psets(self):
         psets = {}
+        if not self._entity:
+            return psets
         _psets = ifcopenshell.util.element.get_psets(self._entity)
         for name in _psets:
             psets[name] = _psets[name]

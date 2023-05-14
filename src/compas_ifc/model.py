@@ -177,7 +177,7 @@ class Model:
             self._geographic_elements = self.get_entities_by_type("IfcGeographicElement")
         return self._geographic_elements
 
-    def insert(self, geometry, parent=None, name=None, description=None) -> BuildingElementProxy:
+    def insert(self, geometry, parent=None, name=None, description=None, cls=None) -> BuildingElementProxy:
         """Insert a geometry into the model. The geometry will be wrapped in a building element proxy.
 
         Parameters
@@ -196,7 +196,9 @@ class Model:
         :class:`compas_ifc.entities.buildingelements.BuildingElementProxy`
             The building element proxy wrapping the geometry.
         """
-        element = BuildingElementProxy(None, self)
+        if cls is None:
+            cls = BuildingElementProxy
+        element = cls(None, self)
         element.body = geometry
         element.parent = parent
         element["Name"] = name

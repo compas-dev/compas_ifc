@@ -39,11 +39,11 @@ class IFCController(Controller):
 
 class IFC_viewer(App):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, config=CONFIG, controller_class=IFCController, **kwargs)
+        super().__init__(*args, config=CONFIG, controller_class=IFCController, title="COMPAS IFC", **kwargs)
         self.ifc = None
 
-        extra = {"density_scale": "-1"}
-        apply_stylesheet(self._app, theme="dark_blue.xml", extra=extra)
+        # extra = {"density_scale": "-1"}
+        # apply_stylesheet(self._app, theme="dark_blue.xml", extra=extra)
         self.on_object_selected += [self.on_entityobj_selected]
         self.create_tabs()
 
@@ -83,22 +83,30 @@ class IFC_viewer(App):
         self.model = model_cls(path)
 
     def add_hierachy(self, entity: Entity, **kwargs):
-        if isinstance(entity, list):
-            for e in entity:
-                self.add_hierachy(e, **kwargs)
-        elif hasattr(entity, "spatial_structure"):
-            parent = self
-            print("Adding spatial structure hierarchy:")
-            for i, entity in enumerate(entity.spatial_structure()):
-                existed = [obj for obj in self.view.objects.values() if obj.entity == entity]
-                if existed:
-                    print(" " * i, "->", entity, "already exists")
-                    parent = existed[0]
-                else:
-                    print(" " * i, "->", entity)
-                    parent = parent.add(entity, **kwargs)
-        else:
-            self.add(entity, **kwargs)
+
+        parent = entity.parent
+        chain = []
+
+        while parent:
+            chain.append(parent)
+            parent = parent.parent
+        
+        chain.reverse()
+        chain.append(entity)
+
+        parent = self
+        for i, entity in enumerate(chain):
+            existed = [obj for obj in self.view.objects.values() if obj.entity == entity]
+            if existed:
+                print(" " * i, "->", entity, "already exists")
+                parent = existed[0]
+            else:
+                print(" " * i, "->", entity)
+                parent = parent.add(entity, **kwargs)
+                last = parent
+        
+        return last
+
 
     def add_all(self, **kwargs):
         def add_branch(entity, parent):
@@ -154,7 +162,7 @@ class IFC_viewer(App):
                 if hasattr(obj, "entity"):
                     entity = obj.entity
                     node_item = {
-                        "name": f"{entity._entity.Name} ({entity._entity.is_a()})",
+                        "name": f"{entity.name} ({entity.ifc_type})",
                         "entity": entity,
                         "children": add_branch(obj.children),
                         "expanded": True,
@@ -189,30 +197,37 @@ class IFC_viewer(App):
     def attribute_tab(self, entity: Entity = None):
         attributes = []
         if entity:
-            enum_options = self.get_enum_options(entity)
+            if entity._entity is not None:
+                enum_options = self.get_enum_options(entity)
 
-            def expand_dict(dict_entry):
-                attributes = []
-                for name, value in dict_entry.items():
+                def expand_dict(dict_entry):
+                    attributes = []
+                    for name, value in dict_entry.items():
 
-                    def on_item_edited(form, entry, column, value):
-                        dict_entry[entry["name"]] = value
+                        def on_item_edited(form, entry, column, value):
+                            dict_entry[entry["name"]] = value
 
-                    if isinstance(value, dict):
-                        attributes.append({"name": name, "children": expand_dict(value)})
-                    else:
-                        if name in enum_options:
-                            value = {"value": value, "options": enum_options[name]}
-                        attributes.append(
-                            {
-                                "name": name,
-                                "value": value,
-                                "on_item_edited": on_item_edited,
-                            }
-                        )
-                return attributes
+                        if isinstance(value, dict):
+                            attributes.append({"name": name, "children": expand_dict(value)})
+                        else:
+                            if name in enum_options:
+                                value = {"value": value, "options": enum_options[name]}
+                            attributes.append(
+                                {
+                                    "name": name,
+                                    "value": value,
+                                    "on_item_edited": on_item_edited,
+                                }
+                            )
+                    return attributes
 
-            attributes = expand_dict(entity.attributes)
+                attributes = expand_dict(entity.attributes)
+            
+            else:
+                attributes = [
+                    {"name": name, "value": value}
+                    for name, value in entity.attributes.items()
+                ]
 
         return {
             "name": "Attributes",
