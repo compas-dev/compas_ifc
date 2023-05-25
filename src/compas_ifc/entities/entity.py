@@ -1,5 +1,6 @@
 from typing import Dict
 from typing import Union
+from typing import Optional
 
 import ifcopenshell
 import ifcopenshell.util.element
@@ -35,30 +36,36 @@ class Entity:
     def __init__(self, entity: ifcopenshell.entity_instance, model):
         self._entity = entity
         self._model = model
+        self._declaration = None
         self._psets = {}
         self._attributes = {}
         self._properties = {}
-        if entity:
-            self._ifc_type = self._entity.is_a()
-            self._declaration = self.model.schema.declaration_by_name(self._ifc_type)
-        else:
-            self._ifc_type = "Ifc" + type(self).__name__  # NOTE: this is a bit fragile
-            # self._declaration = self.model.schema.declaration_by_name(self._ifc_type)
-            self._declaration = self.model.schema.declaration_by_name(self._ifc_type)
+        self._ifc_type = None
 
     def __repr__(self):
         return "<{}:{}>".format(type(self).__name__, self._ifc_type)
 
+    @property
+    def declaration(self):
+        if not self._declaration and self.model.schema:
+            self._declaration = self.model.schema.declaration_by_name(self.ifc_type)
+        return self._declaration
+
+    @property
+    def ifc_type(self):
+        if not self._ifc_type and self._entity:
+            self._ifc_type = self._entity.is_a()
+        else:
+            self._ifc_type = "Ifc" + type(self).__name__
+        return self._ifc_type
+
     def is_a(self, ifc_type: str = None):
+        # TODO: this is a bit mess, need to clean up
         if not self.ifc_type:
             return self.ifc_type
         if not self._entity:
             return ifc_type == self.ifc_type  # TODO: consider inheritance
         return self._entity.is_a(ifc_type)
-
-    @property
-    def ifc_type(self):
-        return self._ifc_type
 
     def __getitem__(self, key: str):
         return self.attribute(key)
@@ -68,7 +75,7 @@ class Entity:
 
     def _collect_attributes(self):
         if not self._entity:
-            return {attr.name(): None for attr in self._declaration.all_attributes()}
+            return {attr.name(): None for attr in self.declaration.all_attributes()}
 
         attributes = self._entity.get_info(
             recursive=False,
@@ -102,6 +109,7 @@ class Entity:
         if not self._attributes:
             self._attributes = self._collect_attributes()
 
+        # TODO: this is a bit of a hack, need to clean up
         for key, value in self._attributes.items():
             if isinstance(value, ifcopenshell.entity_instance):
                 self._attributes[key] = self.model.reader.get_entity(value)
@@ -166,6 +174,23 @@ class Entity:
 
         """
         self.attributes[name] = value
+    
+    def set_attributes(self, attributes: Dict[str, Union[str, int, float]]) -> None:
+        """
+        Set the values of multiple attributes.
+
+        Parameters
+        ----------
+        attributes : Dict[str, Union[str, int, float]]
+            The attributes to set.
+
+        Returns
+        -------
+        None
+
+        """
+        for name, value in attributes.items():
+            self.set_attribute(name, value)
 
     def pset(self, name: str) -> Dict:
         """

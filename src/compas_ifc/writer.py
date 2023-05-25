@@ -1,7 +1,11 @@
 import ifcopenshell
 from ifcopenshell.api import run
 
+from .entities.objectdefinition import ObjectDefinition
+from .entities.element import Element
 from .entities.entity import Entity
+from .entities.product import Product
+from .entities.project import Project
 from .resources.representation import write_body_representation
 
 
@@ -147,7 +151,7 @@ class IFCWriter(object):
         self.default_project
 
         # TODO: make this better
-        for entity in self.model._inserted_entities:
+        for entity in self.model._new_entities:
             if not entity.parent and self.model.building_storeys:
                 entity.parent = self.model.building_storeys[0]
 
@@ -172,7 +176,7 @@ class IFCWriter(object):
         for entity in self.model.get_all_entities():
             self.write_entity(entity)
 
-        for entity in self.model._inserted_entities:  # TODO: needs better api
+        for entity in self.model._new_entities:  # TODO: needs better api
             self.write_relation(entity)
 
         self.file.write(filepath)
@@ -185,7 +189,9 @@ class IFCWriter(object):
             self.trim_existing_relation(entity)
         else:
             # Entity created in memory
-            self.create_new_relation(entity)
+            if isinstance(entity, ObjectDefinition) and not isinstance(entity, Project):
+                # Only ObjectDefinitions can have parental relations, except for Project.
+                self.create_new_relation(entity)
 
     def trim_existing_relation(self, entity: Entity) -> None:
         """writes a existing parental relation to the ifc file, trimming the non existing children."""
@@ -214,10 +220,9 @@ class IFCWriter(object):
 
         self.write_entity(relation)
 
-    def create_new_relation(self, entity: Entity):
+    def create_new_relation(self, entity: ObjectDefinition):
         """Writes a new parental relation to the ifc file."""
 
-        # TODO: this needs accomodate other type of elements.
         if entity.parent:
             parent = self._entitymap[entity.parent]
         else:
@@ -225,7 +230,11 @@ class IFCWriter(object):
             parent = self.default_building_storey
 
         child = self._entitymap[entity]
-        run("spatial.assign_container", self.file, relating_structure=parent, product=child)
+
+        if isinstance(entity, Element):
+            run("spatial.assign_container", self.file, relating_structure=parent, product=child)
+        else:
+            run("aggregate.assign_object", self.file, relating_object=parent, product=child)
 
     def write_entity(self, entity: Entity) -> None:
         """Writes the given entity recursively with all its referencing attributes to the ifc file."""
@@ -255,7 +264,7 @@ class IFCWriter(object):
 
     def write_entity_representation(self, entity: Entity):
         """Writes the representations of the given entity to the ifc file."""
-        if entity.body:
+        if isinstance(entity, Product):
             try:
                 write_body_representation(self.file, entity.body, self._entitymap[entity], self.default_body_context)
             except Exception as e:

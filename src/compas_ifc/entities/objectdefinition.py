@@ -19,7 +19,7 @@ class ObjectDefinition(Root):
 
     def decomposes(self):
         """Return the relation that decomposes this element."""
-        if self not in self.model._inserted_entities:
+        if self not in self.model._new_entities:
             for rel in self._entity.Decomposes:
                 return self.model.reader.get_entity(rel)
 
@@ -42,7 +42,7 @@ class ObjectDefinition(Root):
     @property
     def children(self):
         children = [entity for entity in self.model.get_entities_by_type("IfcObjectDefinition") if entity.parent == self]
-        for entity in self.model._inserted_entities:
+        for entity in self.model._new_entities:
             if entity.parent == self and entity not in children:
                 children.append(entity)
         return children

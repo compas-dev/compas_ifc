@@ -14,7 +14,7 @@ class Element(Product):
 
     def contained_in_structure(self):
         """Return the spatial structure containing this element."""
-        if self not in self.model._inserted_entities:
+        if self not in self.model._new_entities:
             for rel in self._entity.ContainedInStructure:
                 return self.model.reader.get_entity(rel)
 

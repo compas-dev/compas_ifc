@@ -24,6 +24,7 @@ from compas_ifc.entities.buildingelements import BuildingElement
 from compas_ifc.entities.geographicelement import GeographicElement
 from compas_ifc.entities.buildingelements import BuildingElementProxy
 from compas_ifc.entities.buildingstorey import BuildingStorey
+from compas_ifc.entities.objectdefinition import ObjectDefinition
 from compas_ifc.entities.entity import Entity
 from compas_ifc.entities.project import Project
 from compas_ifc.entities.site import Site
@@ -78,7 +79,7 @@ class Model:
     def __init__(self, filepath: str = None, entity_types: dict = None) -> None:
         self.reader = IFCReader(model=self, entity_types=entity_types)
         self.writer = IFCWriter(model=self)
-        self._inserted_entities = set()
+        self._new_entities = set()
         self._projects = None
         self._sites = None
         self._buildings = None
@@ -100,12 +101,12 @@ class Model:
 
     def get_all_entities(self) -> List[Entity]:
         """Get all entities in the model."""
-        return self.reader.get_all_entities() + list(self._inserted_entities)
+        return self.reader.get_all_entities() + list(self._new_entities)
 
     def get_entities_by_type(self, ifc_type: str, include_subtypes: bool = True) -> List[Entity]:
         """Get all entities of a specific ifc type in the model. If include_subtypes is True, also return entities of subtypes of the given type."""
         entities = self.reader.get_entities_by_type(ifc_type, include_subtypes)
-        for entity in self._inserted_entities:
+        for entity in self._new_entities:
             if entity.ifc_type == ifc_type:
                 entities.append(entity)
         return entities
@@ -177,6 +178,38 @@ class Model:
             self._geographic_elements = self.get_entities_by_type("IfcGeographicElement")
         return self._geographic_elements
 
+    def create(self, cls, attributes, parent=None):
+        """Create an entity and add it to the model.
+
+        Parameters
+        ----------
+        cls : :class:`compas_ifc.entities.Entity`
+            The type of entity to create.
+        attributes : dict
+            The attributes of the entity.
+        parent : :class:`compas_ifc.entities.Entity`
+            The parent entity of the entity.
+
+        Returns
+        -------
+        :class:`compas_ifc.entities.Entity`
+            The created entity.
+        """
+        entity = cls(None, self)
+        entity.set_attributes(attributes)
+        if parent: 
+            if isinstance(entity, ObjectDefinition):
+                entity.parent = parent
+            else:
+                print(hasattr(entity, "parent"))
+                raise ValueError(f"{entity} cannot be assigned a parent.")
+        self._new_entities.add(entity)
+        
+        if cls == Project:
+            self._projects = [entity]
+
+        return entity
+
     def insert(self, geometry, parent=None, name=None, description=None, cls=None) -> BuildingElementProxy:
         """Insert a geometry into the model. The geometry will be wrapped in a building element proxy.
 
@@ -203,5 +236,5 @@ class Model:
         element.parent = parent
         element["Name"] = name
         element["Description"] = description
-        self._inserted_entities.add(element)
+        self._new_entities.add(element)
         return element
