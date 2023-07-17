@@ -1,21 +1,3 @@
-"""
-********************************************************************************
-model
-********************************************************************************
-
-.. currentmodule:: compas_ifc.model
-
-Classes
-=======
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    Model
-
-"""
-
 from typing import List
 
 from compas_ifc.entities.element import Element

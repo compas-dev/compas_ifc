@@ -158,7 +158,7 @@ def linkcode_resolve(domain, info):
     else:
         return None
 
-    return f"https://github.com/blockresearchgroup/compas_ifc/blob/master/src/{filename}.py#L{lineno}"
+    return f"https://github.com/compas-dev/compas_ifc/blob/master/src/{filename}.py#L{lineno}"
 
 # extlinks
 
@@ -166,25 +166,36 @@ extlinks = {}
 
 # -- Options for HTML output ----------------------------------------------
 
-html_theme = "compaspkg"
-html_theme_path = sphinx_compas_theme.get_html_theme_path()
+html_theme = "sphinx_book_theme"
+# html_theme_path = sphinx_compas_theme.get_html_theme_path()
+
+# html_theme_options = {
+#     "package_name"    : "compas_ifc",
+#     "package_title"   : project,
+#     "package_version" : release,
+#     "package_author"  : "tom van mele",
+#     "package_docs"    : "https://blockresearchgroup.github.io/compas_ifc/",
+#     "package_repo"    : "https://github.com/blockresearchgroup/compas_ifc",
+#     "package_old_versions_txt": "https://blockresearchgroup.github.io/compas_ifc/doc_versions.txt"
+# }
 
 html_theme_options = {
-    "package_name"    : "compas_ifc",
-    "package_title"   : project,
-    "package_version" : release,
-    "package_author"  : "tom van mele",
-    "package_docs"    : "https://blockresearchgroup.github.io/compas_ifc/",
-    "package_repo"    : "https://github.com/blockresearchgroup/compas_ifc",
-    "package_old_versions_txt": "https://blockresearchgroup.github.io/compas_ifc/doc_versions.txt"
+    "repository_url": "https://github.com/compas-dev/compas_ifc",
+    "use_repository_button": True,
 }
 
-html_context = {}
-html_static_path = sphinx_compas_theme.get_html_static_path()
-html_extra_path = []
-html_last_updated_fmt = ""
-html_copy_source = False
-html_show_sourcelink = False
-html_permalinks = False
-html_add_permalinks = None
-html_compact_lists = True
+# html_context = {}
+# html_static_path = sphinx_compas_theme.get_html_static_path()
+# html_extra_path = []
+# html_last_updated_fmt = ""
+# html_copy_source = False
+# html_show_sourcelink = False
+# html_permalinks = False
+# html_add_permalinks = None
+# html_compact_lists = True
+
+html_static_path =["_static"]
+
+html_css_files = [
+    'custom.css',
+]

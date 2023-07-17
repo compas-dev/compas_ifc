@@ -43,7 +43,7 @@ class Entity:
         self._ifc_type = None
 
     def __repr__(self):
-        return "<{}:{}>".format(type(self).__name__, self._ifc_type)
+        return "<{}:{}>".format(type(self).__name__, self.ifc_type)
 
     @property
     def declaration(self):
@@ -61,7 +61,7 @@ class Entity:
 
     def is_a(self, ifc_type: str = None):
         # TODO: this is a bit mess, need to clean up
-        if not self.ifc_type:
+        if not ifc_type:
             return self.ifc_type
         if not self._entity:
             return ifc_type == self.ifc_type  # TODO: consider inheritance
