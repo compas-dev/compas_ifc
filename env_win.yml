@@ -1,0 +1,11 @@
+name: ifc
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - compas
+  - compas_occ
+  - compas_view2
+  - ifcopenshell
+  - pip:
+    - -r requirements-dev.txt
