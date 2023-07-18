@@ -2,7 +2,6 @@ import os
 
 from compas_view2.app import App
 from compas_view2.app import Controller
-from qt_material import apply_stylesheet
 from qtpy import QtCore
 from qtpy import QtWidgets
 
@@ -83,14 +82,13 @@ class IFC_viewer(App):
         self.model = model_cls(path)
 
     def add_hierachy(self, entity: Entity, **kwargs):
-
         parent = entity.parent
         chain = []
 
         while parent:
             chain.append(parent)
             parent = parent.parent
-        
+
         chain.reverse()
         chain.append(entity)
 
@@ -104,9 +102,8 @@ class IFC_viewer(App):
                 print(" " * i, "->", entity)
                 parent = parent.add(entity, **kwargs)
                 last = parent
-        
-        return last
 
+        return last
 
     def add_all(self, **kwargs):
         def add_branch(entity, parent):
@@ -222,12 +219,9 @@ class IFC_viewer(App):
                     return attributes
 
                 attributes = expand_dict(entity.attributes)
-            
+
             else:
-                attributes = [
-                    {"name": name, "value": value}
-                    for name, value in entity.attributes.items()
-                ]
+                attributes = [{"name": name, "value": value} for name, value in entity.attributes.items()]
 
         return {
             "name": "Attributes",
