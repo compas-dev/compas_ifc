@@ -41,7 +41,9 @@ class ObjectDefinition(Root):
 
     @property
     def children(self):
-        children = [entity for entity in self.model.get_entities_by_type("IfcObjectDefinition") if entity.parent == self]
+        children = [
+            entity for entity in self.model.get_entities_by_type("IfcObjectDefinition") if entity.parent == self
+        ]
         for entity in self.model._new_entities:
             if entity.parent == self and entity not in children:
                 children.append(entity)

@@ -19,4 +19,5 @@ matplotlib
 sphinx
 twine
 wheel
+sphinx_book_theme
 -e .

@@ -1,6 +1,7 @@
 from typing import Dict
 from typing import Union
-from typing import Optional
+
+# from typing import Optional
 
 import ifcopenshell
 import ifcopenshell.util.element
@@ -174,7 +175,7 @@ class Entity:
 
         """
         self.attributes[name] = value
-    
+
     def set_attributes(self, attributes: Dict[str, Union[str, int, float]]) -> None:
         """
         Set the values of multiple attributes.

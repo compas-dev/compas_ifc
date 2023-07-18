@@ -179,14 +179,14 @@ class Model:
         """
         entity = cls(None, self)
         entity.set_attributes(attributes)
-        if parent: 
+        if parent:
             if isinstance(entity, ObjectDefinition):
                 entity.parent = parent
             else:
                 print(hasattr(entity, "parent"))
                 raise ValueError(f"{entity} cannot be assigned a parent.")
         self._new_entities.add(entity)
-        
+
         if cls == Project:
             self._projects = [entity]
 

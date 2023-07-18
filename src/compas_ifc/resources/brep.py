@@ -203,7 +203,7 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep: BRep) -> List[ifcop
 
                     if face.nurbssurface.is_v_periodic:
                         for i, row in enumerate(ifc_control_points):
-                            row.append(get_ifc_point(control_points[i%len(control_points)][0]))
+                            row.append(get_ifc_point(control_points[i % len(control_points)][0]))
 
                     weights = face.nurbssurface.weights
                     weights = np.array(weights, dtype=float)
