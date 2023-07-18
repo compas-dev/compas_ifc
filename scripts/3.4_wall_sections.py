@@ -23,11 +23,11 @@ sectionPlane = Plane([0, 0, 1], [0, 0, 1])
 
 for wall in model.get_entities_by_type("IfcWall"):
     print("Converting brep:", wall)
-    viewer.add(Collection(wall.body), name="{}.Body".format(wall.name), opacity=0.5)
+    viewer.add(Collection(wall.body_with_opening), name="{}.Body".format(wall.name), opacity=0.5)
 
     print("creating section...")
     sections = []
-    for shape in wall.body:
+    for shape in wall.body_with_opening:
         sections.append(shape.slice(sectionPlane))
 
     print(sections)

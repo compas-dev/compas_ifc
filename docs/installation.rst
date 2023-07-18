@@ -2,7 +2,7 @@
 Installation
 ********************************************************************************
 
-Install with conda (recommended)
+Install with conda (required)
 ================================
 
 Create an environment named ``research`` and install COMPAS from the package channel ``conda-forge``.

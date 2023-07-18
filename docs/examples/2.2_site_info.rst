@@ -1,0 +1,113 @@
+*******************************************************************************
+2.2 Site Info
+*******************************************************************************
+
+This example show how to retrive the site information from an IFC file.
+
+.. code-block:: python
+
+    import os
+    from pprint import pprint
+
+    from compas_ifc.model import Model
+
+    HERE = os.path.dirname(__file__)
+    FILE = os.path.join(
+        HERE,
+        "..",
+        "data",
+        "wall-with-opening-and-window.ifc",
+    )
+
+    model = Model(FILE)
+    assert len(model.projects) > 0
+
+    project = model.projects[0]
+    assert len(project.sites) > 0
+
+    site = project.sites[0]
+
+    # =============================================================================
+    # Info
+    # =============================================================================
+
+    print("\n" + "*" * 53)
+    print("Site")
+    print("*" * 53 + "\n")
+
+    site.print_inheritance()
+
+    print("\nSpatial Structure")
+    print("=" * 53 + "\n")
+
+    site.print_spatial_hierarchy()
+
+    print("\nAttributes")
+    print("=" * 53 + "\n")
+
+    pprint(site.attributes)
+
+    print("\nProperties")
+    print("=" * 53 + "\n")
+
+    pprint(site.properties)
+
+    print("\nBuildings")
+    print("=" * 53 + "\n")
+
+    print(site.buildings)
+
+    print()
+
+Example Output:
+
+.. code-block:: none
+
+    *****************************************************
+    Site
+    *****************************************************
+
+    - IfcRoot
+    -- IfcObjectDefinition
+    --- IfcObject
+    ---- IfcProduct
+    ----- IfcSpatialElement
+    ------ IfcSpatialStructureElement
+    ------- IfcSite
+
+    Spatial Structure
+    =====================================================
+
+    <Site:IfcSite Name: Default Site, GlobalId: 1cwlDi_hLEvPsClAelBNnz>
+    ---- <Building:IfcBuilding Name: Default Building, GlobalId: 0AqAhXVxvCy9m0OX1nxY1A>
+    -------- <BuildingStorey:IfcBuildingStorey Name: Default Building Storey, GlobalId: 2GNgSHJ5j9BRUjqT$7tE8w>
+    ------------ <Window:IfcWindow Name: Window for Test Example, GlobalId: 0tA4DSHd50le6Ov9Yu0I9X>
+    ------------ <Wall:IfcWallStandardCase Name: Wall for Test Example, GlobalId: 3ZYW59sxj8lei475l7EhLU>
+
+    Attributes
+    =====================================================
+
+    {'CompositionType': 'ELEMENT',
+    'Description': 'Description of Default Site',
+    'GlobalId': '1cwlDi_hLEvPsClAelBNnz',
+    'LandTitleNumber': None,
+    'LongName': None,
+    'Name': 'Default Site',
+    'ObjectPlacement': <Entity:IfcEntity>,
+    'ObjectType': None,
+    'OwnerHistory': <Entity:IfcEntity>,
+    'RefElevation': 10.0,
+    'RefLatitude': (24, 28, 0),
+    'RefLongitude': (54, 25, 0),
+    'Representation': None,
+    'SiteAddress': None}
+
+    Properties
+    =====================================================
+
+    {}
+
+    Buildings
+    =====================================================
+
+    [<Building:IfcBuilding Name: Default Building, GlobalId: 0AqAhXVxvCy9m0OX1nxY1A>]

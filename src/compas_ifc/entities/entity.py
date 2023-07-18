@@ -264,7 +264,7 @@ class Entity:
         List[str]
 
         """
-        declaration = self._declaration
+        declaration = self.declaration
         inheritance = [declaration.name()]
         while declaration.supertype():
             inheritance.append(declaration.supertype().name())

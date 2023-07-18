@@ -7,7 +7,7 @@ from compas_ifc.entities.entity import Entity
 
 class EntityObject(CollectionObject):
     def __init__(self, entity: Entity, **kwargs):
-        body = getattr(entity, "body", [])
+        body = getattr(entity, "body_with_opening", [])
         if not isinstance(body, list):
             body = [body]
         name = entity.name
