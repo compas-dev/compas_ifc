@@ -2,8 +2,6 @@
 API Reference
 ********************************************************************************
 
-.. currentmodule:: compas_ifc
-
 .. rst-class:: lead
 
 This is the auto-generated API reference for COMPAS IFC.
