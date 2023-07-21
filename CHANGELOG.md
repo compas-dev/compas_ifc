@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `composite_body` attribute to `BuildingElement`.
 * Added `composite_opening` attribute to `BuildingElement`.
 * Added `composite_body_with_opening` attribute to `BuildingElement`.
+* Added Documentation site.
 
 ### Changed
 
