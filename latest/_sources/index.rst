@@ -8,6 +8,8 @@ IFC is now widely adopted by industry and often the required format for BIM data
 
 COMPAS IFC is a COMPAS extension developed to make our lives easier. It allows us to work with IFC files in an accessible, developer-friendly and pythonic way. By creating a two-way bridge between IFC files and COMPAS data structures, we can immediately benifit from wide range of tools for geometric processing and analysing from COMPAS ecosystem. COMPAS IFC also allows us to export processed data back to valid IFC files.
 
+COMPAS IFC relies on IfcOpenShell(https://ifcopenshell.org/) for lower-level entity parsing, schema retriving and file manipulations. On top of that we additionally simplify the workflow to interact with IFC contents. 
+
 Some of the core features of COMPAS IFC are:
 
 - Prase IFC files and inspect its entities
