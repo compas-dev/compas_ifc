@@ -24,7 +24,7 @@ Classes
     Slab
     Stair
     Wall
-    IWindow
+    Window
     Space
     BuildingStorey
     Building

@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../src'))
 
 project = "COMPAS IFC"
 copyright = "ETH Zurich"
-author = "tom van mele"
+author = "Li Chen, Tom Van Mele"
 release = "0.2.0"
 version = ".".join(release.split(".")[0:2])
 
@@ -182,6 +182,11 @@ html_theme = "sphinx_book_theme"
 html_theme_options = {
     "repository_url": "https://github.com/compas-dev/compas_ifc",
     "use_repository_button": True,
+    "logo": {
+        "image_light": "compas_icon_white.png",  # relative to parent of conf.py
+        "image_dark": "compas_icon_white.png",  # relative to parent of conf.py
+        "text": "COMPAS IFC docs",
+    },
 }
 
 # html_context = {}
