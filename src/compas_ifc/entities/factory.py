@@ -1,5 +1,7 @@
 import ifcopenshell
 
+# TODO: use polymorphism to simplify the class inheritance.
+# TODO: pre-generate all classes.
 
 class Factory:
 
@@ -10,33 +12,72 @@ class Factory:
 
         declaration = self.schema.declaration_by_name(name)
 
-        attributes = {}
+        def init(self, entity):
+            self._entity = entity
 
-        # TODO: make attributes getters and setters with type checking.
+        attributes = {
+            "__init__": init,
+        }
+
         for attribute in declaration.all_attributes():
-            
-            @property
-            def prop(self):
-                return "getter called"
+            name = attribute.name()
+            attributes[name] = self.create_getter(attribute)
 
+        for attribute in declaration.all_inverse_attributes():
+            name = attribute.name()
+            attributes[name] = self.create_getter(attribute, setter=False)
+        
+        return type(name, (), attributes)
+
+    def create_getter(self, attribute, setter=True):
+
+        name = attribute.name()
+
+        @property
+        def prop(self):
+            return getattr(self._entity, name)
+
+        if setter:
             @prop.setter
             def prop(self, value):
-                print("setter called")
-            
-            attributes[attribute.name()] = prop
+                if not hasattr(self._entity, name):
+                    raise AttributeError(f"Attribute <{name}> does not exist")
 
-        # for attribute in declaration.all_inverse_attributes():
-        #     attributes[attribute.name()] = None
+                attribute_type = attribute.type_of_attribute()
+                if attribute_type.as_aggregation_type():
+                    value = list(value)
+                    lower = attribute_type.bound1()
+                    upper = attribute_type.bound2()
+                    if lower > 0 and upper > 0:
+                        if len(value) < lower or len(value) > upper:
+                            raise ValueError(f"Expected <{name}> to have between {lower} and {upper} elements")
+                    # TODO: check type of elements
+
+                if attribute_type.as_named_type():
+                    declared_type = attribute_type.declared_type()
+                    type_name = declared_type.name()
+                    # TODO: take care of non-entity situations
+                    if declared_type.as_entity() and value.is_a() != type_name:
+                        raise TypeError(f"Expected <{name}> to be of type {type_name}, got {value.is_a()}")
+
+                setattr(self._entity, name, value)
+
         
-        return type(name, (object,), attributes)
-
+        return prop
 
 if __name__ == "__main__":
 
-    factory = Factory()
-    IfcObjectDefinition = factory.create_class("IfcObjectDefinition")
-    print(IfcObjectDefinition)
+    file = ifcopenshell.open("data/wall-with-opening-and-window.ifc")
+    _entity = file[3]
+    declaration = _entity.is_a()
 
-    od = IfcObjectDefinition()
-    print(od.Name)
-    od.Name = "test"
+    factory = Factory()
+    Entity = factory.create_class(declaration)
+
+    entity = Entity(_entity)
+    print(entity.ThePerson)
+    # entity.ThePerson = "some wrong value type"
+    entity.ThePerson = file[3]
+
+    print(entity.ThePerson)
+    print(entity)
