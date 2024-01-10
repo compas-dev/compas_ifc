@@ -237,7 +237,9 @@ def factory(entity, model, entity_types=None) -> Entity:
     for ifc_type in inheritance:
         if ifc_type in entity_types:
             return entity_types[ifc_type](entity, model)
-    return Entity(entity, model)
+
+    dynamic_class = type(entity.is_a(), (Entity,), {})
+    return dynamic_class(entity, model)
 
 
 Entity.factory = staticmethod(factory)
