@@ -3,13 +3,13 @@
 <!DOCTYPE html>
 
 
-<html lang="en" data-content_root="" >
+<html lang="en" >
 
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-
-    <title>Model.print_spatial_hierarchy &#8212; COMPAS IFC 0.2.0 documentation</title>
+    <link rel="icon" href="../../_static/compas.ico" type="image/x-icon">
+    <title>Model.print_spatial_hierarchy &#8212; COMPAS IFC</title>
   
   
   
@@ -19,31 +19,44 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/compas.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
-  <script src="../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/tabs.js"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api/generated/compas_ifc.model.Model.print_spatial_hierarchy';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/compas-dev/compas_ifc/gh-pages/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'latest';
+        </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Model.save" href="compas_ifc.model.Model.save.html" />
@@ -58,15 +71,6 @@
   
   
   <a class="skip-link" href="#main-content">Skip to main content</a>
-  
-  <div id="pst-scroll-pixel-helper"></div>
-
-  
-  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
-    <i class="fa-solid fa-arrow-up"></i>
-    Back to top
-  </button>
-
   
   <input type="checkbox"
           class="sidebar-toggle"
@@ -91,8 +95,8 @@
          class="form-control"
          name="q"
          id="search-input"
-         placeholder="Search..."
-         aria-label="Search..."
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
          autocomplete="off"
          autocorrect="off"
          autocapitalize="off"
@@ -102,6 +106,208 @@
   </div>
   
     <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/compas_icon_white.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/compas_icon_white.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+    <p class="title logo__title">COMPAS IFC</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <!-- <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../index.html">
+                        Introduction
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../tutorial.html">
+                        Tutorial
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../examples.html">
+                        Examples
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../api.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../license.html">
+                        License
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+  </ul> -->
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      latest  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/compas-dev/compas_ifc" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="http://forum.compas-framework.org/" title="Discourse" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Discourse</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/compas_ifc/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python"></i></span>
+            <label class="sr-only">PyPI</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
     </nav>
   
   <div class="bd-container">
@@ -114,33 +320,146 @@
   <div class="sidebar-header-items sidebar-primary__section">
     
     
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <!-- <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
     
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../index.html">
+                        Introduction
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../tutorial.html">
+                        Tutorial
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../examples.html">
+                        Examples
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../api.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../license.html">
+                        License
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+  </ul> -->
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      latest  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/compas-dev/compas_ifc" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="http://forum.compas-framework.org/" title="Discourse" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Discourse</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/compas_ifc/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python"></i></span>
+            <label class="sr-only">PyPI</label></a>
+        </li>
+</ul></div>
+        
+      </div>
     
   </div>
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
-        <div class="sidebar-primary-item">
-
-  
-
-<a class="navbar-brand logo" href="../../index.html">
-  
-  
-  
-  
-  
-    
-    
-      
-    
-    
-    <img src="../../_static/compas_icon_white.png" class="logo__image only-light" alt=""/>
-    <script>document.write(`<img src="../../_static/compas_icon_white.png" class="logo__image only-dark" alt=""/>`);</script>
-  
-  
-    <p class="title logo__title">COMPAS IFC docs</p>
-  
-</a></div>
         <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
@@ -163,573 +482,10 @@
 </ul>
 </li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../api.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2 current active has-children"><a class="reference internal" href="../compas_ifc.model.html">compas_ifc.model</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l3 current active has-children"><a class="reference internal" href="compas_ifc.model.Model.html">Model</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.model.Model.create.html">Model.create</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.model.Model.export.html">Model.export</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.model.Model.get_all_entities.html">Model.get_all_entities</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.model.Model.get_entities_by_name.html">Model.get_entities_by_name</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.model.Model.get_entities_by_type.html">Model.get_entities_by_type</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.model.Model.get_entity_by_global_id.html">Model.get_entity_by_global_id</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.model.Model.get_entity_by_id.html">Model.get_entity_by_id</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.model.Model.insert.html">Model.insert</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.model.Model.open.html">Model.open</a></li>
-<li class="toctree-l4 current active"><a class="current reference internal" href="#">Model.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.model.Model.save.html">Model.save</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../compas_ifc.reader.html">compas_ifc.reader</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.reader.IFCReader.html">IFCReader</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.reader.IFCReader.get_all_entities.html">IFCReader.get_all_entities</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entities_by_name.html">IFCReader.get_entities_by_name</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entities_by_type.html">IFCReader.get_entities_by_type</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entity.html">IFCReader.get_entity</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entity_by_global_id.html">IFCReader.get_entity_by_global_id</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entity_by_id.html">IFCReader.get_entity_by_id</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.reader.IFCReader.open.html">IFCReader.open</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../compas_ifc.writer.html">compas_ifc.writer</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.writer.IFCWriter.html">IFCWriter</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.writer.IFCWriter.create_new_relation.html">IFCWriter.create_new_relation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.writer.IFCWriter.export.html">IFCWriter.export</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.writer.IFCWriter.reset.html">IFCWriter.reset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.writer.IFCWriter.save.html">IFCWriter.save</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.writer.IFCWriter.trim_existing_relation.html">IFCWriter.trim_existing_relation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.writer.IFCWriter.write_entity.html">IFCWriter.write_entity</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.writer.IFCWriter.write_entity_pset.html">IFCWriter.write_entity_pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.writer.IFCWriter.write_entity_representation.html">IFCWriter.write_entity_representation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.writer.IFCWriter.write_relation.html">IFCWriter.write_relation</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../compas_ifc.entities.html">compas_ifc.entities</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Entity.html">Entity</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.attribute.html">Entity.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.factory.html">Entity.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.has_attribute.html">Entity.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.has_property.html">Entity.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.inheritance.html">Entity.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.is_a.html">Entity.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.print_inheritance.html">Entity.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.property.html">Entity.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.pset.html">Entity.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.set_attribute.html">Entity.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.set_attributes.html">Entity.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.set_property.html">Entity.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Entity.traverse_branch.html">Entity.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Root.html">Root</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.attribute.html">Root.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.factory.html">Root.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.has_attribute.html">Root.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.has_property.html">Root.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.inheritance.html">Root.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.is_a.html">Root.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.print_inheritance.html">Root.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.property.html">Root.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.pset.html">Root.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.set_attribute.html">Root.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.set_attributes.html">Root.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.set_property.html">Root.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Root.traverse_branch.html">Root.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.html">ObjectDefinition</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.decomposes.html">ObjectDefinition.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.is_decomposed_by.html">ObjectDefinition.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.print_spatial_hierarchy.html">ObjectDefinition.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.traverse.html">ObjectDefinition.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.traverse_ancestor.html">ObjectDefinition.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.traverse_branch.html">ObjectDefinition.traverse_branch</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.attribute.html">ObjectDefinition.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.factory.html">ObjectDefinition.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.has_attribute.html">ObjectDefinition.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.has_property.html">ObjectDefinition.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.inheritance.html">ObjectDefinition.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.is_a.html">ObjectDefinition.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.print_inheritance.html">ObjectDefinition.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.property.html">ObjectDefinition.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.pset.html">ObjectDefinition.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.set_attribute.html">ObjectDefinition.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.set_attributes.html">ObjectDefinition.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.ObjectDefinition.set_property.html">ObjectDefinition.set_property</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Element.html">Element</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.contained_in_structure.html">Element.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.attribute.html">Element.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.classifications.html">Element.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.decomposes.html">Element.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.factory.html">Element.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.has_attribute.html">Element.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.has_property.html">Element.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.inheritance.html">Element.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.is_a.html">Element.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.is_decomposed_by.html">Element.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.materials.html">Element.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.print_inheritance.html">Element.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.print_spatial_hierarchy.html">Element.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.property.html">Element.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.pset.html">Element.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.set_attribute.html">Element.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.set_attributes.html">Element.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.set_property.html">Element.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.traverse.html">Element.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.traverse_ancestor.html">Element.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Element.traverse_branch.html">Element.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.SpatialElement.html">SpatialElement</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.contains_elements.html">SpatialElement.contains_elements</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.is_containment_hierarchical.html">SpatialElement.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.attribute.html">SpatialElement.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.classifications.html">SpatialElement.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.decomposes.html">SpatialElement.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.factory.html">SpatialElement.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.has_attribute.html">SpatialElement.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.has_property.html">SpatialElement.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.inheritance.html">SpatialElement.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.is_a.html">SpatialElement.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.is_decomposed_by.html">SpatialElement.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.materials.html">SpatialElement.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.print_inheritance.html">SpatialElement.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.print_spatial_hierarchy.html">SpatialElement.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.property.html">SpatialElement.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.pset.html">SpatialElement.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.set_attribute.html">SpatialElement.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.set_attributes.html">SpatialElement.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.set_property.html">SpatialElement.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.traverse.html">SpatialElement.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.traverse_ancestor.html">SpatialElement.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.SpatialElement.traverse_branch.html">SpatialElement.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Beam.html">Beam</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.attribute.html">Beam.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.classifications.html">Beam.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.contained_in_structure.html">Beam.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.container.html">Beam.container</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.decomposes.html">Beam.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.factory.html">Beam.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.has_attribute.html">Beam.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.has_property.html">Beam.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.inheritance.html">Beam.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.is_a.html">Beam.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.is_contained.html">Beam.is_contained</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.is_containment_hierarchical.html">Beam.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.is_decomposed_by.html">Beam.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.materials.html">Beam.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.print_inheritance.html">Beam.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.print_spatial_hierarchy.html">Beam.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.property.html">Beam.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.pset.html">Beam.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.set_attribute.html">Beam.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.set_attributes.html">Beam.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.set_property.html">Beam.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.traverse.html">Beam.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.traverse_ancestor.html">Beam.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Beam.traverse_branch.html">Beam.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Column.html">Column</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.attribute.html">Column.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.classifications.html">Column.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.contained_in_structure.html">Column.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.container.html">Column.container</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.decomposes.html">Column.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.factory.html">Column.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.has_attribute.html">Column.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.has_property.html">Column.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.inheritance.html">Column.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.is_a.html">Column.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.is_contained.html">Column.is_contained</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.is_containment_hierarchical.html">Column.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.is_decomposed_by.html">Column.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.materials.html">Column.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.print_inheritance.html">Column.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.print_spatial_hierarchy.html">Column.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.property.html">Column.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.pset.html">Column.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.set_attribute.html">Column.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.set_attributes.html">Column.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.set_property.html">Column.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.traverse.html">Column.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.traverse_ancestor.html">Column.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Column.traverse_branch.html">Column.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Door.html">Door</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.attribute.html">Door.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.classifications.html">Door.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.contained_in_structure.html">Door.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.container.html">Door.container</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.decomposes.html">Door.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.factory.html">Door.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.has_attribute.html">Door.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.has_property.html">Door.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.inheritance.html">Door.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.is_a.html">Door.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.is_contained.html">Door.is_contained</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.is_containment_hierarchical.html">Door.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.is_decomposed_by.html">Door.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.materials.html">Door.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.print_inheritance.html">Door.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.print_spatial_hierarchy.html">Door.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.property.html">Door.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.pset.html">Door.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.set_attribute.html">Door.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.set_attributes.html">Door.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.set_property.html">Door.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.traverse.html">Door.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.traverse_ancestor.html">Door.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Door.traverse_branch.html">Door.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Roof.html">Roof</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.attribute.html">Roof.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.classifications.html">Roof.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.contained_in_structure.html">Roof.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.container.html">Roof.container</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.decomposes.html">Roof.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.factory.html">Roof.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.has_attribute.html">Roof.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.has_property.html">Roof.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.inheritance.html">Roof.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.is_a.html">Roof.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.is_contained.html">Roof.is_contained</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.is_containment_hierarchical.html">Roof.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.is_decomposed_by.html">Roof.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.materials.html">Roof.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.print_inheritance.html">Roof.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.print_spatial_hierarchy.html">Roof.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.property.html">Roof.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.pset.html">Roof.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.set_attribute.html">Roof.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.set_attributes.html">Roof.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.set_property.html">Roof.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.traverse.html">Roof.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.traverse_ancestor.html">Roof.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Roof.traverse_branch.html">Roof.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Railing.html">Railing</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.attribute.html">Railing.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.classifications.html">Railing.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.contained_in_structure.html">Railing.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.container.html">Railing.container</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.decomposes.html">Railing.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.factory.html">Railing.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.has_attribute.html">Railing.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.has_property.html">Railing.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.inheritance.html">Railing.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.is_a.html">Railing.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.is_contained.html">Railing.is_contained</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.is_containment_hierarchical.html">Railing.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.is_decomposed_by.html">Railing.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.materials.html">Railing.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.print_inheritance.html">Railing.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.print_spatial_hierarchy.html">Railing.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.property.html">Railing.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.pset.html">Railing.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.set_attribute.html">Railing.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.set_attributes.html">Railing.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.set_property.html">Railing.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.traverse.html">Railing.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.traverse_ancestor.html">Railing.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Railing.traverse_branch.html">Railing.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Slab.html">Slab</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.attribute.html">Slab.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.classifications.html">Slab.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.contained_in_structure.html">Slab.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.container.html">Slab.container</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.decomposes.html">Slab.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.factory.html">Slab.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.has_attribute.html">Slab.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.has_property.html">Slab.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.inheritance.html">Slab.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.is_a.html">Slab.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.is_contained.html">Slab.is_contained</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.is_containment_hierarchical.html">Slab.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.is_decomposed_by.html">Slab.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.materials.html">Slab.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.print_inheritance.html">Slab.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.print_spatial_hierarchy.html">Slab.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.property.html">Slab.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.pset.html">Slab.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.set_attribute.html">Slab.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.set_attributes.html">Slab.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.set_property.html">Slab.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.traverse.html">Slab.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.traverse_ancestor.html">Slab.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Slab.traverse_branch.html">Slab.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Stair.html">Stair</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.attribute.html">Stair.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.classifications.html">Stair.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.contained_in_structure.html">Stair.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.container.html">Stair.container</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.decomposes.html">Stair.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.factory.html">Stair.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.has_attribute.html">Stair.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.has_property.html">Stair.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.inheritance.html">Stair.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.is_a.html">Stair.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.is_contained.html">Stair.is_contained</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.is_containment_hierarchical.html">Stair.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.is_decomposed_by.html">Stair.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.materials.html">Stair.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.print_inheritance.html">Stair.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.print_spatial_hierarchy.html">Stair.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.property.html">Stair.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.pset.html">Stair.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.set_attribute.html">Stair.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.set_attributes.html">Stair.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.set_property.html">Stair.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.traverse.html">Stair.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.traverse_ancestor.html">Stair.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Stair.traverse_branch.html">Stair.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Wall.html">Wall</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.attribute.html">Wall.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.classifications.html">Wall.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.contained_in_structure.html">Wall.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.container.html">Wall.container</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.decomposes.html">Wall.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.factory.html">Wall.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.has_attribute.html">Wall.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.has_property.html">Wall.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.inheritance.html">Wall.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.is_a.html">Wall.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.is_contained.html">Wall.is_contained</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.is_containment_hierarchical.html">Wall.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.is_decomposed_by.html">Wall.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.materials.html">Wall.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.print_inheritance.html">Wall.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.print_spatial_hierarchy.html">Wall.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.property.html">Wall.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.pset.html">Wall.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.set_attribute.html">Wall.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.set_attributes.html">Wall.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.set_property.html">Wall.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.traverse.html">Wall.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.traverse_ancestor.html">Wall.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Wall.traverse_branch.html">Wall.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Window.html">Window</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-23"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.attribute.html">Window.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.classifications.html">Window.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.contained_in_structure.html">Window.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.container.html">Window.container</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.decomposes.html">Window.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.factory.html">Window.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.has_attribute.html">Window.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.has_property.html">Window.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.inheritance.html">Window.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.is_a.html">Window.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.is_contained.html">Window.is_contained</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.is_containment_hierarchical.html">Window.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.is_decomposed_by.html">Window.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.materials.html">Window.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.print_inheritance.html">Window.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.print_spatial_hierarchy.html">Window.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.property.html">Window.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.pset.html">Window.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.set_attribute.html">Window.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.set_attributes.html">Window.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.set_property.html">Window.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.traverse.html">Window.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.traverse_ancestor.html">Window.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Window.traverse_branch.html">Window.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Space.html">Space</a><input class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-24"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.attribute.html">Space.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.classifications.html">Space.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.contains_elements.html">Space.contains_elements</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.decomposes.html">Space.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.factory.html">Space.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.has_attribute.html">Space.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.has_property.html">Space.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.inheritance.html">Space.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.is_a.html">Space.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.is_containment_hierarchical.html">Space.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.is_decomposed_by.html">Space.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.materials.html">Space.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.print_inheritance.html">Space.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.print_spatial_hierarchy.html">Space.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.property.html">Space.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.pset.html">Space.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.set_attribute.html">Space.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.set_attributes.html">Space.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.set_property.html">Space.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.traverse.html">Space.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.traverse_ancestor.html">Space.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Space.traverse_branch.html">Space.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.html">BuildingStorey</a><input class="toctree-checkbox" id="toctree-checkbox-25" name="toctree-checkbox-25" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-25"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.attribute.html">BuildingStorey.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.classifications.html">BuildingStorey.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.contains_elements.html">BuildingStorey.contains_elements</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.decomposes.html">BuildingStorey.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.factory.html">BuildingStorey.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.has_attribute.html">BuildingStorey.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.has_property.html">BuildingStorey.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.inheritance.html">BuildingStorey.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.is_a.html">BuildingStorey.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.is_containment_hierarchical.html">BuildingStorey.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.is_decomposed_by.html">BuildingStorey.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.materials.html">BuildingStorey.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.print_inheritance.html">BuildingStorey.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.print_spatial_hierarchy.html">BuildingStorey.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.property.html">BuildingStorey.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.pset.html">BuildingStorey.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.set_attribute.html">BuildingStorey.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.set_attributes.html">BuildingStorey.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.set_property.html">BuildingStorey.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.traverse.html">BuildingStorey.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.traverse_ancestor.html">BuildingStorey.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingStorey.traverse_branch.html">BuildingStorey.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Building.html">Building</a><input class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-26"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.attribute.html">Building.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.classifications.html">Building.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.contains_elements.html">Building.contains_elements</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.decomposes.html">Building.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.factory.html">Building.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.has_attribute.html">Building.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.has_property.html">Building.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.inheritance.html">Building.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.is_a.html">Building.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.is_containment_hierarchical.html">Building.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.is_decomposed_by.html">Building.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.materials.html">Building.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.print_inheritance.html">Building.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.print_spatial_hierarchy.html">Building.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.property.html">Building.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.pset.html">Building.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.set_attribute.html">Building.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.set_attributes.html">Building.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.set_property.html">Building.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.traverse.html">Building.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.traverse_ancestor.html">Building.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Building.traverse_branch.html">Building.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Site.html">Site</a><input class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-27"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.add_building.html">Site.add_building</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.attribute.html">Site.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.classifications.html">Site.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.contains_elements.html">Site.contains_elements</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.decomposes.html">Site.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.factory.html">Site.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.has_attribute.html">Site.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.has_property.html">Site.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.inheritance.html">Site.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.is_a.html">Site.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.is_containment_hierarchical.html">Site.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.is_decomposed_by.html">Site.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.materials.html">Site.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.print_inheritance.html">Site.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.print_spatial_hierarchy.html">Site.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.property.html">Site.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.pset.html">Site.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.set_attribute.html">Site.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.set_attributes.html">Site.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.set_property.html">Site.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.traverse.html">Site.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.traverse_ancestor.html">Site.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Site.traverse_branch.html">Site.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.Project.html">Project</a><input class="toctree-checkbox" id="toctree-checkbox-28" name="toctree-checkbox-28" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-28"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.add_site.html">Project.add_site</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.attribute.html">Project.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.decomposes.html">Project.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.factory.html">Project.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.has_attribute.html">Project.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.has_property.html">Project.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.inheritance.html">Project.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.is_a.html">Project.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.is_decomposed_by.html">Project.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.print_inheritance.html">Project.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.print_spatial_hierarchy.html">Project.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.property.html">Project.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.pset.html">Project.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.set_attribute.html">Project.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.set_attributes.html">Project.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.set_property.html">Project.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.traverse.html">Project.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.traverse_ancestor.html">Project.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.Project.traverse_branch.html">Project.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.html">BuildingElementProxy</a><input class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-29"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.attribute.html">BuildingElementProxy.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.classifications.html">BuildingElementProxy.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.contained_in_structure.html">BuildingElementProxy.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.container.html">BuildingElementProxy.container</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.decomposes.html">BuildingElementProxy.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.factory.html">BuildingElementProxy.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.has_attribute.html">BuildingElementProxy.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.has_property.html">BuildingElementProxy.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.inheritance.html">BuildingElementProxy.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.is_a.html">BuildingElementProxy.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.is_contained.html">BuildingElementProxy.is_contained</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.is_containment_hierarchical.html">BuildingElementProxy.is_containment_hierarchical</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.is_decomposed_by.html">BuildingElementProxy.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.materials.html">BuildingElementProxy.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.print_inheritance.html">BuildingElementProxy.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.print_spatial_hierarchy.html">BuildingElementProxy.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.property.html">BuildingElementProxy.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.pset.html">BuildingElementProxy.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.set_attribute.html">BuildingElementProxy.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.set_attributes.html">BuildingElementProxy.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.set_property.html">BuildingElementProxy.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.traverse.html">BuildingElementProxy.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.traverse_ancestor.html">BuildingElementProxy.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.BuildingElementProxy.traverse_branch.html">BuildingElementProxy.traverse_branch</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="compas_ifc.entities.GeographicElement.html">GeographicElement</a><input class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-30"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.attribute.html">GeographicElement.attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.classifications.html">GeographicElement.classifications</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.contained_in_structure.html">GeographicElement.contained_in_structure</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.decomposes.html">GeographicElement.decomposes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.factory.html">GeographicElement.factory</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.has_attribute.html">GeographicElement.has_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.has_property.html">GeographicElement.has_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.inheritance.html">GeographicElement.inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.is_a.html">GeographicElement.is_a</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.is_decomposed_by.html">GeographicElement.is_decomposed_by</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.materials.html">GeographicElement.materials</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.print_inheritance.html">GeographicElement.print_inheritance</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.print_spatial_hierarchy.html">GeographicElement.print_spatial_hierarchy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.property.html">GeographicElement.property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.pset.html">GeographicElement.pset</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.set_attribute.html">GeographicElement.set_attribute</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.set_attributes.html">GeographicElement.set_attributes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.set_property.html">GeographicElement.set_property</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.traverse.html">GeographicElement.traverse</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.traverse_ancestor.html">GeographicElement.traverse_ancestor</a></li>
-<li class="toctree-l4"><a class="reference internal" href="compas_ifc.entities.GeographicElement.traverse_branch.html">GeographicElement.traverse_branch</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2 current active"><a class="reference internal" href="../compas_ifc.model.html">compas_ifc.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_ifc.reader.html">compas_ifc.reader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_ifc.writer.html">compas_ifc.writer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_ifc.entities.html">compas_ifc.entities</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
@@ -737,6 +493,11 @@
 
     </div>
 </nav></div>
+        <div class="sidebar-primary-item"><div class="sidebar-primary-item">
+    <a href="https://compas.dev" target="_blank">
+        COMPAS.dev <i class="fa fa-external-link" aria-hidden="true"></i>
+    </a>
+</div></div>
     </div>
   
   
@@ -751,9 +512,6 @@
       <main id="main-content" class="bd-main">
         
         
-
-<div class="sbt-scroll-pixel-helper"></div>
-
           <div class="bd-content">
             <div class="bd-article-container">
               
@@ -762,158 +520,54 @@
   
     <div class="header-article-items__start">
       
-        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <span class="fa-solid fa-bars"></span>
-</label></div>
-      
-    </div>
-  
-  
-    <div class="header-article-items__end">
-      
         <div class="header-article-item">
 
-<div class="article-header-buttons">
-
-
-<a href="https://github.com/compas-dev/compas_ifc" target="_blank"
-   class="btn btn-sm btn-source-repository-button"
-   title="Source repository"
-   data-bs-placement="bottom" data-bs-toggle="tooltip"
->
-  
-
-<span class="btn__icon-container">
-  <i class="fab fa-github"></i>
-  </span>
-
-</a>
 
 
 
 
-
-
-<div class="dropdown dropdown-download-buttons">
-  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
-    <i class="fas fa-download"></i>
-  </button>
-  <ul class="dropdown-menu">
-      
-      
-      
-      <li><a href="../../_sources/api/generated/compas_ifc.model.Model.print_spatial_hierarchy.rst" target="_blank"
-   class="btn btn-sm btn-download-source-button dropdown-item"
-   title="Download source file"
-   data-bs-placement="left" data-bs-toggle="tooltip"
->
-  
-
-<span class="btn__icon-container">
-  <i class="fas fa-file"></i>
-  </span>
-<span class="btn__text-container">.rst</span>
-</a>
-</li>
-      
-      
-      
-      
-      <li>
-<button onclick="window.print()"
-  class="btn btn-sm btn-download-pdf-button dropdown-item"
-  title="Print to PDF"
-  data-bs-placement="left" data-bs-toggle="tooltip"
->
-  
-
-<span class="btn__icon-container">
-  <i class="fas fa-file-pdf"></i>
-  </span>
-<span class="btn__text-container">.pdf</span>
-</button>
-</li>
-      
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../api.html" class="nav-link">API Reference</a></li>
+    
+    
+    <li class="breadcrumb-item"><i class="fa-solid fa-ellipsis"></i></li>
+    
+    
+    <li class="breadcrumb-item"><a href="compas_ifc.model.Model.html" class="nav-link">Model</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Model.print_spatial_hierarchy</li>
   </ul>
+</nav>
 </div>
-
-
-
-
-<button onclick="toggleFullScreen()"
-  class="btn btn-sm btn-fullscreen-button"
-  title="Fullscreen mode"
-  data-bs-placement="bottom" data-bs-toggle="tooltip"
->
-  
-
-<span class="btn__icon-container">
-  <i class="fas fa-expand"></i>
-  </span>
-
-</button>
-
-
-
-<script>
-document.write(`
-  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
-    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
-  </button>
-`);
-</script>
-
-
-<script>
-document.write(`
-  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
-  </button>
-`);
-</script>
-<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="fa-solid fa-list"></span>
-</label>
-</div></div>
       
     </div>
   
+  
 </div>
 </div>
               
               
-
-<div id="jb-print-docs-body" class="onlyprint">
-    <h1>Model.print_spatial_hierarchy</h1>
-    <!-- Table of contents -->
-    <div id="print-main-content">
-        <div id="jb-print-toc">
-            
-            <div>
-                <h2> Contents </h2>
-            </div>
-            <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compas_ifc.model.Model.print_spatial_hierarchy"><code class="docutils literal notranslate"><span class="pre">Model.print_spatial_hierarchy()</span></code></a></li>
-</ul>
-            </nav>
-        </div>
-    </div>
-</div>
-
               
                 
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section class="detail" id="model-print-spatial-hierarchy">
-<h1>Model.print_spatial_hierarchy<a class="headerlink" href="#model-print-spatial-hierarchy" title="Permalink to this heading">#</a></h1>
+  <section id="model-print-spatial-hierarchy">
+<h1>Model.print_spatial_hierarchy</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_ifc.model.Model.print_spatial_hierarchy">
-<span class="sig-prename descclassname"><span class="pre">Model.</span></span><span class="sig-name descname"><span class="pre">print_spatial_hierarchy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.12)"><span class="pre">None</span></a></span></span><a class="reference external" href="https://github.com/compas-dev/compas_ifc/blob/master/src/compas_ifc/model.py#L108"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#compas_ifc.model.Model.print_spatial_hierarchy" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">Model.</span></span><span class="sig-name descname"><span class="pre">print_spatial_hierarchy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Print the spatial hierarchy of the model.</p>
+<dl class="field-list simple">
+</dl>
 </dd></dl>
 
 </section>
@@ -921,33 +575,10 @@ document.write(`
 
                 </article>
               
-
               
               
-              
-              
-                <footer class="prev-next-footer">
+                <footer class="bd-footer-article">
                   
-<div class="prev-next-area">
-    <a class="left-prev"
-       href="compas_ifc.model.Model.open.html"
-       title="previous page">
-      <i class="fa-solid fa-angle-left"></i>
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Model.open</p>
-      </div>
-    </a>
-    <a class="right-next"
-       href="compas_ifc.model.Model.save.html"
-       title="next page">
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Model.save</p>
-      </div>
-      <i class="fa-solid fa-angle-right"></i>
-    </a>
-</div>
                 </footer>
               
             </div>
@@ -958,7 +589,7 @@ document.write(`
 
   <div class="sidebar-secondary-item">
   <div class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> Contents
+    <i class="fa-solid fa-list"></i> On this page
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
@@ -972,49 +603,50 @@ document.write(`
           </div>
           <footer class="bd-footer-content">
             
-<div class="bd-footer-content__inner container">
-  
-  <div class="footer-item">
-    
-<p class="component-author">
-By Li Chen, Tom Van Mele
-</p>
-
-  </div>
-  
-  <div class="footer-item">
-    
-
-  <p class="copyright">
-    
-      © Copyright ETH Zurich.
-      <br/>
-    
-  </p>
-
-  </div>
-  
-  <div class="footer-item">
-    
-  </div>
-  
-  <div class="footer-item">
-    
-  </div>
-  
-</div>
           </footer>
         
-
       </main>
     </div>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
   <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright COMPAS Association.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.2.1.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
   </footer>
   </body>
 </html>
