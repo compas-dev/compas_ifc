@@ -14,7 +14,7 @@ m2r2
 nbsphinx
 pydocstyle
 pytest <7.1
-sphinx_compas_theme >=0.15.18
+sphinx_compas2_theme
 matplotlib
 sphinx
 twine

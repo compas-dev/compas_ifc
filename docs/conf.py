@@ -1,122 +1,77 @@
+# flake8: noqa
 # -*- coding: utf-8 -*-
 
-# If your documentation needs a minimal Sphinx version, state it here.
-#
-# needs_sphinx = "1.0"
-
-import sys
-import os
-import inspect
-import importlib
-
-import sphinx_compas_theme
-from sphinx.ext.napoleon.docstring import NumpyDocstring
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../src'))
+import sphinx_compas2_theme
 
 # -- General configuration ------------------------------------------------
 
 project = "COMPAS IFC"
-copyright = "ETH Zurich"
+copyright = "COMPAS Association"
 author = "Li Chen, Tom Van Mele"
-release = "0.2.0"
-version = ".".join(release.split(".")[0:2])
+package = "compas_ifc"
+organization = "compas-dev"
 
 master_doc = "index"
-source_suffix = [".rst", ]
-templates_path = sphinx_compas_theme.get_autosummary_templates_path()
-exclude_patterns = []
-
-pygments_style   = "sphinx"
-show_authors     = True
+source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
+templates_path = sphinx_compas2_theme.get_autosummary_templates_path()
+exclude_patterns = sphinx_compas2_theme.default_exclude_patterns + ["reference/**"]
 add_module_names = True
-language         = None
+language = "en"
 
+latest_version = sphinx_compas2_theme.get_latest_version()
+
+if latest_version == "Unreleased":
+    release = "Unreleased"
+    version = "latest"
+else:
+    release = latest_version
+    version = ".".join(release.split(".")[0:2])  # type: ignore
 
 # -- Extension configuration ------------------------------------------------
 
-extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
-    "sphinx.ext.doctest",
-    "sphinx.ext.coverage",
-    "sphinx.ext.linkcode",
-    "sphinx.ext.extlinks",
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.githubpages",
-    "matplotlib.sphinxext.plot_directive",
-]
+extensions = sphinx_compas2_theme.default_extensions
+extensions.remove("sphinx.ext.linkcode")
+
+# numpydoc options
+
+numpydoc_show_class_members = False
+numpydoc_class_members_toctree = False
+numpydoc_attributes_as_param_list = True
+
+# bibtex options
 
 # autodoc options
 
-autodoc_mock_imports = [
-    "System",
-    "clr",
-    "Eto",
-    "Rhino",
-    "Grasshopper",
-    "scriptcontext",
-    "rhinoscriptsyntax",
-    "bpy",
-    "bmesh",
-    "mathutils"
-]
+autodoc_type_aliases = {}
+
+autodoc_typehints = "description"
+autodoc_typehints_format = "short"
+autodoc_typehints_description_target = "documented"
+
+autodoc_mock_imports = sphinx_compas2_theme.default_mock_imports
 
 autodoc_default_options = {
     "undoc-members": True,
     "show-inheritance": True,
 }
 
-autodoc_member_order = "alphabetical"
+autodoc_member_order = "groupwise"
 
 autoclass_content = "class"
-
-def skip(app, what, name, obj, would_skip, options):
-    if name.startswith('_'):
-        return True
-    return would_skip
-
-def setup(app):
-    app.connect("autodoc-skip-member", skip)
 
 # autosummary options
 
 autosummary_generate = True
+autosummary_mock_imports = sphinx_compas2_theme.default_mock_imports
 
-# napoleon options
-
-napoleon_google_docstring = False
-napoleon_numpy_docstring = True
-napoleon_include_init_with_doc = False
-napoleon_include_private_with_doc = False
-napoleon_include_special_with_doc = True
-napoleon_use_admonition_for_examples = False
-napoleon_use_admonition_for_notes = False
-napoleon_use_admonition_for_references = False
-napoleon_use_ivar = False
-napoleon_use_param = False
-napoleon_use_rtype = False
+# graph options
 
 # plot options
 
+plot_include_source = False
 plot_html_show_source_link = False
 plot_html_show_formats = False
-
-# docstring sections
-
-def parse_attributes_section(self, section):
-    return self._format_fields("Attributes", self._consume_fields())
-
-NumpyDocstring._parse_attributes_section = parse_attributes_section
-
-def patched_parse(self):
-    self._sections["attributes"] = self._parse_attributes_section
-    self._unpatched_parse()
-
-NumpyDocstring._unpatched_parse = NumpyDocstring._parse
-NumpyDocstring._parse = patched_parse
+plot_formats = ["png"]
 
 # intersphinx options
 
@@ -127,80 +82,102 @@ intersphinx_mapping = {
 
 # linkcode
 
-def linkcode_resolve(domain, info):
-    if domain != 'py':
-        return None
-    if not info['module']:
-        return None
-    if not info['fullname']:
-        return None
-
-    package = info['module'].split('.')[0]
-    if not package.startswith('compas_ifc'):
-        return None
-
-    module = importlib.import_module(info['module'])
-    parts = info['fullname'].split('.')
-
-    if len(parts) == 1:
-        obj = getattr(module, info['fullname'])
-        filename = inspect.getmodule(obj).__name__.replace('.', '/')
-        lineno = inspect.getsourcelines(obj)[1]
-    elif len(parts) == 2:
-        obj_name, attr_name = parts
-        obj = getattr(module, obj_name)
-        attr = getattr(obj, attr_name)
-        if inspect.isfunction(attr):
-            filename = inspect.getmodule(obj).__name__.replace('.', '/')
-            lineno = inspect.getsourcelines(attr)[1]
-        else:
-            return None
-    else:
-        return None
-
-    return f"https://github.com/compas-dev/compas_ifc/blob/master/src/{filename}.py#L{lineno}"
+# linkcode_resolve = sphinx_compas2_theme.get_linkcode_resolve(organization, package)
 
 # extlinks
 
 extlinks = {}
 
+# from pytorch
+
+from sphinx.writers import html, html5
+
+
+def replace(Klass):
+    old_call = Klass.visit_reference
+
+    def visit_reference(self, node):
+        if "refuri" in node:
+            refuri = node.get("refuri")
+            if "generated" in refuri:
+                href_anchor = refuri.split("#")
+                if len(href_anchor) > 1:
+                    href = href_anchor[0]
+                    anchor = href_anchor[1]
+                    page = href.split("/")[-1]
+                    parts = page.split(".")
+                    if parts[-1] == "html":
+                        pagename = ".".join(parts[:-1])
+                        if anchor == pagename:
+                            node["refuri"] = href
+        return old_call(self, node)
+
+    Klass.visit_reference = visit_reference
+
+
+replace(html.HTMLTranslator)
+replace(html5.HTML5Translator)
+
 # -- Options for HTML output ----------------------------------------------
 
-html_theme = "sphinx_book_theme"
-# html_theme_path = sphinx_compas_theme.get_html_theme_path()
-
-# html_theme_options = {
-#     "package_name"    : "compas_ifc",
-#     "package_title"   : project,
-#     "package_version" : release,
-#     "package_author"  : "tom van mele",
-#     "package_docs"    : "https://blockresearchgroup.github.io/compas_ifc/",
-#     "package_repo"    : "https://github.com/blockresearchgroup/compas_ifc",
-#     "package_old_versions_txt": "https://blockresearchgroup.github.io/compas_ifc/doc_versions.txt"
-# }
+html_theme = "sidebaronly"
+html_title = project
 
 html_theme_options = {
-    "repository_url": "https://github.com/compas-dev/compas_ifc",
-    "use_repository_button": True,
-    "logo": {
-        "image_light": "compas_icon_white.png",  # relative to parent of conf.py
-        "image_dark": "compas_icon_white.png",  # relative to parent of conf.py
-        "text": "COMPAS IFC docs",
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": f"https://github.com/{organization}/{package}",
+            "icon": "fa-brands fa-github",
+            "type": "fontawesome",
+        },
+        {
+            "name": "Discourse",
+            "url": "http://forum.compas-framework.org/",
+            "icon": "fa-brands fa-discourse",
+            "type": "fontawesome",
+        },
+        {
+            "name": "PyPI",
+            "url": f"https://pypi.org/project/{package}/",
+            "icon": "fa-brands fa-python",
+            "type": "fontawesome",
+        },
+    ],
+    "switcher": {
+        "json_url": f"https://raw.githubusercontent.com/{organization}/{package}/gh-pages/versions.json",
+        "version_match": version,
     },
+    "check_switcher": False,
+    "logo": {
+        "image_light": "_static/compas_icon_white.png",  # relative to parent of conf.py
+        "image_dark": "_static/compas_icon_white.png",  # relative to parent of conf.py
+        "text": project,
+    },
+    "navigation_depth": 2,
 }
 
-# html_context = {}
-# html_static_path = sphinx_compas_theme.get_html_static_path()
-# html_extra_path = []
-# html_last_updated_fmt = ""
-# html_copy_source = False
-# html_show_sourcelink = False
-# html_permalinks = False
-# html_add_permalinks = None
-# html_compact_lists = True
-
-html_static_path =["_static"]
-
-html_css_files = [
-    'custom.css',
+favicons = [
+    {
+        "rel": "icon",
+        "href": "compas.ico",  # relative to the static path
+    }
 ]
+
+html_context = {
+    "github_url": "https://github.com",
+    "github_user": organization,
+    "github_repo": package,
+    "github_version": "main",
+    "doc_path": "docs",
+}
+
+html_static_path = sphinx_compas2_theme.get_html_static_path() + ["_static"]
+html_css_files = []
+html_extra_path = []
+html_last_updated_fmt = ""
+html_copy_source = False
+html_show_sourcelink = True
+html_permalinks = False
+html_permalinks_icon = ""
+html_compact_lists = True

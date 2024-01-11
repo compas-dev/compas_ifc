@@ -2,6 +2,12 @@
 COMPAS IFC
 ********************************************************************************
 
+.. note::
+   COMPAS IFC is currently being upgraded to support COMPAS 2.0. This upgrade is scheduled to be completed by the end of January 2024.
+   If you intend to use COMPAS IFC at its current state, please make sure to use it with COMPAS 1.x.
+   
+
+
 Industry Foundation Classes (IFC) is a data model that describes building and construction industry data. It is a platform neutral, open file format specification that is not controlled by a single vendor or group of vendors. It is an object-based file format with a data model developed by buildingSMART (formerly the International Alliance for Interoperability, IAI) to facilitate interoperability in the architecture, engineering and construction (AEC) industry, and is a commonly used collaboration format in Building information modeling (BIM) based projects. The latest IFC documentation and specification can be found at https://ifc43-docs.standards.buildingsmart.org/.
 
 IFC is now widely adopted by industry and often the required format for BIM data exchange and project delivery. However Working direcly with IFC content is a highly complicated task, due to its multi-layered class inheritances and complex spatial heirarchies.
