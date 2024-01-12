@@ -32,7 +32,15 @@ class CLASS_NAME(PARENT_NAME):
     \"\"\"Wrapper class for CLASS_NAME.\"\"\"
 """
 
-attribute_template = "    ATTRIBUTE_NAME = Attribute(\"ATTRIBUTE_NAME\", \"ATTRIBUTE_TYPE\", ATTRIBUTE_OPTIONAL)\n"
+attribute_template = """
+    @property
+    def ATTRIBUTE_NAME(self)-> "ATTRIBUTE_TYPE":
+        return self._get_attribute("ATTRIBUTE_NAME")
+
+    @ATTRIBUTE_NAME.setter
+    def ATTRIBUTE_NAME(self, value: "ATTRIBUTE_TYPE"):
+        return self._set_attribute("ATTRIBUTE_NAME", value)
+"""
 
 if __name__ == "__main__":
     init_string = ""
@@ -63,10 +71,15 @@ if __name__ == "__main__":
                 elif attribute_type.as_simple_type():
                     attribute_type = attribute_type.declared_type()
                 else:
+                    if attribute_type.declared_type().as_entity():
+                        class_string = init_template.replace("CLASS_NAME", attribute_type.declared_type().name()) + class_string
                     attribute_type = attribute_type.declared_type().name()
+                
                 attribute_string = attribute_string.replace("ATTRIBUTE_TYPE", attribute_type)
-                attribute_optional = attribute.optional()
-                attribute_string = attribute_string.replace("ATTRIBUTE_OPTIONAL", str(attribute_optional))
+                init_string += f"from .{name} import {name}\n"
+
+                # attribute_optional = attribute.optional()
+                # attribute_string = attribute_string.replace("ATTRIBUTE_OPTIONAL", str(attribute_optional))
                 class_string += attribute_string
 
             class_string += get_extension_methods(name)

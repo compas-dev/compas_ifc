@@ -33,8 +33,8 @@ class IFCReader(object):
 if __name__ == "__main__":
     reader = IFCReader("data/wall-with-opening-and-window.ifc")
     # print(len(reader._file))
-    entities = reader.get_by_type("IfcWall")    
-    attributes = entities[0].attributes
+    entities = reader.get_by_type("IfcProject")    
+    entities[0].print_attributes(max_depth=5)
                   
-    print()
-
+    # for key in entities[0]:
+    #     print(key, entities[0][key])
