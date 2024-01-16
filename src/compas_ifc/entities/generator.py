@@ -26,7 +26,7 @@ def get_extension_methods(class_name):
 
 init_template = "from .CLASS_NAME import CLASS_NAME\n"
 
-template = """from compas_ifc.entities.attribute import Attribute
+template = """from typing import Union, List
 
 class CLASS_NAME(PARENT_NAME):
     \"\"\"Wrapper class for CLASS_NAME.\"\"\"
@@ -34,13 +34,38 @@ class CLASS_NAME(PARENT_NAME):
 
 attribute_template = """
     @property
-    def ATTRIBUTE_NAME(self)-> "ATTRIBUTE_TYPE":
+    def ATTRIBUTE_NAME(self)-> ATTRIBUTE_TYPE:
         return self._get_attribute("ATTRIBUTE_NAME")
 
     @ATTRIBUTE_NAME.setter
-    def ATTRIBUTE_NAME(self, value: "ATTRIBUTE_TYPE"):
+    def ATTRIBUTE_NAME(self, value: ATTRIBUTE_TYPE):
         return self._set_attribute("ATTRIBUTE_NAME", value)
 """
+
+def get_aggregation_type(attribute_type):
+        # type_aggragation = attribute_type.type_of_aggregation()
+        # bound1 = attribute_type.bound1()
+        # bound2 = attribute_type.bound2()
+        # TODO: add support for bounds etc.
+
+        type_of_element = attribute_type.type_of_element()
+        if type_of_element.as_aggregation_type():
+            aggregation_string, type_of_element_string = get_aggregation_type(type_of_element)
+            return f"List[{aggregation_string}]", type_of_element_string
+        else:
+            type_of_element_string = type_of_element.declared_type().name()
+            return f"List[{type_of_element_string}]", type_of_element_string
+
+def flaten_select_list(select_type, initial_list=None):
+    if initial_list is None:
+        initial_list = []
+    select_list = select_type.select_list()
+    for item in select_list:
+        if item.as_select_type():
+            initial_list = flaten_select_list(item, initial_list)
+        else:
+            initial_list.append(item)
+    return initial_list
 
 if __name__ == "__main__":
     init_string = ""
@@ -66,16 +91,41 @@ if __name__ == "__main__":
                 attribute_string = attribute_string.replace("ATTRIBUTE_NAME", attribute.name())
                 attribute_type = attribute.type_of_attribute()
                 if attribute_type.as_aggregation_type():
-                    attribute_type = "AGREGATION_TYPE"
-                    # TODO: add aggregation type
+                    
+                    type_aggragation = attribute_type.type_of_aggregation()
+                    bound1 = attribute_type.bound1()
+                    bound2 = attribute_type.bound2()
+                    type_of_element = attribute_type.type_of_element()
+                    aggregation_string, type_of_element_string = get_aggregation_type(attribute_type)
+                    attribute_string = attribute_string.replace("ATTRIBUTE_TYPE", aggregation_string)
+                    class_string = init_template.replace("CLASS_NAME", type_of_element_string) + class_string
                 elif attribute_type.as_simple_type():
                     attribute_type = attribute_type.declared_type()
+                    TYPE_MAP = {
+                        "integer": "int",
+                        "logical": "bool",
+                    }
+                    attribute_string = attribute_string.replace("ATTRIBUTE_TYPE", TYPE_MAP[attribute_type])
+                elif attribute_type.declared_type().as_select_type():
+                    select_list = flaten_select_list(attribute_type.declared_type())
+                    select_string = "Union["
+                    for index, item in enumerate(select_list):
+                        if index == 0:
+                            select_string += f"\"{item.name()}\""
+                        else:
+                            select_string += f", \"{item.name()}\""
+                        class_string = init_template.replace("CLASS_NAME", item.name()) + class_string
+                    select_string += "]"
+                    attribute_string = attribute_string.replace("ATTRIBUTE_TYPE", select_string)                
                 else:
                     if attribute_type.declared_type().as_entity():
                         class_string = init_template.replace("CLASS_NAME", attribute_type.declared_type().name()) + class_string
-                    attribute_type = attribute_type.declared_type().name()
+                    elif attribute_type.declared_type().as_type_declaration():
+                        class_string = init_template.replace("CLASS_NAME", attribute_type.declared_type().name()) + class_string
+                    elif attribute_type.declared_type().as_enumeration_type():
+                        class_string = init_template.replace("CLASS_NAME", attribute_type.declared_type().name()) + class_string
+                    attribute_string = attribute_string.replace("ATTRIBUTE_TYPE", attribute_type.declared_type().name())
                 
-                attribute_string = attribute_string.replace("ATTRIBUTE_TYPE", attribute_type)
                 init_string += f"from .{name} import {name}\n"
 
                 # attribute_optional = attribute.optional()
