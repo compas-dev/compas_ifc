@@ -48,6 +48,7 @@ class CLASS_NAME(PARENT_NAME):
         self.attribute_imports = set()
         self.parent = None
         self.attributes = []
+        self.inverse_attributes = []
         self.description = ""
 
     def get_parent(self):
@@ -62,8 +63,22 @@ class CLASS_NAME(PARENT_NAME):
         self.description = f"Wrapper class for {self.name}."
 
     def get_attributes(self):
+        # attributes = self.declaration.attributes()
+        # direved = self.declaration.derived()
+        # all_attributes = self.declaration.all_attributes()
+        # all_inverse_attributes = self.declaration.all_inverse_attributes()
+
         for attribute in self.declaration.attributes():
             self.attributes.append(AtrtributeGenerator(attribute, self))
+
+        inverse_attributes_from_supertype = []
+        if self.declaration.supertype():
+            for ia in self.declaration.supertype().all_inverse_attributes():
+                inverse_attributes_from_supertype.append(ia.name())
+
+        for inverse_attribute in self.declaration.all_inverse_attributes():
+            if inverse_attribute.name() not in inverse_attributes_from_supertype:
+                self.inverse_attributes.append(InverseAtrtributeGenerator(inverse_attribute, self))
 
     def get_attribute_imports_string(self):
         if not self.attribute_imports:
@@ -86,7 +101,11 @@ class CLASS_NAME(PARENT_NAME):
         for attribute in self.attributes:
             class_string += attribute.generate()
             self.attribute_imports.update(attribute.imports)
-        
+
+        for inverse_attribute in self.inverse_attributes:
+            class_string += inverse_attribute.generate()
+            self.attribute_imports.update(inverse_attribute.imports)
+
         if class_string.find("Union") != -1:
             self.imports.add("from typing import Union")
 
@@ -215,6 +234,36 @@ class AtrtributeGenerator:
         self.get_attribute_type()
         attribute_string = self.TEMPLATE.replace("ATTRIBUTE_NAME", self.name)
         attribute_string = attribute_string.replace("ATTRIBUTE_TYPE", str(self.type))
+        attribute_string = attribute_string.replace("DESCRIPTION", self.description)
+
+        return attribute_string
+
+
+class InverseAtrtributeGenerator(AtrtributeGenerator):
+    TEMPLATE = """
+    def ATTRIBUTE_NAME(self)-> list[ATTRIBUTE_TYPE]:
+        \"\"\"DESCRIPTION\"\"\"
+        return self._get_inverse_attribute("ATTRIBUTE_NAME")
+"""
+
+    def __init__(self, attribute, parent):
+        self.parent = parent
+        self.attribute = attribute
+        self.name = attribute.name()
+        self.imports = set()
+        self.type = None
+        self.description = str(attribute)
+
+    def get_attribute_type(self):
+        # TODO: handle bound1, bound2 etc. for the aggregation
+        entity_reference = self.attribute.entity_reference()
+        self.type = entity_reference.name()
+        self.imports.add(f"from .{self.type} import {self.type}")
+
+    def generate(self):
+        self.get_attribute_type()
+        attribute_string = self.TEMPLATE.replace("ATTRIBUTE_NAME", self.name)
+        attribute_string = attribute_string.replace("ATTRIBUTE_TYPE", f'"{self.type}"')
         attribute_string = attribute_string.replace("DESCRIPTION", self.description)
 
         return attribute_string

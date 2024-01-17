@@ -1,6 +1,6 @@
 import ifcopenshell
 from compas_ifc.entities.base import Base
-
+import os
 
 class IFCReader(object):
     def __init__(self, filepath):
@@ -8,8 +8,7 @@ class IFCReader(object):
         self._file = ifcopenshell.open(filepath)
         self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
         self._entitymap = {}
-        # self.get_all_entities()
-        # print("Opened file: {}".format(filepath))
+        print("IFC file loaded: {}".format(filepath))
 
     def from_entity(self, entity):
         
@@ -29,12 +28,19 @@ class IFCReader(object):
         entities = self._file.by_type(type_name)
         return [self.from_entity(entity) for entity in entities]
 
+    def file_size(self):
+        file_stats = os.stat(self.filepath)
+        size_in_mb = file_stats.st_size / (1024 * 1024)
+        size_in_mb = round(size_in_mb, 2)
+        return size_in_mb
+
 
 if __name__ == "__main__":
     reader = IFCReader("data/wall-with-opening-and-window.ifc")
+    reader.file_size()
     # print(len(reader._file))
-    entities = reader.get_by_type("IfcProject")    
-    entities[0].print_attributes(max_depth=5)
+    # entities = reader.get_by_type("IfcProject")    
+    # entities[0].print_attributes(max_depth=1)
                   
     # for key in entities[0]:
     #     print(key, entities[0][key])

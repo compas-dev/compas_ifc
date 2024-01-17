@@ -42,6 +42,9 @@ class Base(Data):
         else:
             return attr
 
+    def _get_inverse_attribute(self, name):
+        return [self.reader.from_entity(attr) for attr in getattr(self.entity, name)]
+
     def all_attribute_names(self):
         # all_attributes = []
         # def get_attr_names(cls):
