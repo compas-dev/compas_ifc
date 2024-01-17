@@ -6,6 +6,8 @@ class Generator:
         self.schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
 
     def generate(self):
+        init_string = ""
+
         for declaration in self.schema.declarations():
             class_string = None
             if declaration.as_entity():
@@ -13,23 +15,28 @@ class Generator:
                 class_string = entity_generator.generate()
                 name = entity_generator.name
 
-            if declaration.as_type_declaration():
-                type_declaration_generator = TypeDeclarationGenerator(declaration)
-                class_string = type_declaration_generator.generate()
-                name = type_declaration_generator.name
+            # if declaration.as_type_declaration():
+            #     type_declaration_generator = TypeDeclarationGenerator(declaration)
+            #     class_string = type_declaration_generator.generate()
+            #     name = type_declaration_generator.name
 
             if declaration.as_enumeration_type():
                 enum_generator = EnumGenerator(declaration)
                 class_string = enum_generator.generate()
                 name = enum_generator.name
-            
+
             if class_string:
+                init_string += f"from .{name} import {name}\n"
+
                 with open(f"src/compas_ifc/entities/generated/{name}.py", "w") as f:
                     f.write(class_string)
 
+        with open("src/compas_ifc/entities/generated/__init__.py", "w") as f:
+            f.write(init_string)
+
+
 class EntityGenerator:
     TEMPLATE = """IMPORTS
-
 class CLASS_NAME(PARENT_NAME):
     \"\"\"DESCRIPTION\"\"\"
 """
@@ -38,6 +45,7 @@ class CLASS_NAME(PARENT_NAME):
         self.declaration = declaration
         self.name = declaration.name()
         self.imports = set()
+        self.attribute_imports = set()
         self.parent = None
         self.attributes = []
         self.description = ""
@@ -55,7 +63,16 @@ class CLASS_NAME(PARENT_NAME):
 
     def get_attributes(self):
         for attribute in self.declaration.attributes():
-            self.attributes.append(AtrtributeGenerator(attribute))
+            self.attributes.append(AtrtributeGenerator(attribute, self))
+
+    def get_attribute_imports_string(self):
+        if not self.attribute_imports:
+            return ""
+
+        attribute_imports_string = "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n"
+        for import_string in sorted(self.attribute_imports):
+            attribute_imports_string += f"    {import_string}\n"
+        return attribute_imports_string
 
     def generate(self):
         self.get_parent()
@@ -68,9 +85,14 @@ class CLASS_NAME(PARENT_NAME):
 
         for attribute in self.attributes:
             class_string += attribute.generate()
-            self.imports.update(attribute.imports)
+            self.attribute_imports.update(attribute.imports)
+        
+        if class_string.find("Union") != -1:
+            self.imports.add("from typing import Union")
 
-        class_string = class_string.replace("IMPORTS", "\n".join(sorted(self.imports)))
+        import_strings = "\n".join(sorted(self.imports)) + "\n\n" + self.get_attribute_imports_string()
+
+        class_string = class_string.replace("IMPORTS", import_strings)
 
         return class_string
 
@@ -87,12 +109,22 @@ class AtrtributeGenerator:
         return self._set_attribute("ATTRIBUTE_NAME", value)
 """
 
-    def __init__(self, attribute):
+    TYPE_MAP = {
+        "DOUBLE": "float",
+        "INT": "int",
+        "STRING": "str",
+        "LOGICAL": "bool",
+        "BOOL": "bool",
+        "BINARY": "bytes",
+    }
+
+    def __init__(self, attribute, parent):
+        self.parent = parent
         self.attribute = attribute
         self.name = attribute.name()
         self.imports = set()
         self.type = None
-        self.description = "Would say something about the attribute here."
+        self.description = str(attribute)
 
     def get_aggregation_type(self, attribute_type):
         # type_aggragation = attribute_type.type_of_aggregation()
@@ -107,9 +139,13 @@ class AtrtributeGenerator:
         else:
             if type_of_element.declared_type().as_select_type():
                 type_of_element_string = self.get_select_type(type_of_element)
+            elif type_of_element.declared_type().as_type_declaration():
+                type_of_element_string = self.get_type_declaration(type_of_element)
             else:
                 type_of_element_string = type_of_element.declared_type().name()
-                self.imports.add(f"from .{type_of_element_string} import {type_of_element_string}")
+                if type_of_element_string != self.parent.name:
+                    self.imports.add(f"from .{type_of_element_string} import {type_of_element_string}")
+                type_of_element_string = f'"{type_of_element_string}"'
             return f"list[{type_of_element_string}]"
 
     def get_select_type(self, attribute_type):
@@ -125,11 +161,33 @@ class AtrtributeGenerator:
             return initial_list
 
         select_list = flaten_select_list(attribute_type.declared_type())
-        select_string = "Union[" + ", ".join([f"{item.name()}" for item in select_list]) + "]"
+        class_names = set()
         for item in select_list:
-            self.imports.add(f"from .{item.name()} import {item.name()}")
-        self.imports.add("from typing import Union")
+            if item.as_type_declaration():
+                class_names.add(self.get_type_declaration(item))
+            else:
+                class_names.add(f'"{item.name()}"')
+                if item.name() != self.parent.name:
+                    self.imports.add(f"from .{item.name()} import {item.name()}")
+        select_string = "Union[" + ", ".join(class_names) + "]"
         return select_string
+
+    def get_type_declaration(self, attribute_type):
+        if hasattr(attribute_type, "argument_types"):
+            declared_type = attribute_type
+        else:
+            declared_type = attribute_type.declared_type()
+
+        ifc_type = declared_type.argument_types()[0]
+        if ifc_type.startswith("AGGREGATE OF"):
+            value_type = ifc_type.split("OF ")[1]
+            if value_type == "ENTITY INSTANCE":
+                python_type = "list"  # TODO: handle this
+            else:
+                python_type = f"list[{self.TYPE_MAP[value_type]}]"
+        else:
+            python_type = self.TYPE_MAP[ifc_type]
+        return python_type
 
     def get_attribute_type(self):
         attribute_type = self.attribute.type_of_attribute()
@@ -144,10 +202,14 @@ class AtrtributeGenerator:
             self.type = TYPE_MAP[attribute_type]
         elif attribute_type.declared_type().as_select_type():
             self.type = self.get_select_type(attribute_type)
+        elif attribute_type.declared_type().as_type_declaration():
+            self.type = self.get_type_declaration(attribute_type)
         else:
-            # Entity, Enumeration, or Type declaration
-            self.type = attribute_type.declared_type().name()
-            self.imports.add(f"from .{self.type} import {self.type}")
+            # Entity, Enumeration
+            type_name = attribute_type.declared_type().name()
+            if type_name != self.parent.name:
+                self.imports.add(f"from .{type_name} import {type_name}")
+            self.type = f'"{type_name}"'
 
     def generate(self):
         self.get_attribute_type()
@@ -202,15 +264,16 @@ class EnumGenerator:
     TEMPLATE = """class CLASS_NAME(str):
     items = ITEMS
 """
+
     def __init__(self, declaration):
         self.declaration = declaration
         self.name = declaration.name()
         self.items = []
-    
+
     def get_items(self):
         for item in self.declaration.enumeration_items():
             self.items.append(item)
-        
+
     def generate(self):
         self.get_items()
 
@@ -218,6 +281,7 @@ class EnumGenerator:
         class_string = class_string.replace("ITEMS", str(self.items))
 
         return class_string
+
 
 if __name__ == "__main__":
     generator = Generator()
