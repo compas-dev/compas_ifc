@@ -1,3 +1,3 @@
 from .IfcObjectDefinition import IfcObjectDefinition
-
-__all__ = ["IfcObjectDefinition"]
+from .IfcElement import IfcElement
+from .IfcSpatialElement import IfcSpatialElement

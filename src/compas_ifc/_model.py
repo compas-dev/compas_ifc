@@ -14,15 +14,15 @@ class IfcModel(Data):
         return self.reader.get_by_type("IfcProject")[0]
 
     @property
-    def sites(self) -> IfcSite:
+    def sites(self) -> list[IfcSite]:
         return self.reader.get_by_type("IfcSite")
 
     @property
-    def buildings(self) -> IfcBuilding:
+    def buildings(self) -> list[IfcBuilding]:
         return self.reader.get_by_type("IfcBuilding")
     
     @property
-    def building_elements(self) -> IfcBuildingElement:
+    def building_elements(self) -> list[IfcBuildingElement]:
         return self.reader.get_by_type("IfcBuildingElement")
 
     def get_by_type(self, type_name):

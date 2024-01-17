@@ -1,4 +1,7 @@
 import ifcopenshell
+import inspect
+import types
+from compas_ifc.entities import extensions
 
 
 class Generator:
@@ -89,6 +92,26 @@ class CLASS_NAME(PARENT_NAME):
             attribute_imports_string += f"    {import_string}\n"
         return attribute_imports_string
 
+    def get_extension_methods(self, class_name):
+        extension = getattr(extensions, class_name, None)
+        if extension is None:
+            return ""
+
+        print("Extension classes:", extension)
+
+        extension_methods_string = ""
+        for method in dir(extension):
+            method = getattr(extension, method)
+            if isinstance(method, types.FunctionType):
+                extension_methods_string += f"\n{inspect.getsource(method)}"
+            elif isinstance(method, property):
+                if method.fget is not None:
+                    extension_methods_string += f"\n{inspect.getsource(method.fget)}"
+                if method.fset is not None:
+                    extension_methods_string += f"\n{inspect.getsource(method.fset)}"
+
+        return extension_methods_string
+
     def generate(self):
         self.get_parent()
         self.get_description()
@@ -112,6 +135,8 @@ class CLASS_NAME(PARENT_NAME):
         import_strings = "\n".join(sorted(self.imports)) + "\n\n" + self.get_attribute_imports_string()
 
         class_string = class_string.replace("IMPORTS", import_strings)
+
+        class_string += self.get_extension_methods(self.name)
 
         return class_string
 

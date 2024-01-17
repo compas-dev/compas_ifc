@@ -79,6 +79,29 @@ class Base(Data):
     def attribute_info(self):
         raise NotImplementedError
 
+    def print_spatial_hierarchy(self):
+        # NOTE: maybe move to IfcObjectDefinition?
+
+        top = self
+        while top.parent:
+            top = top.parent
+
+        spatial_tree = Tree()
+
+        def add_entity(entity, parent_node):
+            for child_entity in entity.children:
+                name = f"{child_entity}"
+                if child_entity == self:
+                    name += "*"
+                node = EntityNode(name=name)
+                parent_node.add(node)
+                add_entity(child_entity, node)
+
+        root_node = EntityNode(name=f"{top}")
+        spatial_tree.add(root_node)
+        add_entity(top, root_node)
+        spatial_tree.print_hierarchy()
+
 
 class EntityNode(TreeNode):
     def __repr__(self):
