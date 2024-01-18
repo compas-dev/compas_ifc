@@ -5,6 +5,15 @@ from compas.datastructures import Tree, TreeNode
 
 
 class Base(Data):
+    """Base class for all IFC entities.
+
+    Attributes
+    ----------
+    entity : entity_instance
+        The IFC entity instance.
+    reader : IfcReader
+    """
+
     def __new__(cls, entity, *args, **kwargs):
         # try:
         #     from . import generated
@@ -74,13 +83,19 @@ class Base(Data):
                         add_entity(sub_entity, sub_node, depth + 1)
 
         add_entity(self, root, 0)
+
+        print("=" * 80 + "\n" + f"Attributes of {self}\n" + "=" * 80)
         attr_tree.print_hierarchy()
+        print("")
 
     def attribute_info(self):
         raise NotImplementedError
 
     def print_spatial_hierarchy(self):
-        # NOTE: maybe move to IfcObjectDefinition?
+        from compas_ifc.entities.generated import IfcObjectDefinition
+
+        if not isinstance(self, IfcObjectDefinition):
+            raise TypeError("Only IfcObjectDefinition has spatial hierarchy")
 
         top = self
         while top.parent:
@@ -100,7 +115,36 @@ class Base(Data):
         root_node = EntityNode(name=f"{top}")
         spatial_tree.add(root_node)
         add_entity(top, root_node)
+
+        print("=" * 80 + "\n" + f"Spatial hierarchy of {self}\n" + "=" * 80)
         spatial_tree.print_hierarchy()
+        print("")
+
+    def print_properties(self):
+        from compas_ifc.entities.generated import IfcObject
+
+        if not isinstance(self, IfcObject):
+            raise TypeError("Only IfcObject has properties")
+
+        def add_property(item, parent_node):
+            if isinstance(item, dict):
+                for key, value in item.items():
+                    if isinstance(value, dict):
+                        node = EntityNode(name=f"{key}")
+                        parent_node.add(node)
+                        add_property(value, node)
+                    else:
+                        node = EntityNode(name=f"{key}: {value}")
+                        parent_node.add(node)
+
+        tree = Tree()
+        root = EntityNode(name=f"{self}")
+        tree.add(root)
+        add_property(self.properties, root)
+
+        print("=" * 80 + "\n" + f"Properties of {self}\n" + "=" * 80)
+        tree.print_hierarchy()
+        print("")
 
 
 class EntityNode(TreeNode):

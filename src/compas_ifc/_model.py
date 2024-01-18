@@ -1,9 +1,11 @@
 from compas.data import Data
 from compas_ifc._reader import IFCReader
+from compas_ifc.entities.base import Base
 from compas_ifc.entities.generated import IfcProject
 from compas_ifc.entities.generated import IfcSite
 from compas_ifc.entities.generated import IfcBuilding
 from compas_ifc.entities.generated import IfcBuildingElement
+
 
 class IfcModel(Data):
     def __init__(self, path):
@@ -20,12 +22,12 @@ class IfcModel(Data):
     @property
     def buildings(self) -> list[IfcBuilding]:
         return self.reader.get_by_type("IfcBuilding")
-    
+
     @property
     def building_elements(self) -> list[IfcBuildingElement]:
         return self.reader.get_by_type("IfcBuildingElement")
 
-    def get_by_type(self, type_name):
+    def get_by_type(self, type_name) -> list[Base]:
         return self.reader.get_by_type(type_name)
 
     def summary(self):
@@ -50,6 +52,7 @@ class IfcModel(Data):
 
     def show(self):
         raise NotImplementedError
+
 
 if __name__ == "__main__":
     model = IfcModel("data/wall-with-opening-and-window.ifc")

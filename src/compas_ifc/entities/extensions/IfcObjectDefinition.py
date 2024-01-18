@@ -5,8 +5,6 @@ if TYPE_CHECKING:
 else:
     IfcObjectDefinition = object
 
-from compas.datastructures import Tree, TreeNode
-
 
 class IfcObjectDefinition(IfcObjectDefinition):
     @property
@@ -24,3 +22,9 @@ class IfcObjectDefinition(IfcObjectDefinition):
             return relations[0].RelatedObjects
         else:
             return []
+
+    @property
+    def material(self):
+        from ifcopenshell.util.element import get_material
+
+        return get_material(self.entity)
