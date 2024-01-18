@@ -9,6 +9,13 @@ class Generator:
         self.schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
 
     def generate(self):
+        doc_string = """
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: class.rst
+
+"""
         init_string = ""
 
         for declaration in self.schema.declarations():
@@ -29,10 +36,13 @@ class Generator:
                 name = enum_generator.name
 
             if class_string:
-                init_string += f"from .{name} import {name}\n"
+                init_string += f"from .{name.lower()} import {name}\n"
+                doc_string += f"    {name}\n"
 
-                with open(f"src/compas_ifc/entities/generated/{name}.py", "w") as f:
+                with open(f"src/compas_ifc/entities/generated/{name.lower()}.py", "w") as f:
                     f.write(class_string)
+
+        init_string = f'"""{doc_string}"""\n\n{init_string}'
 
         with open("src/compas_ifc/entities/generated/__init__.py", "w") as f:
             f.write(init_string)
@@ -57,7 +67,7 @@ class CLASS_NAME(PARENT_NAME):
     def get_parent(self):
         if self.declaration.supertype():
             self.parent = self.declaration.supertype().name()
-            self.imports.add(f"from .{self.parent} import {self.parent}")
+            self.imports.add(f"from .{self.parent.lower()} import {self.parent}")
         else:
             self.parent = "Base"
             self.imports.add("from compas_ifc.entities.base import Base")
@@ -188,7 +198,7 @@ class AtrtributeGenerator:
             else:
                 type_of_element_string = type_of_element.declared_type().name()
                 if type_of_element_string != self.parent.name:
-                    self.imports.add(f"from .{type_of_element_string} import {type_of_element_string}")
+                    self.imports.add(f"from .{type_of_element_string.lower()} import {type_of_element_string}")
                 type_of_element_string = f'"{type_of_element_string}"'
             return f"list[{type_of_element_string}]"
 
@@ -212,7 +222,7 @@ class AtrtributeGenerator:
             else:
                 class_names.add(f'"{item.name()}"')
                 if item.name() != self.parent.name:
-                    self.imports.add(f"from .{item.name()} import {item.name()}")
+                    self.imports.add(f"from .{item.name().lower()} import {item.name()}")
         select_string = "Union[" + ", ".join(class_names) + "]"
         return select_string
 
@@ -252,7 +262,7 @@ class AtrtributeGenerator:
             # Entity, Enumeration
             type_name = attribute_type.declared_type().name()
             if type_name != self.parent.name:
-                self.imports.add(f"from .{type_name} import {type_name}")
+                self.imports.add(f"from .{type_name.lower()} import {type_name}")
             self.type = f'"{type_name}"'
 
     def generate(self):
@@ -283,7 +293,7 @@ class InverseAtrtributeGenerator(AtrtributeGenerator):
         # TODO: handle bound1, bound2 etc. for the aggregation
         entity_reference = self.attribute.entity_reference()
         self.type = entity_reference.name()
-        self.imports.add(f"from .{self.type} import {self.type}")
+        self.imports.add(f"from .{self.type.lower()} import {self.type}")
 
     def generate(self):
         self.get_attribute_type()
