@@ -53,7 +53,7 @@ def sphere_to_IfcSphere(file: ifcopenshell.file, sphere: Sphere) -> ifcopenshell
     """
     return file.create_entity(
         "IfcSphere",
-        Position=create_IfcAxis2Placement3D(file, sphere.point),
+        Position=create_IfcAxis2Placement3D(file, sphere.base),
         Radius=sphere.radius,
     )
 
