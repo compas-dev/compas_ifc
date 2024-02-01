@@ -1,6 +1,7 @@
 from typing import List
 
 import ifcopenshell
+import os
 
 from compas_ifc.entities.entity import Entity
 
@@ -124,3 +125,10 @@ class IFCReader(object):
     def get_all_entities(self) -> List[Entity]:
         """Returns all the entities in the model."""
         return [self.get_entity(_entity) for _entity in self._file]
+
+    def file_size(self):
+        """Returns the size of the IFC file in bytes."""
+        file_stats = os.stat(self.filepath)
+        size_in_mb = file_stats.st_size / (1024 * 1024)
+        size_in_mb = round(size_in_mb, 2)
+        return size_in_mb

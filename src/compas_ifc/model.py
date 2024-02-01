@@ -109,6 +109,19 @@ class Model:
         """Print the spatial hierarchy of the model."""
         self.project.print_spatial_hierarchy(max_level)
 
+    def print_summary(self):
+        """Print a summary of the model."""
+
+        print("=" * 80)
+        print("File: {}".format(self.reader.filepath))
+        print("Size: {} MB".format(self.reader.file_size()))
+        print("Project: {}".format(self.project.name))
+        print("Description: {}".format(self.project.attributes.get("Description", "")))
+        print("Number of sites: {}".format(len(self.sites)))
+        print("Number of buildings: {}".format(len(self.buildings)))
+        print("Number of building elements: {}".format(len(self.building_elements)))
+        print("=" * 80)
+
     @property
     def schema(self) -> str:
         return self.reader._schema
