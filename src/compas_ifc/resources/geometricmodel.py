@@ -1,6 +1,6 @@
 from typing import List
 
-from compas_occ.brep import BRep
+from compas_occ.brep import OCCBrep
 
 # from compas.geometry import Polyline
 from compas.geometry import Box
@@ -14,7 +14,7 @@ from compas_ifc.resources.geometry import IfcProfileDef_to_curve
 from ifcopenshell import geom
 
 
-def IfcAdvancedBrep_to_brep(advanced_brep) -> BRep:
+def IfcAdvancedBrep_to_brep(advanced_brep) -> OCCBrep:
     """
     Convert an IFC AdvancedBrep [advancedbrep]_ to a COMPAS brep.
 
@@ -22,7 +22,7 @@ def IfcAdvancedBrep_to_brep(advanced_brep) -> BRep:
     pass
 
 
-def IfcAdvancedBrepWithVoids_to_brep(advanced_brep_with_voids) -> BRep:
+def IfcAdvancedBrepWithVoids_to_brep(advanced_brep_with_voids) -> OCCBrep:
     """
     Convert an IFC AdvancedBrepWithVoids [advancedbrepwithvoids]_ to a COMPAS brep.
 
@@ -38,7 +38,7 @@ def IfcBlock_to_box(block) -> Box:
     pass
 
 
-def IfcBooleanClippingResult_to_brep(boolean_clipping_result) -> BRep:
+def IfcBooleanClippingResult_to_brep(boolean_clipping_result) -> OCCBrep:
     """
     Convert an IFC BooleanClippingResult [booleanclippingresult]_ to a COMPAS brep.
 
@@ -46,7 +46,7 @@ def IfcBooleanClippingResult_to_brep(boolean_clipping_result) -> BRep:
     return IfcBooleanResult_to_brep(boolean_clipping_result)
 
 
-def IfcBooleanResult_to_brep(boolean_result) -> BRep:
+def IfcBooleanResult_to_brep(boolean_result) -> OCCBrep:
     """
     Convert an IFC BooleanResult [booleanresult]_ to a COMPAS brep.
 
@@ -73,11 +73,11 @@ def IfcBooleanResult_to_brep(boolean_result) -> BRep:
 
     # Operator
     if br.Operator == "UNION":
-        C: BRep = A + B
+        C: OCCBrep = A + B
     elif br.Operator == "INTERSECTION":
-        C: BRep = A & B
+        C: OCCBrep = A & B
     elif br.Operator == "DIFFERENCE":
-        C: BRep = A - B
+        C: OCCBrep = A - B
     else:
         raise NotImplementedError(br.Operator)
 
@@ -113,7 +113,7 @@ def IfcBoundingBox_to_box(bounding_box) -> Box:
     return box
 
 
-def IfcBoxedHalfSpace(boxed_half_space) -> BRep:
+def IfcBoxedHalfSpace(boxed_half_space) -> OCCBrep:
     bhs = boxed_half_space
     print(bhs.BaseSurface)
     print(bhs.Enclosure)
@@ -124,7 +124,7 @@ def IfcCartesianPointList(cartesian_point_list) -> List[Point]:
     return [Point(*p) for p in cartesian_point_list.CoordList]
 
 
-def IfcExtrudedAreaSolid_to_brep(extruded_area_solid) -> BRep:
+def IfcExtrudedAreaSolid_to_brep(extruded_area_solid) -> OCCBrep:
     eas = extruded_area_solid
     profile = IfcProfileDef_to_curve(eas.SweptArea)
 
@@ -134,7 +134,7 @@ def IfcExtrudedAreaSolid_to_brep(extruded_area_solid) -> BRep:
     def _extrude(profile, eas):
         vector = IfcDirection_to_vector(eas.ExtrudedDirection)
         vector.scale(eas.Depth)
-        brep = BRep.from_extrusion(profile, vector)
+        brep = OCCBrep.from_extrusion(profile, vector)
         brep.sew()
         brep.fix()
         brep.make_solid()
@@ -154,16 +154,16 @@ def IfcExtrudedAreaSolid_to_brep(extruded_area_solid) -> BRep:
         return _extrude(profile, eas)
 
 
-def IfcFacetedBrep_to_brep(faceted_brep) -> BRep:
+def IfcFacetedBrep_to_brep(faceted_brep) -> OCCBrep:
     pass
 
 
-def IfcFacetedBrepWithVoids_to_brep(faceted_brep_with_voids) -> BRep:
+def IfcFacetedBrepWithVoids_to_brep(faceted_brep_with_voids) -> OCCBrep:
     # fbwv = faceted_brep_with_voids
     pass
 
 
-def IfcIndexedPolygonalFaceSet_to_brep() -> BRep:
+def IfcIndexedPolygonalFaceSet_to_brep() -> OCCBrep:
     pass
 
 
@@ -174,14 +174,14 @@ def IfcPolygonalBoundedHalfSpace_to_brep(polygonal_bounded_half_space):
     print(pbhs.BaseSurface)
 
 
-def IfcPolygonalFaceSet_to_brep(polygonal_face_set) -> BRep:
+def IfcPolygonalFaceSet_to_brep(polygonal_face_set) -> OCCBrep:
     pfs = polygonal_face_set
 
     xyz = pfs.Coordinates.CoordList
     vertices = [[float(x), float(y), float(z)] for x, y, z in xyz]
     faces = [[i - 1 for i in face.CoordIndex] for face in pfs.Faces]
     polygons = [[vertices[index] for index in face] for face in faces]
-    brep = BRep.from_polygons(polygons)
+    brep = OCCBrep.from_polygons(polygons)
 
     brep.sew()
     brep.fix()
@@ -190,7 +190,7 @@ def IfcPolygonalFaceSet_to_brep(polygonal_face_set) -> BRep:
     return brep
 
 
-def IfcTessellatedFaceSet_to_brep(tessellated_face_set) -> BRep:
+def IfcTessellatedFaceSet_to_brep(tessellated_face_set) -> OCCBrep:
     tfs = tessellated_face_set
 
     if tfs.is_a("IfcTriangulatedFaceSet"):
@@ -202,14 +202,14 @@ def IfcTessellatedFaceSet_to_brep(tessellated_face_set) -> BRep:
     raise NotImplementedError(tfs.is_a())
 
 
-def IfcTriangulatedFaceSet_to_brep(triangulated_face_set) -> BRep:
+def IfcTriangulatedFaceSet_to_brep(triangulated_face_set) -> OCCBrep:
     tfs = triangulated_face_set
 
     xyz = tfs.Coordinates.CoordList
     vertices = [[float(x), float(y), float(z)] for x, y, z in xyz]
     faces = [[a - 1, b - 1, c - 1] for a, b, c in tfs.CoordIndex]
     triangles = [[vertices[index] for index in face] for face in faces]
-    brep = BRep.from_polygons(triangles)
+    brep = OCCBrep.from_polygons(triangles)
 
     brep.sew()
     brep.fix()
@@ -218,12 +218,12 @@ def IfcTriangulatedFaceSet_to_brep(triangulated_face_set) -> BRep:
     return brep
 
 
-def IfcShape_to_brep(ifc_shape) -> BRep:
+def IfcShape_to_brep(ifc_shape) -> OCCBrep:
     settings = geom.settings()
     settings.set(settings.USE_PYTHON_OPENCASCADE, True)
     shape = geom.create_shape(settings, ifc_shape)
 
-    brep = BRep.from_shape(shape)
+    brep = OCCBrep.from_shape(shape)
     brep.sew()
     brep.fix()
     brep.make_solid()

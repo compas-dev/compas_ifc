@@ -2,7 +2,7 @@ import ifcopenshell
 import numpy as np
 
 from compas.utilities import geometric_key
-from compas_occ.brep import BRep
+from compas_occ.brep import OCCBrep
 from typing import List
 
 from .primities import point_to_ifc_cartesian_point
@@ -26,7 +26,7 @@ def calculate_knots_and_multiplicities(knot_sequence):
     return knots, multiplicities
 
 
-def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep: BRep) -> List[ifcopenshell.entity_instance]:
+def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep: OCCBrep) -> List[ifcopenshell.entity_instance]:
     brep.fix()
     brep.sew()
     brep.make_solid()

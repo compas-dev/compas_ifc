@@ -40,7 +40,7 @@ from functools import reduce
 from operator import mul
 from typing import List
 
-from compas_occ.brep import BRep
+from compas_occ.brep import OCCBrep
 from OCC.Core.BRep import BRep_Builder
 from OCC.Core.TopoDS import TopoDS_Compound
 
@@ -153,12 +153,12 @@ def entity_body_with_opening_geometry(entity: Entity = None, bodies=None, voids=
     builder.MakeCompound(compound)
     for brep in voids:
         builder.Add(compound, brep.occ_shape)
-    B = BRep.from_shape(compound)
+    B = OCCBrep.from_shape(compound)
 
     shapes = []
     for A in bodies:
         try:
-            C: BRep = A - B
+            C: OCCBrep = A - B
             C.make_solid()
             shapes.append(C)
         except Exception:

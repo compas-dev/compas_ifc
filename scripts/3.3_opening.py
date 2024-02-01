@@ -1,28 +1,19 @@
-import os
-
-from compas_view2.app import App
-from compas_view2.collections import Collection
-
+from compas_viewer import Viewer
 from compas_ifc.model import Model
+from compas.geometry import Translation
 
-HERE = os.path.dirname(__file__)
-FILE = os.path.join(
-    HERE,
-    "..",
-    "data",
-    "wall-with-opening-and-window.ifc",
-)
-
-
-model = Model(FILE)
-viewer = App(enable_sceneform=True)
+model = Model("data/wall-with-opening-and-window.ifc")
+viewer = Viewer()
 
 for entity in model.get_entities_by_type("IfcWall"):
-    print("Converting brep:", entity)
-    viewer.add(Collection(entity.body), name="body", opacity=0.5, facecolor=(0, 1, 0))
-    viewer.add(Collection(entity.opening), name="opening", facecolor=(1, 0, 0))
-    obj = viewer.add(Collection(entity.body_with_opening), name="combined", show_faces=True)
-    obj.translation = [0, 2, 0]
 
-viewer.view.camera.zoom_extents()
-viewer.run()
+    viewer.add(entity.body, name="body", opacity=0.5)
+
+    obj = viewer.add(entity.opening, name="opening")
+    obj.transformation = Translation.from_vector([0, 1, 0])
+
+    obj = viewer.add(entity.body_with_opening, name="combined", show_faces=True)
+    obj.transformation = Translation.from_vector([0, 2, 0])
+
+
+viewer.show()

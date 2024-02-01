@@ -5,7 +5,7 @@ from compas.geometry import Box
 from compas.geometry import Cone
 from compas.geometry import Cylinder
 from compas.geometry import Sphere
-from compas_occ.brep import BRep
+from compas_occ.brep import OCCBrep
 
 from .brep import brep_to_ifc_advanced_brep
 from .mesh import mesh_to_IfcPolygonalFaceSet
@@ -27,7 +27,7 @@ def write_body_representation(file, body, ifc_entity, context):
             shape = cylinder_to_IfcRightCircularCylinder(file, body)
         elif isinstance(body, Mesh):
             shape = mesh_to_IfcPolygonalFaceSet(file, body)
-        elif isinstance(body, BRep):
+        elif isinstance(body, OCCBrep):
             shape = brep_to_ifc_advanced_brep(file, body)
         else:
             raise Exception("Unsupported body type.")
