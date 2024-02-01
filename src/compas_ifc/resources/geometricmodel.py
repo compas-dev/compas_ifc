@@ -1,7 +1,5 @@
 from typing import List
 
-from compas_occ.brep import OCCBrep
-
 # from compas.geometry import Polyline
 from compas.geometry import Box
 from compas.geometry import Line
@@ -14,7 +12,7 @@ from compas_ifc.resources.geometry import IfcProfileDef_to_curve
 from ifcopenshell import geom
 
 
-def IfcAdvancedBrep_to_brep(advanced_brep) -> OCCBrep:
+def IfcAdvancedBrep_to_brep(advanced_brep):
     """
     Convert an IFC AdvancedBrep [advancedbrep]_ to a COMPAS brep.
 
@@ -22,7 +20,7 @@ def IfcAdvancedBrep_to_brep(advanced_brep) -> OCCBrep:
     pass
 
 
-def IfcAdvancedBrepWithVoids_to_brep(advanced_brep_with_voids) -> OCCBrep:
+def IfcAdvancedBrepWithVoids_to_brep(advanced_brep_with_voids):
     """
     Convert an IFC AdvancedBrepWithVoids [advancedbrepwithvoids]_ to a COMPAS brep.
 
@@ -38,7 +36,7 @@ def IfcBlock_to_box(block) -> Box:
     pass
 
 
-def IfcBooleanClippingResult_to_brep(boolean_clipping_result) -> OCCBrep:
+def IfcBooleanClippingResult_to_brep(boolean_clipping_result):
     """
     Convert an IFC BooleanClippingResult [booleanclippingresult]_ to a COMPAS brep.
 
@@ -46,11 +44,13 @@ def IfcBooleanClippingResult_to_brep(boolean_clipping_result) -> OCCBrep:
     return IfcBooleanResult_to_brep(boolean_clipping_result)
 
 
-def IfcBooleanResult_to_brep(boolean_result) -> OCCBrep:
+def IfcBooleanResult_to_brep(boolean_result):
     """
     Convert an IFC BooleanResult [booleanresult]_ to a COMPAS brep.
 
     """
+    from compas_occ.brep import OCCBrep
+
     br = boolean_result
 
     # First Operand
@@ -113,7 +113,7 @@ def IfcBoundingBox_to_box(bounding_box) -> Box:
     return box
 
 
-def IfcBoxedHalfSpace(boxed_half_space) -> OCCBrep:
+def IfcBoxedHalfSpace(boxed_half_space):
     bhs = boxed_half_space
     print(bhs.BaseSurface)
     print(bhs.Enclosure)
@@ -124,7 +124,9 @@ def IfcCartesianPointList(cartesian_point_list) -> List[Point]:
     return [Point(*p) for p in cartesian_point_list.CoordList]
 
 
-def IfcExtrudedAreaSolid_to_brep(extruded_area_solid) -> OCCBrep:
+def IfcExtrudedAreaSolid_to_brep(extruded_area_solid):
+    from compas_occ.brep import OCCBrep
+
     eas = extruded_area_solid
     profile = IfcProfileDef_to_curve(eas.SweptArea)
 
@@ -154,16 +156,16 @@ def IfcExtrudedAreaSolid_to_brep(extruded_area_solid) -> OCCBrep:
         return _extrude(profile, eas)
 
 
-def IfcFacetedBrep_to_brep(faceted_brep) -> OCCBrep:
+def IfcFacetedBrep_to_brep(faceted_brep):
     pass
 
 
-def IfcFacetedBrepWithVoids_to_brep(faceted_brep_with_voids) -> OCCBrep:
+def IfcFacetedBrepWithVoids_to_brep(faceted_brep_with_voids):
     # fbwv = faceted_brep_with_voids
     pass
 
 
-def IfcIndexedPolygonalFaceSet_to_brep() -> OCCBrep:
+def IfcIndexedPolygonalFaceSet_to_brep():
     pass
 
 
@@ -174,7 +176,9 @@ def IfcPolygonalBoundedHalfSpace_to_brep(polygonal_bounded_half_space):
     print(pbhs.BaseSurface)
 
 
-def IfcPolygonalFaceSet_to_brep(polygonal_face_set) -> OCCBrep:
+def IfcPolygonalFaceSet_to_brep(polygonal_face_set):
+    from compas_occ.brep import OCCBrep
+
     pfs = polygonal_face_set
 
     xyz = pfs.Coordinates.CoordList
@@ -190,7 +194,7 @@ def IfcPolygonalFaceSet_to_brep(polygonal_face_set) -> OCCBrep:
     return brep
 
 
-def IfcTessellatedFaceSet_to_brep(tessellated_face_set) -> OCCBrep:
+def IfcTessellatedFaceSet_to_brep(tessellated_face_set):
     tfs = tessellated_face_set
 
     if tfs.is_a("IfcTriangulatedFaceSet"):
@@ -202,7 +206,9 @@ def IfcTessellatedFaceSet_to_brep(tessellated_face_set) -> OCCBrep:
     raise NotImplementedError(tfs.is_a())
 
 
-def IfcTriangulatedFaceSet_to_brep(triangulated_face_set) -> OCCBrep:
+def IfcTriangulatedFaceSet_to_brep(triangulated_face_set):
+    from compas_occ.brep import OCCBrep
+
     tfs = triangulated_face_set
 
     xyz = tfs.Coordinates.CoordList
@@ -218,7 +224,9 @@ def IfcTriangulatedFaceSet_to_brep(triangulated_face_set) -> OCCBrep:
     return brep
 
 
-def IfcShape_to_brep(ifc_shape) -> OCCBrep:
+def IfcShape_to_brep(ifc_shape):
+    from compas_occ.brep import OCCBrep
+
     settings = geom.settings()
     settings.set(settings.USE_PYTHON_OPENCASCADE, True)
     shape = geom.create_shape(settings, ifc_shape)

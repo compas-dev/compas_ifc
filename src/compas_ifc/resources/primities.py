@@ -1,7 +1,5 @@
 import ifcopenshell
 
-from OCC.Core.gp import gp_Pln
-
 from compas.geometry import Frame
 from compas.geometry import Point
 from .shapes import create_IfcAxis2Placement3D
@@ -15,7 +13,7 @@ def point_to_ifc_cartesian_point(file: ifcopenshell.file, point: Point) -> ifcop
     return file.create_entity("IFCCARTESIANPOINT", (*point,))
 
 
-def occ_plane_to_frame(occ_plane: gp_Pln) -> Frame:
+def occ_plane_to_frame(occ_plane) -> Frame:
     """
     Convert an OCC plane to a COMPAS frame.
     """
