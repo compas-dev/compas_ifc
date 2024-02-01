@@ -466,6 +466,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/0.1_overview.html">0.1 Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/1.1_query_entities.html">1.1 Query Entities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/1.2_traverse_hierarchy.html">1.2 Traverse Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/2.1_project_info.html">2.1 Project Info</a></li>
@@ -474,10 +475,10 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="examples/3.1_model_view.html">3.1 Model View</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/3.2_element_view.html">3.2 Element View</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/3.3_opening.html">3.3 Opening</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/3.4_wall_sections.html">3.1 Wall Section</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/4.1_edit_export.html">4.1 Edit Export</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/4.2_create_new.html">4.1 Create New (In Progess)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/5.0_ifc_viewer.html">5.0 IFC Viewer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/5.1_custom_viewer.html">5.0 IFC Viewer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/5.2_attribute_form.html">5.2 Attribute Form</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -524,11 +525,6 @@ document.write(`
                   
   <section id="compas-ifc">
 <h1>COMPAS IFC</h1>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>COMPAS IFC is currently being upgraded to support COMPAS 2.0. This upgrade is scheduled to be completed by the end of January 2024.
-If you intend to use COMPAS IFC at its current state, please make sure to use it with COMPAS 1.x.</p>
-</div>
 <p>Industry Foundation Classes (IFC) is a data model that describes building and construction industry data. It is a platform neutral, open file format specification that is not controlled by a single vendor or group of vendors. It is an object-based file format with a data model developed by buildingSMART (formerly the International Alliance for Interoperability, IAI) to facilitate interoperability in the architecture, engineering and construction (AEC) industry, and is a commonly used collaboration format in Building information modeling (BIM) based projects. The latest IFC documentation and specification can be found at <a class="reference external" href="https://ifc43-docs.standards.buildingsmart.org/">https://ifc43-docs.standards.buildingsmart.org/</a>.</p>
 <p>IFC is now widely adopted by industry and often the required format for BIM data exchange and project delivery. However Working direcly with IFC content is a highly complicated task, due to its multi-layered class inheritances and complex spatial heirarchies.</p>
 <p>COMPAS IFC is a COMPAS extension developed to make our lives easier. It allows us to work with IFC files in an accessible, developer-friendly and pythonic way. By creating a two-way bridge between IFC files and COMPAS data structures, we can immediately benifit from wide range of tools for geometric processing and analysing from COMPAS ecosystem. COMPAS IFC also allows us to export processed data back to valid IFC files.</p>
@@ -552,6 +548,7 @@ If you intend to use COMPAS IFC at its current state, please make sure to use it
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/0.1_overview.html">0.1 Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/1.1_query_entities.html">1.1 Query Entities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/1.2_traverse_hierarchy.html">1.2 Traverse Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/2.1_project_info.html">2.1 Project Info</a></li>
@@ -560,10 +557,10 @@ If you intend to use COMPAS IFC at its current state, please make sure to use it
 <li class="toctree-l2"><a class="reference internal" href="examples/3.1_model_view.html">3.1 Model View</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/3.2_element_view.html">3.2 Element View</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/3.3_opening.html">3.3 Opening</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/3.4_wall_sections.html">3.1 Wall Section</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/4.1_edit_export.html">4.1 Edit Export</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/4.2_create_new.html">4.1 Create New (In Progess)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/5.0_ifc_viewer.html">5.0 IFC Viewer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/5.1_custom_viewer.html">5.0 IFC Viewer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/5.2_attribute_form.html">5.2 Attribute Form</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>

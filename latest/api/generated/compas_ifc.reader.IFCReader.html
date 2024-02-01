@@ -467,6 +467,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Tutorial</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/0.1_overview.html">0.1 Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../examples/1.1_query_entities.html">1.1 Query Entities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../examples/1.2_traverse_hierarchy.html">1.2 Traverse Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../examples/2.1_project_info.html">2.1 Project Info</a></li>
@@ -475,10 +476,10 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="../../examples/3.1_model_view.html">3.1 Model View</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../examples/3.2_element_view.html">3.2 Element View</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../examples/3.3_opening.html">3.3 Opening</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../examples/3.4_wall_sections.html">3.1 Wall Section</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../examples/4.1_edit_export.html">4.1 Edit Export</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../examples/4.2_create_new.html">4.1 Create New (In Progess)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../examples/5.0_ifc_viewer.html">5.0 IFC Viewer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/5.1_custom_viewer.html">5.0 IFC Viewer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/5.2_attribute_form.html">5.2 Attribute Form</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../api.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
@@ -606,25 +607,28 @@ If that is not the case, they are also accessible here.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.__init__.html#compas_ifc.reader.IFCReader.__init__" title="compas_ifc.reader.IFCReader.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_all_entities.html#compas_ifc.reader.IFCReader.get_all_entities" title="compas_ifc.reader.IFCReader.get_all_entities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_all_entities</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.file_size.html#compas_ifc.reader.IFCReader.file_size" title="compas_ifc.reader.IFCReader.file_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">file_size</span></code></a></p></td>
+<td><p>Returns the size of the IFC file in bytes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_all_entities.html#compas_ifc.reader.IFCReader.get_all_entities" title="compas_ifc.reader.IFCReader.get_all_entities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_all_entities</span></code></a></p></td>
 <td><p>Returns all the entities in the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entities_by_name.html#compas_ifc.reader.IFCReader.get_entities_by_name" title="compas_ifc.reader.IFCReader.get_entities_by_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entities_by_name</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entities_by_name.html#compas_ifc.reader.IFCReader.get_entities_by_name" title="compas_ifc.reader.IFCReader.get_entities_by_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entities_by_name</span></code></a></p></td>
 <td><p>Returns all the entities with the given name.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entities_by_type.html#compas_ifc.reader.IFCReader.get_entities_by_type" title="compas_ifc.reader.IFCReader.get_entities_by_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entities_by_type</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entities_by_type.html#compas_ifc.reader.IFCReader.get_entities_by_type" title="compas_ifc.reader.IFCReader.get_entities_by_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entities_by_type</span></code></a></p></td>
 <td><p>Returns all the entities of the given type.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entity.html#compas_ifc.reader.IFCReader.get_entity" title="compas_ifc.reader.IFCReader.get_entity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entity</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entity.html#compas_ifc.reader.IFCReader.get_entity" title="compas_ifc.reader.IFCReader.get_entity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entity</span></code></a></p></td>
 <td><p>Returns the compas_ifc entity corresponding to the given ifcopenshell entity.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entity_by_global_id.html#compas_ifc.reader.IFCReader.get_entity_by_global_id" title="compas_ifc.reader.IFCReader.get_entity_by_global_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entity_by_global_id</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entity_by_global_id.html#compas_ifc.reader.IFCReader.get_entity_by_global_id" title="compas_ifc.reader.IFCReader.get_entity_by_global_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entity_by_global_id</span></code></a></p></td>
 <td><p>Returns the entity with the given global id.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entity_by_id.html#compas_ifc.reader.IFCReader.get_entity_by_id" title="compas_ifc.reader.IFCReader.get_entity_by_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entity_by_id</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entity_by_id.html#compas_ifc.reader.IFCReader.get_entity_by_id" title="compas_ifc.reader.IFCReader.get_entity_by_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entity_by_id</span></code></a></p></td>
 <td><p>Returns the entity with the given id.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.open.html#compas_ifc.reader.IFCReader.open" title="compas_ifc.reader.IFCReader.open"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.open.html#compas_ifc.reader.IFCReader.open" title="compas_ifc.reader.IFCReader.open"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
