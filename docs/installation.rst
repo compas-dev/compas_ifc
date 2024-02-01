@@ -9,7 +9,7 @@ Create an environment named ``research`` and install COMPAS from the package cha
 
 .. code-block:: bash
 
-    conda create -n ifc -c conda-forge compas compas_occ compas_view2 ifcopenshell
+    conda create -n ifc -c conda-forge compas compas_occ
 
 Activate the environment. 
 
@@ -17,9 +17,9 @@ Activate the environment.
 
     conda activate ifc
 
-Verify that the installation was successful.
+Install compas_ifc and optionally compas_viewer.
 
 .. code-block:: bash
 
-    pip install -e .
+    pip install compas_ifc compas_viewer
 

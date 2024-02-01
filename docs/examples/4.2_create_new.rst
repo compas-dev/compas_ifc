@@ -6,24 +6,15 @@ This example shows how to insert new geometry into an existing IFC model and how
 
 .. code-block:: python
 
-    import os
-
     import compas
     from compas.datastructures import Mesh
     from compas.geometry import Box
     from compas.geometry import Sphere
+    from compas.geometry import Frame
     from compas_ifc.model import Model
 
-    HERE = os.path.dirname(__file__)
-    FILE = os.path.join(
-        HERE,
-        "..",
-        "data",
-        "wall-with-opening-and-window.ifc",
-    )
 
-
-    model = Model(FILE)
+    model = Model("data/wall-with-opening-and-window.ifc")
 
     print("\n" + "*" * 53)
     print("Create Geometry Examples")
@@ -48,7 +39,7 @@ This example shows how to insert new geometry into an existing IFC model and how
     model = Model()
 
     box = Box.from_width_height_depth(5, 5, 5)
-    sphere = Sphere([10, 0, 0], 5)
+    sphere = Sphere(2, Frame([10, 0, 0]))
     mesh = Mesh.from_obj(compas.get("tubemesh.obj"))
 
     # A minimal hierarchy will be created if parent is not specified

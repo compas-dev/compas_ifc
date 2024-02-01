@@ -38,5 +38,3 @@ print("\nProperties")
 print("=" * 53 + "\n")
 
 pprint(window.properties)
-
-print()
