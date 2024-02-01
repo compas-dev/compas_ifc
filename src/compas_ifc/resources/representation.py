@@ -5,7 +5,6 @@ from compas.geometry import Box
 from compas.geometry import Cone
 from compas.geometry import Cylinder
 from compas.geometry import Sphere
-from compas_occ.brep import OCCBrep
 
 from .brep import brep_to_ifc_advanced_brep
 from .mesh import mesh_to_IfcPolygonalFaceSet
@@ -16,6 +15,8 @@ from .shapes import sphere_to_IfcSphere
 
 
 def write_body_representation(file, body, ifc_entity, context):
+    from compas_occ.brep import OCCBrep
+
     def _body_to_shape(body):
         if isinstance(body, Box):
             shape = box_to_IfcBlock(file, body)
