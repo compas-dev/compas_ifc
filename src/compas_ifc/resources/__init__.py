@@ -83,6 +83,7 @@ References
 .. [boundingbox] :ifc:`ifcboundingbox`
 
 """
+
 from .geometry import IfcCartesianPoint_to_point  # noqa: F401
 from .geometry import IfcDirection_to_vector  # noqa: F401
 from .geometry import IfcVector_to_vector  # noqa: F401
