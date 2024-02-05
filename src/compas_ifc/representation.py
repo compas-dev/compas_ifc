@@ -49,12 +49,14 @@ from compas.geometry import Box
 from compas.geometry import Scale
 from compas.geometry import Transformation
 from compas_ifc.entities.entity import Entity
+from compas_ifc.shapes import TessellatedBrep
 from compas_ifc.resources import IfcAxis2Placement3D_to_frame
 from compas_ifc.resources import IfcBoundingBox_to_box
 from compas_ifc.resources import IfcCartesianTransformationOperator3D_to_frame
 from compas_ifc.resources import IfcIndexedPolyCurve_to_lines
 from compas_ifc.resources import IfcLocalPlacement_to_transformation
 from compas_ifc.resources import IfcShape_to_brep
+from compas_ifc.resources import IfcShape_to_tessellatedbrep
 
 
 # this does not belong here
@@ -76,7 +78,24 @@ def IfcMappedItem_to_transformation(item) -> Transformation:
     return reduce(mul, matrices[::-1])
 
 
-def entity_body_geometry(entity: Entity, context="Model"):
+def entity_transformation(entity: Entity):
+    """
+    Construct the transformation of an entity.
+    """
+    return _entity_transformation(entity._entity, scale=entity.model.project.length_scale)
+
+
+def _entity_transformation(_entity, scale=1.0):
+
+    if _entity.ObjectPlacement:
+        scaled_placement = IfcLocalPlacement_to_transformation(_entity.ObjectPlacement, scale=scale)
+    else:
+        scaled_placement = Scale.from_factors([scale, scale, scale])
+
+    return scaled_placement
+
+
+def entity_body_geometry(entity: Entity, context="Model", use_occ=True, apply_transformation=True):
     """
     Construct the body geometry representations of an entity.
 
@@ -97,44 +116,53 @@ def entity_body_geometry(entity: Entity, context="Model"):
     if not representation:
         return bodies
 
-    scale = entity.model.project.length_scale
-    if entity._entity.ObjectPlacement:
-        scaled_placement = IfcLocalPlacement_to_transformation(entity._entity.ObjectPlacement, scale=scale)
-    else:
-        scaled_placement = Transformation()
     if representation.ContextOfItems.ContextType == context:
         for item in representation.Items:
-            brep = IfcShape_to_brep(item)
-            brep.transform(scaled_placement)
-            bodies.append(brep)
+            if use_occ:
+                brep = IfcShape_to_brep(item)
+                bodies.append(brep)
+            else:
+                tessellatedbrep = IfcShape_to_tessellatedbrep(item)
+                bodies.append(tessellatedbrep)
+
+    if apply_transformation:
+        transformation = entity_transformation(entity)
+        for body in bodies:
+            body.transform(transformation)
 
     return bodies
 
 
-def entity_opening_geometry(entity: Entity):
+def entity_opening_geometry(entity: Entity, use_occ=True, apply_transformation=True):
     """
     Construct the opening geometry representations of an entity.
     """
 
     voids = []
     if hasattr(entity._entity, "HasOpenings"):
-        scale = entity.model.project.length_scale
         for opening in entity._entity.HasOpenings:
             element = opening.RelatedOpeningElement
-            if element.ObjectPlacement:
-                scaled_placement = IfcLocalPlacement_to_transformation(element.ObjectPlacement, scale=scale)
-            else:
-                scaled_placement = Transformation()
+
+            if apply_transformation:
+                transformation = _entity_transformation(element, entity.model.project.length_scale)
+
             for representation in element.Representation.Representations:
                 for item in representation.Items:
-                    brep = IfcShape_to_brep(item)
-                    brep.transform(scaled_placement)
-                    voids.append(brep)
+                    if use_occ:
+                        brep = IfcShape_to_brep(item)
+                        if apply_transformation:
+                            brep.transform(transformation)
+                        voids.append(brep)
+                    else:
+                        tessellatedbrep = IfcShape_to_tessellatedbrep(item)
+                        if apply_transformation:
+                            tessellatedbrep.transform(transformation)
+                        voids.append(tessellatedbrep)
 
     return voids
 
 
-def entity_body_with_opening_geometry(entity: Entity = None, bodies=None, voids=None, context="Model"):
+def entity_body_with_opening_geometry(entity: Entity = None, bodies=None, voids=None, context="Model", use_occ=False):
     """
     Construct the body geometry representations of an entity.
 
@@ -143,28 +171,41 @@ def entity_body_with_opening_geometry(entity: Entity = None, bodies=None, voids=
     .. [1] :ifc:`body-geometry`
 
     """
-    bodies = bodies or entity_body_geometry(entity, context=context)
-    voids = voids or entity_opening_geometry(entity)
+    bodies = bodies or entity_body_geometry(entity, context=context, use_occ=use_occ, apply_transformation=True)
+    voids = voids or entity_opening_geometry(entity, use_occ=use_occ, apply_transformation=True)
 
     if not voids:
         return bodies
 
-    compound = TopoDS_Compound()
-    builder = BRep_Builder()
-    builder.MakeCompound(compound)
-    for brep in voids:
-        builder.Add(compound, brep.occ_shape)
-    B = OCCBrep.from_shape(compound)
+    if use_occ:
+        print("Using OCC for boolean operations.")
+        compound = TopoDS_Compound()
+        builder = BRep_Builder()
+        builder.MakeCompound(compound)
+        for brep in voids:
+            builder.Add(compound, brep.occ_shape)
+        B = OCCBrep.from_shape(compound)
 
-    shapes = []
-    for A in bodies:
-        try:
-            C: OCCBrep = A - B
-            C.make_solid()
+        shapes = []
+        for A in bodies:
+            try:
+                C: OCCBrep = A - B
+                C.make_solid()
+                shapes.append(C)
+            except Exception:
+                shapes.append(A)
+                print("Warning: Failed to subtract voids from body.")
+    else:
+        print("Using CGAL for boolean operations.")
+        from compas_cgal.booleans import boolean_difference
+
+        shapes = []
+        for A in bodies:
+            C = A
+            for B in voids:
+                vertices, faces = boolean_difference(C.to_vertices_and_faces(), B.to_vertices_and_faces())
+                C = TessellatedBrep(vertices=vertices, faces=faces)
             shapes.append(C)
-        except Exception:
-            shapes.append(A)
-            print("Warning: Failed to subtract voids from body.")
 
     return shapes
 
