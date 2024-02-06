@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Updated workflow to not use `conda` anymore.
+* Updated `Reader` to re-enable lazy loading.
 
 ### Removed
 
