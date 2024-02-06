@@ -1,5 +1,6 @@
 from compas_viewer.scene import ViewerSceneObject
 from .tessellatedbrep import TessellatedBrep
+from compas.datastructures import Mesh
 import numpy as np
 
 class TessellatedBrepObject(ViewerSceneObject):
@@ -20,3 +21,6 @@ class TessellatedBrepObject(ViewerSceneObject):
         positions = self.tessellatedbrep.vertices[self.tessellatedbrep.faces].reshape(-1, 3)
         elements = np.arange(len(positions)*3).reshape(-1, 3)
         return positions.tolist(), self.facecolors, elements.tolist()
+
+    def to_mesh(self):
+        return Mesh.from_vertices_and_faces(self.tessellatedbrep.vertices, self.tessellatedbrep.faces)
