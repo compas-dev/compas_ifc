@@ -28,6 +28,7 @@ class Product(ObjectDefinition):
         self._opening = None
         self._body_with_opening = None
         self._transformation = None
+        self._style = None
 
     def classifications(self) -> List[Dict[str, str]]:
         """
@@ -142,7 +143,14 @@ class Product(ObjectDefinition):
         from compas_ifc.representation import entity_body_with_opening_geometry
 
         if not self._body_with_opening:
-            self._body_with_opening = self.model.reader.get(self._entity.id()) or entity_body_with_opening_geometry(self)
+            cached_geometry = self.model.reader.get_preloaded_geometry(self)
+            if cached_geometry:
+                self._body_with_opening = cached_geometry
+            else:
+                # TODO: double check if this is still triggered with preloaded geometry
+                # raise
+                self._body_with_opening = entity_body_with_opening_geometry(self)
+
         return self._body_with_opening
 
     @body_with_opening.setter
@@ -160,3 +168,10 @@ class Product(ObjectDefinition):
     @transformation.setter
     def transformation(self, value):
         self._transformation = value
+
+    @property
+    def style(self):
+        if not self._style:
+            self._style = self.model.reader.get_preloaded_style(self)
+        # TODO: handle non-preloaded situation
+        return self._style

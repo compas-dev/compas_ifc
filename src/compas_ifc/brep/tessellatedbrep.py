@@ -15,9 +15,9 @@ class TessellatedBrep(Geometry):
         self.vertices = np.array(vertices).reshape(-1, 3)
         self.edges = np.array(edges).reshape(-1, 2)
         self.faces = np.array(faces).reshape(-1, 3)
-    
+
     def transform(self, transformation):
         self.vertices = transform_points_numpy(self.vertices, transformation)
-    
+
     def to_vertices_and_faces(self):
         return self.vertices, self.faces

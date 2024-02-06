@@ -58,8 +58,8 @@ class Model:
 
     """
 
-    def __init__(self, filepath: str = None, entity_types: dict = None) -> None:
-        self.reader = IFCReader(model=self, entity_types=entity_types)
+    def __init__(self, filepath: str = None, entity_types: dict = None, use_occ=True) -> None:
+        self.reader = IFCReader(model=self, entity_types=entity_types, use_occ=use_occ)
         self.writer = IFCWriter(model=self)
         self._new_entities = set()
         self._projects = None

@@ -50,14 +50,16 @@ class IFCReader(object):
 
     """
 
-    def __init__(self, model, entity_types: dict = None):
+    def __init__(self, model, entity_types: dict = None, use_occ=True):
         self.filepath = None
         self.model = model
         self.entity_types = entity_types
+        self.use_occ = use_occ
         self._file = ifcopenshell.file()
         self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
         self._entitymap = {}
         self._geometrymap = {}
+        self._stylemap = {}
 
     def open(self, filepath: str):
         self.filepath = filepath
@@ -134,56 +136,68 @@ class IFCReader(object):
     def get_preloaded_geometry(self, entity):
         return self._geometrymap.get(entity._entity.id())
 
+    def get_preloaded_style(self, entity):
+        return self._stylemap.get(entity._entity.id(), {})
+
     def load_geometries(self, include=None, exclude=None):
         """Load all the geometries of the IFC file using a fast multithreaded iterator."""
         print("Loading geometries...")
         settings = ifcopenshell.geom.settings()
-        iterator = ifcopenshell.geom.iterator(settings, self._file, multiprocessing.cpu_count(), include=include, exclude=exclude)
+        if self.use_occ:
+            settings.set(settings.USE_PYTHON_OPENCASCADE, True)
+
+        iterator = ifcopenshell.geom.iterator(
+            settings, self._file, multiprocessing.cpu_count(), include=include, exclude=exclude
+        )
         start = time.time()
         if iterator.initialize():
             while True:
                 shape = iterator.get()
-                matrix = shape.transformation.matrix.data
-                faces = shape.geometry.faces
-                edges = shape.geometry.edges
-                verts = shape.geometry.verts
-                brep = TessellatedBrep(vertices=verts, edges=edges, faces=faces)
+                if self.use_occ:
+                    from compas_occ.brep import OCCBrep
 
+                    brep = OCCBrep.from_shape(shape.geometry)
 
-                matrix = np.array(matrix).reshape((4, 3))
-                matrix = np.hstack([
-                    matrix, 
-                    np.array([[0], [0], [0], [1]])
-                ])
-                matrix = matrix.transpose()
-                transformation = Transformation.from_matrix(matrix.tolist())
+                    shellcolors = []
+                    for style_id, style in zip(shape.style_ids, shape.styles):
+                        if style_id == -1:
+                            shellcolors.append((0.5, 0.5, 0.5, 1.0))
+                        else:
+                            shellcolors.append(style)
 
-                facecolors = []
-                opacity=0
-                for m_id in shape.geometry.material_ids:
-                    if m_id == -1:
-                        facecolors.append([0.5, 0.5, 0.5])
-                        facecolors.append([0.5, 0.5, 0.5])
-                        facecolors.append([0.5, 0.5, 0.5])
-                        continue
-                    material = shape.geometry.materials[m_id]
-                    color = material.diffuse
-                    facecolors.append(color)
-                    facecolors.append(color)
-                    facecolors.append(color)
-                    opacity += 1 - material.transparency
-                
-                opacity /= len(shape.geometry.material_ids)
+                    self._geometrymap[shape.data.id] = brep
+                    self._stylemap[shape.data.id] = {"shellcolors": shellcolors, "use_rgba": True}
 
-                if opacity < 1 and opacity > 0.5:
-                    opacity = 0.5
+                else:
 
-                self._geometrymap[shape.id] = {
-                    "brep": brep,
-                    "transformation": transformation,
-                    "facecolors": facecolors,
-                    "opacity": opacity
-                }
+                    matrix = shape.transformation.matrix.data
+                    faces = shape.geometry.faces
+                    edges = shape.geometry.edges
+                    verts = shape.geometry.verts
+
+                    matrix = np.array(matrix).reshape((4, 3))
+                    matrix = np.hstack([matrix, np.array([[0], [0], [0], [1]])])
+                    matrix = matrix.transpose()
+                    transformation = Transformation.from_matrix(matrix.tolist())
+
+                    facecolors = []
+                    for m_id in shape.geometry.material_ids:
+                        if m_id == -1:
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            continue
+                        material = shape.geometry.materials[m_id]
+                        color = (*material.diffuse, 1 - material.transparency)
+                        facecolors.append(color)
+                        facecolors.append(color)
+                        facecolors.append(color)
+
+                    brep = TessellatedBrep(vertices=verts, edges=edges, faces=faces)
+
+                    brep.transform(transformation)
+                    self._geometrymap[shape.id] = brep
+                    self._stylemap[shape.id] = {"facecolors": facecolors}
 
                 if not iterator.next():
                     break
