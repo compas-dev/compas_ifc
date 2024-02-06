@@ -3,9 +3,10 @@ from .tessellatedbrep import TessellatedBrep
 import numpy as np
 
 class TessellatedBrepObject(ViewerSceneObject):
-    def __init__(self, tessellatedbrep: TessellatedBrep, **kwargs):
+    def __init__(self, tessellatedbrep: TessellatedBrep, facecolors=None, **kwargs):
         super().__init__(item=tessellatedbrep, **kwargs)
         self.tessellatedbrep = tessellatedbrep
+        self.facecolors = facecolors
 
     def _read_lines_data(self):
         positions = self.tessellatedbrep.vertices
@@ -16,9 +17,6 @@ class TessellatedBrepObject(ViewerSceneObject):
         return positions.tolist(), colors.tolist(), elements.tolist()
     
     def _read_frontfaces_data(self):
-        positions = self.tessellatedbrep.vertices
-        elements = self.tessellatedbrep.faces
-        colors = []
-        default_color = self.facescolor["_default"]
-        colors = np.full(shape=(len(elements), 3), fill_value=default_color)
-        return positions.tolist(), colors.tolist(), elements.tolist()
+        positions = self.tessellatedbrep.vertices[self.tessellatedbrep.faces].reshape(-1, 3)
+        elements = np.arange(len(positions)*3).reshape(-1, 3)
+        return positions.tolist(), self.facecolors, elements.tolist()
