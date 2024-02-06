@@ -58,7 +58,6 @@ class IFCReader(object):
         self._file = ifcopenshell.open(filepath)
         self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
         self._entitymap = {}
-        self.get_all_entities()
         print("Opened file: {}".format(filepath))
 
     def get_entity(self, entity: ifcopenshell.entity_instance):
@@ -94,16 +93,8 @@ class IFCReader(object):
         List[:class:`compas_ifc.entities.entity.Entity`]
             The entities of the given type.
         """
-        entities = []
-        for entity in self._entitymap.values():
-            if accept_subtypes:
-                if entity._entity.is_a(entity_type):
-                    entities.append(entity)
-            else:
-                if entity.ifc_type == entity_type:
-                    entities.append(entity)
-
-        return entities
+        _entities = self._file.by_type(entity_type, include_subtypes=accept_subtypes)
+        return [self.get_entity(_entity) for _entity in _entities]
 
     def get_entities_by_name(self, entity_name) -> List[Entity]:
         """Returns all the entities with the given name."""
