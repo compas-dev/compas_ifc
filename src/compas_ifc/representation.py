@@ -49,7 +49,7 @@ from compas.geometry import Box
 from compas.geometry import Scale
 from compas.geometry import Transformation
 from compas_ifc.entities.entity import Entity
-from compas_ifc.shapes import TessellatedBrep
+from compas_ifc.brep import TessellatedBrep
 from compas_ifc.resources import IfcAxis2Placement3D_to_frame
 from compas_ifc.resources import IfcBoundingBox_to_box
 from compas_ifc.resources import IfcCartesianTransformationOperator3D_to_frame

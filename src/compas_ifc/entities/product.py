@@ -142,7 +142,7 @@ class Product(ObjectDefinition):
         from compas_ifc.representation import entity_body_with_opening_geometry
 
         if not self._body_with_opening:
-            self._body_with_opening = entity_body_with_opening_geometry(self)
+            self._body_with_opening = self.model.reader.get(self._entity.id()) or entity_body_with_opening_geometry(self)
         return self._body_with_opening
 
     @body_with_opening.setter

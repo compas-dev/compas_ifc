@@ -9,7 +9,7 @@ from compas.datastructures import Mesh
 from compas_ifc.resources.geometry import IfcAxis2Placement3D_to_frame
 from compas_ifc.resources.geometry import IfcDirection_to_vector
 from compas_ifc.resources.geometry import IfcProfileDef_to_curve
-from compas_ifc.shapes import TessellatedBrep
+from compas_ifc.brep import TessellatedBrep
 
 from ifcopenshell import geom
 
