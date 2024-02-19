@@ -75,8 +75,8 @@ class IFCWriter(object):
     def default_project(self):
         if not self._default_project:
             if not self.model.projects:
-                self._default_project = run(
-                    "root.create_entity", self.file, ifc_class="IfcProject", name="Default Project"
+                self._default_project = self.file.create_entity(
+                    "IfcProject", GlobalId=self.create_guid(), Name="Default Project"
                 )
                 run("unit.assign_unit", self.file)
             else:
@@ -87,12 +87,14 @@ class IFCWriter(object):
     def default_site(self):
         if not self._default_site:
             if not self.model.sites:
-                self._default_site = run("root.create_entity", self.file, ifc_class="IfcSite", name="Default Site")
-                run(
-                    "aggregate.assign_object",
-                    self.file,
-                    product=self._default_site,
-                    relating_object=self.default_project,
+                self._default_site = self.file.create_entity(
+                    "IfcSite", Name="Default Site", GlobalId=self.create_guid()
+                )
+                self.file.create_entity(
+                    "IfcRelAggregates",
+                    GlobalId=self.create_guid(),
+                    RelatingObject=self.default_project,
+                    RelatedObjects=[self._default_site],
                 )
             else:
                 self._default_site = self.write_entity(self.model.sites[0])
@@ -102,14 +104,14 @@ class IFCWriter(object):
     def default_building(self):
         if not self._default_building:
             if not self.model.buildings:
-                self._default_building = run(
-                    "root.create_entity", self.file, ifc_class="IfcBuilding", name="Default Building"
+                self._default_building = self.file.create_entity(
+                    "IfcBuilding", GlobalId=self.create_guid(), Name="Default Building"
                 )
-                run(
-                    "aggregate.assign_object",
-                    self.file,
-                    product=self._default_building,
-                    relating_object=self.default_site,
+                self.file.create_entity(
+                    "IfcRelAggregates",
+                    GlobalId=self.create_guid(),
+                    RelatingObject=self.default_site,
+                    RelatedObjects=[self._default_building],
                 )
             else:
                 self._default_building = self.write_entity(self.model.buildings[0])
@@ -119,22 +121,25 @@ class IFCWriter(object):
     def default_building_storey(self):
         if not self._default_building_storey:
             if not self.model.building_storeys:
-                self._default_building_storey = run(
-                    "root.create_entity", self.file, ifc_class="IfcBuildingStorey", name="Default Storey"
+                self._default_building_storey = self.file.create_entity(
+                    "IfcBuildingStorey", GlobalId=self.create_guid(), Name="Default Storey"
                 )
-                run(
-                    "aggregate.assign_object",
-                    self.file,
-                    product=self._default_building_storey,
-                    relating_object=self.default_building,
+                self.file.create_entity(
+                    "IfcRelAggregates",
+                    GlobalId=self.create_guid(),
+                    RelatingObject=self.default_building,
+                    RelatedObjects=[self._default_building_storey],
                 )
             else:
                 self._default_building_storey = self.write_entity(self.model.building_storeys[0])
         return self._default_building_storey
 
+    def create_guid(self):
+        return ifcopenshell.guid.new()
+
     def reset(self):
         """Resets the writer to start with a new ifc file."""
-        self.file = ifcopenshell.file()
+        self.file = ifcopenshell.file(schema=self.model.schema.name())
         self._entitymap = {}
         self._default_context = None
         self._default_body_context = None
@@ -232,9 +237,16 @@ class IFCWriter(object):
         child = self._entitymap[entity]
 
         if isinstance(entity, Element):
-            run("spatial.assign_container", self.file, relating_structure=parent, product=child)
+            self.file.create_entity(
+                "IfcRelContainedInSpatialStructure",
+                GlobalId=self.create_guid(),
+                RelatingStructure=parent,
+                RelatedElements=[child],
+            )
         else:
-            run("aggregate.assign_object", self.file, relating_object=parent, product=child)
+            self.file.create_entity(
+                "IfcRelAggregates", GlobalId=self.create_guid(), RelatingObject=parent, RelatedObjects=[child]
+            )
 
     def write_entity(self, entity: Entity) -> None:
         """Writes the given entity recursively with all its referencing attributes to the ifc file."""
@@ -250,7 +262,13 @@ class IFCWriter(object):
             else:
                 attributes[key] = value
 
-        ifc_entity = self.file.create_entity(entity.ifc_type, **attributes)
+        # ifc_entity = self.file.create_entity(entity.ifc_type, **attributes)
+        ifc_entity = self.file.create_entity(entity.ifc_type)
+        for key, value in attributes.items():
+            if value is not None:
+                print(key, value)
+                setattr(ifc_entity, key, value)
+
         self._entitymap[entity] = ifc_entity
 
         if not entity._entity:

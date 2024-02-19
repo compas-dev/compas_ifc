@@ -5,7 +5,8 @@ from compas.geometry import Box
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Transformation
-from compas.datastructures import Mesh
+
+# from compas.datastructures import Mesh
 from compas_ifc.resources.geometry import IfcAxis2Placement3D_to_frame
 from compas_ifc.resources.geometry import IfcDirection_to_vector
 from compas_ifc.resources.geometry import IfcProfileDef_to_curve
