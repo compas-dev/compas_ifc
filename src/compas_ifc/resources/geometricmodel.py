@@ -5,14 +5,11 @@ from compas.geometry import Box
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Transformation
-
-# from compas.datastructures import Mesh
 from compas_ifc.resources.geometry import IfcAxis2Placement3D_to_frame
 from compas_ifc.resources.geometry import IfcDirection_to_vector
 from compas_ifc.resources.geometry import IfcProfileDef_to_curve
-from compas_ifc.brep import TessellatedBrep
 
-from ifcopenshell import geom
+import ifcopenshell
 
 
 def IfcAdvancedBrep_to_brep(advanced_brep):
@@ -230,9 +227,9 @@ def IfcTriangulatedFaceSet_to_brep(triangulated_face_set):
 def IfcShape_to_brep(ifc_shape):
     from compas_occ.brep import OCCBrep
 
-    settings = geom.settings()
+    settings = ifcopenshell.geom.settings()
     settings.set(settings.USE_PYTHON_OPENCASCADE, True)
-    shape = geom.create_shape(settings, ifc_shape)
+    shape = ifcopenshell.geom.create_shape(settings, ifc_shape)
 
     brep = OCCBrep.from_shape(shape)
     brep.sew()
@@ -243,8 +240,10 @@ def IfcShape_to_brep(ifc_shape):
 
 
 def IfcShape_to_tessellatedbrep(ifc_shape):
-    settings = geom.settings()
-    shape = geom.create_shape(settings, ifc_shape)
+    from compas_ifc.brep import TessellatedBrep
+
+    settings = ifcopenshell.geom.settings()
+    shape = ifcopenshell.geom.create_shape(settings, ifc_shape)
     return TessellatedBrep(vertices=shape.verts, edges=shape.edges, faces=shape.faces)
 
 

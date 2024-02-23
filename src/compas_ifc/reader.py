@@ -4,7 +4,6 @@ import ifcopenshell
 import os
 import multiprocessing
 import numpy as np
-from .brep import TessellatedBrep
 from compas.geometry import Transformation
 import time
 
@@ -142,6 +141,8 @@ class IFCReader(object):
     def load_geometries(self, include=None, exclude=None):
         """Load all the geometries of the IFC file using a fast multithreaded iterator."""
         print("Loading geometries...")
+        import ifcopenshell.geom
+
         settings = ifcopenshell.geom.settings()
         if self.use_occ:
             settings.set(settings.USE_PYTHON_OPENCASCADE, True)
@@ -169,6 +170,7 @@ class IFCReader(object):
                     self._stylemap[shape.data.id] = {"shellcolors": shellcolors, "use_rgba": True}
 
                 else:
+                    from .brep import TessellatedBrep
 
                     matrix = shape.transformation.matrix.data
                     faces = shape.geometry.faces
