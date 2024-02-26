@@ -7,32 +7,41 @@ else:
 
 
 class IfcProduct(IfcProduct):
-    @property
-    def geometries(self):
-        from compas_ifc.resources import IfcShape_to_brep
-        from compas_ifc.resources import IfcIndexedPolyCurve_to_lines
-
-        geometries = {}
-        representation = self.Representation
-        if representation:
-            for repr in representation.Representations:
-                identifier = repr.RepresentationIdentifier
-                context = repr.ContextOfItems.ContextType
-                _type = repr.RepresentationType
-                if identifier == "Body":
-                    geometries["body"] = [IfcShape_to_brep(item.entity) for item in repr.Items]
-                if identifier == "Axis":
-                    # items = [IfcIndexedPolyCurve_to_lines(item.entity) for item in repr.Items]
-                    geometries["axis"] = "Not implemented"
-
-        geometries["opening"] = "Not implemented"
-        geometries["body_without_opening"] = "Not implemented"
-
-        return geometries
 
     @property
     def transformation(self):
-        # TODO: handle scale at Project level
-        from compas_ifc.resources import IfcLocalPlacement_to_transformation
+        from compas_ifc.conversions.geometries import entity_transformation
 
-        return IfcLocalPlacement_to_transformation(self.ObjectPlacement.entity)
+        return entity_transformation(self)
+
+    @property
+    def body_with_opening(self):
+        return self.reader.get_preloaded_geometry(self)
+
+    @property
+    def style(self):
+        return self.reader.get_preloaded_style(self)
+
+    @property
+    def body(self):
+        from compas_ifc.conversions.geometries import entity_body_geometry
+
+        if getattr(self, "_body", None) is None:
+            self._body = entity_body_geometry(self, use_occ=self.reader.use_occ)
+        return self._body
+
+    @body.setter
+    def body(self, value):
+        self._body = value
+
+    @property
+    def opening(self):
+        from compas_ifc.conversions.geometries import entity_opening_geometry
+
+        if getattr(self, "_opening", None) is None:
+            self._opening = entity_opening_geometry(self, use_occ=self.reader.use_occ)
+        return self._opening
+
+    @opening.setter
+    def opening(self, value):
+        self._opening = value

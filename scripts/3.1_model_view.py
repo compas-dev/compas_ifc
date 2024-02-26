@@ -5,7 +5,7 @@ model = Model("data/wall-with-opening-and-window.ifc")
 
 viewer = Viewer()
 
-for entity in model.get_entities_by_type("IfcBuildingElement"):
-    viewer.add(entity.body_with_opening, name=entity.name, **entity.style)
+for entity in model.building_elements:
+    viewer.add(entity.body_with_opening, name=entity.Name, **entity.style)
 
 viewer.show()

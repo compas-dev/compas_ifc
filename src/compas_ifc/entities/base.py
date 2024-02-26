@@ -1,8 +1,12 @@
 from compas.data import Data
 from ifcopenshell import entity_instance
 from compas.datastructures import Tree, TreeNode
-
 import importlib
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from compas_ifc.reader import IFCReader
+    from compas_ifc.model import Model
 
 
 class Base(Data):
@@ -15,7 +19,7 @@ class Base(Data):
     reader : IfcReader
     """
 
-    def __new__(cls, entity: entity_instance, reader=None):
+    def __new__(cls, entity: entity_instance, reader: "IFCReader" = None):
 
         if reader is None:
             schema = "IFC4"
@@ -60,6 +64,10 @@ class Base(Data):
 
     def _get_inverse_attribute(self, name):
         return [self.reader.from_entity(attr) for attr in getattr(self.entity, name)]
+
+    @property
+    def model(self) -> "Model":
+        return self.reader.model # TODO: rather convoluted.
 
     def is_a(self, type_name):
         return self.entity.is_a(type_name)

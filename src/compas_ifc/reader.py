@@ -1,15 +1,24 @@
-import ifcopenshell
 from compas_ifc.entities.base import Base
+from compas.geometry import Transformation
+import ifcopenshell
 import os
+import multiprocessing
+import numpy as np
+import time
 
 
 class IFCReader(object):
-    def __init__(self, filepath):
+    def __init__(self, filepath, model, use_occ=False):
         self.filepath = filepath
+        self.model = model
+        self.use_occ = use_occ
         self._file = ifcopenshell.open(filepath)
         self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
         self._entitymap = {}
+        self._geometrymap = {}
+        self._stylemap = {}
         print("IFC file loaded: {}".format(filepath))
+        self.load_geometries()
 
     def file_size(self):
         file_stats = os.stat(self.filepath)
@@ -43,6 +52,81 @@ class IFCReader(object):
 
     def get_entity_by_id(self, id) -> Base:
         return self.from_entity(self._file.by_id(id))
+
+    def get_preloaded_geometry(self, entity):
+        return self._geometrymap.get(entity.entity.id())
+
+    def get_preloaded_style(self, entity):
+        return self._stylemap.get(entity.entity.id(), {})
+
+    def load_geometries(self, include=None, exclude=None):
+        """Load all the geometries of the IFC file using a fast multithreaded iterator."""
+        print("Loading geometries...")
+        import ifcopenshell.geom
+
+        settings = ifcopenshell.geom.settings()
+        if self.use_occ:
+            settings.set(settings.USE_PYTHON_OPENCASCADE, True)
+
+        iterator = ifcopenshell.geom.iterator(
+            settings, self._file, multiprocessing.cpu_count(), include=include, exclude=exclude
+        )
+        start = time.time()
+        if iterator.initialize():
+            while True:
+                shape = iterator.get()
+                if self.use_occ:
+                    from compas_occ.brep import OCCBrep
+
+                    brep = OCCBrep.from_shape(shape.geometry)
+
+                    shellcolors = []
+                    for style_id, style in zip(shape.style_ids, shape.styles):
+                        if style_id == -1:
+                            shellcolors.append((0.5, 0.5, 0.5, 1.0))
+                        else:
+                            shellcolors.append(style)
+
+                    self._geometrymap[shape.data.id] = brep
+                    self._stylemap[shape.data.id] = {"shellcolors": shellcolors, "use_rgba": True}
+
+                else:
+                    from .brep import TessellatedBrep
+
+                    matrix = shape.transformation.matrix.data
+                    faces = shape.geometry.faces
+                    edges = shape.geometry.edges
+                    verts = shape.geometry.verts
+
+                    matrix = np.array(matrix).reshape((4, 3))
+                    matrix = np.hstack([matrix, np.array([[0], [0], [0], [1]])])
+                    matrix = matrix.transpose()
+                    transformation = Transformation.from_matrix(matrix.tolist())
+
+                    facecolors = []
+                    for m_id in shape.geometry.material_ids:
+                        if m_id == -1:
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            continue
+                        material = shape.geometry.materials[m_id]
+                        color = (*material.diffuse, 1 - material.transparency)
+                        facecolors.append(color)
+                        facecolors.append(color)
+                        facecolors.append(color)
+
+                    brep = TessellatedBrep(vertices=verts, edges=edges, faces=faces)
+
+                    brep.transform(transformation)
+                    self._geometrymap[shape.id] = brep
+                    self._stylemap[shape.id] = {"facecolors": facecolors}
+
+                if not iterator.next():
+                    break
+
+        print(f"Time to load all {len(self._geometrymap)} geometries {(time.time() - start):.3f}s")
+
 
 if __name__ == "__main__":
     reader = IFCReader("data/wall-with-opening-and-window.ifc")
