@@ -28,7 +28,7 @@ optional_requirements = {}
 
 setup(
     name="compas_ifc",
-    version="0.2.0",
+    version="0.3.0",
     description="Package for working with IFC files.",
     long_description=long_description,
     long_description_content_type="text/markdown",

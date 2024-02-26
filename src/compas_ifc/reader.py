@@ -1,6 +1,11 @@
 from typing import List
 
 import ifcopenshell
+import os
+import multiprocessing
+import numpy as np
+from compas.geometry import Transformation
+import time
 
 from compas_ifc.entities.entity import Entity
 
@@ -44,21 +49,24 @@ class IFCReader(object):
 
     """
 
-    def __init__(self, model, entity_types: dict = None):
+    def __init__(self, model, entity_types: dict = None, use_occ=True):
         self.filepath = None
         self.model = model
         self.entity_types = entity_types
+        self.use_occ = use_occ
         self._file = ifcopenshell.file()
         self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
         self._entitymap = {}
+        self._geometrymap = {}
+        self._stylemap = {}
 
     def open(self, filepath: str):
         self.filepath = filepath
         self._file = ifcopenshell.open(filepath)
         self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
         self._entitymap = {}
-        self.get_all_entities()
         print("Opened file: {}".format(filepath))
+        self.load_geometries()
 
     def get_entity(self, entity: ifcopenshell.entity_instance):
         """
@@ -93,16 +101,8 @@ class IFCReader(object):
         List[:class:`compas_ifc.entities.entity.Entity`]
             The entities of the given type.
         """
-        entities = []
-        for entity in self._entitymap.values():
-            if accept_subtypes:
-                if entity._entity.is_a(entity_type):
-                    entities.append(entity)
-            else:
-                if entity.ifc_type == entity_type:
-                    entities.append(entity)
-
-        return entities
+        _entities = self._file.by_type(entity_type, include_subtypes=accept_subtypes)
+        return [self.get_entity(_entity) for _entity in _entities]
 
     def get_entities_by_name(self, entity_name) -> List[Entity]:
         """Returns all the entities with the given name."""
@@ -124,3 +124,84 @@ class IFCReader(object):
     def get_all_entities(self) -> List[Entity]:
         """Returns all the entities in the model."""
         return [self.get_entity(_entity) for _entity in self._file]
+
+    def file_size(self):
+        """Returns the size of the IFC file in bytes."""
+        file_stats = os.stat(self.filepath)
+        size_in_mb = file_stats.st_size / (1024 * 1024)
+        size_in_mb = round(size_in_mb, 2)
+        return size_in_mb
+
+    def get_preloaded_geometry(self, entity):
+        return self._geometrymap.get(entity._entity.id())
+
+    def get_preloaded_style(self, entity):
+        return self._stylemap.get(entity._entity.id(), {})
+
+    def load_geometries(self, include=None, exclude=None):
+        """Load all the geometries of the IFC file using a fast multithreaded iterator."""
+        print("Loading geometries...")
+        import ifcopenshell.geom
+
+        settings = ifcopenshell.geom.settings()
+        if self.use_occ:
+            settings.set(settings.USE_PYTHON_OPENCASCADE, True)
+
+        iterator = ifcopenshell.geom.iterator(
+            settings, self._file, multiprocessing.cpu_count(), include=include, exclude=exclude
+        )
+        start = time.time()
+        if iterator.initialize():
+            while True:
+                shape = iterator.get()
+                if self.use_occ:
+                    from compas_occ.brep import OCCBrep
+
+                    brep = OCCBrep.from_shape(shape.geometry)
+
+                    shellcolors = []
+                    for style_id, style in zip(shape.style_ids, shape.styles):
+                        if style_id == -1:
+                            shellcolors.append((0.5, 0.5, 0.5, 1.0))
+                        else:
+                            shellcolors.append(style)
+
+                    self._geometrymap[shape.data.id] = brep
+                    self._stylemap[shape.data.id] = {"shellcolors": shellcolors, "use_rgba": True}
+
+                else:
+                    from .brep import TessellatedBrep
+
+                    matrix = shape.transformation.matrix.data
+                    faces = shape.geometry.faces
+                    edges = shape.geometry.edges
+                    verts = shape.geometry.verts
+
+                    matrix = np.array(matrix).reshape((4, 3))
+                    matrix = np.hstack([matrix, np.array([[0], [0], [0], [1]])])
+                    matrix = matrix.transpose()
+                    transformation = Transformation.from_matrix(matrix.tolist())
+
+                    facecolors = []
+                    for m_id in shape.geometry.material_ids:
+                        if m_id == -1:
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            continue
+                        material = shape.geometry.materials[m_id]
+                        color = (*material.diffuse, 1 - material.transparency)
+                        facecolors.append(color)
+                        facecolors.append(color)
+                        facecolors.append(color)
+
+                    brep = TessellatedBrep(vertices=verts, edges=edges, faces=faces)
+
+                    brep.transform(transformation)
+                    self._geometrymap[shape.id] = brep
+                    self._stylemap[shape.id] = {"facecolors": facecolors}
+
+                if not iterator.next():
+                    break
+
+        print(f"Time to load all {len(self._geometrymap)} geometries {(time.time() - start):.3f}s")

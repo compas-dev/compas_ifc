@@ -1,6 +1,4 @@
 # from compas_occ.geometry import OCCNurbsCurve
-from compas_occ.brep import BRepFace
-
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -118,7 +116,9 @@ def IfcCartesianTransformationOperator3D_to_frame(operator) -> Frame:
     return Frame(point, xaxis, yaxis)
 
 
-def IfcProfileDef_to_curve(profile_def) -> BRepFace:
+def IfcProfileDef_to_curve(profile_def):
+    from compas_occ.brep import OCCBrepFace
+
     pd = profile_def
 
     if pd.is_a("IfcParameterizedProfileDef"):
@@ -130,7 +130,7 @@ def IfcProfileDef_to_curve(profile_def) -> BRepFace:
                 frame.point + frame.xaxis * -0.5 * pd.XDim + frame.yaxis * +0.5 * pd.YDim,
                 frame.point + frame.xaxis * -0.5 * pd.XDim + frame.yaxis * -0.5 * pd.YDim,
             ]
-            return BRepFace.from_polygon(points)
+            return OCCBrepFace.from_polygon(points)
 
         else:
             raise NotImplementedError(pd)
@@ -149,11 +149,13 @@ def IfcProfileDef_to_curve(profile_def) -> BRepFace:
 
 
 def IfcCurve_to_face(curve):
+    from compas_occ.brep import OCCBrepFace
+
     if curve.is_a("IfcIndexedPolyCurve"):
         points = [(x, y, 0) for x, y in curve.Points[0]]
-        return BRepFace.from_polygon(points)
+        return OCCBrepFace.from_polygon(points)
     elif curve.is_a("IfcPolyline"):
         points = [IfcCartesianPoint_to_point(pt) for pt in curve.Points]
-        return BRepFace.from_polygon(points)
+        return OCCBrepFace.from_polygon(points)
     else:
         raise NotImplementedError(curve)

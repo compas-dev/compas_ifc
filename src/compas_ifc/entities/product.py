@@ -27,6 +27,8 @@ class Product(ObjectDefinition):
         self._body = None
         self._opening = None
         self._body_with_opening = None
+        self._transformation = None
+        self._style = None
 
     def classifications(self) -> List[Dict[str, str]]:
         """
@@ -117,7 +119,7 @@ class Product(ObjectDefinition):
         from compas_ifc.representation import entity_body_geometry
 
         if not self._body:
-            self._body = entity_body_geometry(self)
+            self._body = entity_body_geometry(self, use_occ=self.model.reader.use_occ)
         return self._body
 
     @body.setter
@@ -129,7 +131,7 @@ class Product(ObjectDefinition):
         from compas_ifc.representation import entity_opening_geometry
 
         if not self._opening:
-            self._opening = entity_opening_geometry(self)
+            self._opening = entity_opening_geometry(self, use_occ=self.model.reader.use_occ)
         return self._opening
 
     @opening.setter
@@ -141,9 +143,35 @@ class Product(ObjectDefinition):
         from compas_ifc.representation import entity_body_with_opening_geometry
 
         if not self._body_with_opening:
-            self._body_with_opening = entity_body_with_opening_geometry(self, self.body, self.opening)
+            cached_geometry = self.model.reader.get_preloaded_geometry(self)
+            if cached_geometry:
+                self._body_with_opening = cached_geometry
+            else:
+                # TODO: double check if this is still triggered with preloaded geometry
+                # raise
+                self._body_with_opening = entity_body_with_opening_geometry(self, use_occ=self.model.reader.use_occ)
+
         return self._body_with_opening
 
     @body_with_opening.setter
     def body_with_opening(self, value):
         self._body_with_opening = value
+
+    @property
+    def transformation(self):
+        from compas_ifc.representation import entity_transformation
+
+        if not self._transformation:
+            self._transformation = entity_transformation(self)
+        return self._transformation
+
+    @transformation.setter
+    def transformation(self, value):
+        self._transformation = value
+
+    @property
+    def style(self):
+        if not self._style:
+            self._style = self.model.reader.get_preloaded_style(self)
+        # TODO: handle non-preloaded situation
+        return self._style

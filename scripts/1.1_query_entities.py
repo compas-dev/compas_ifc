@@ -1,16 +1,6 @@
-import os
-
 from compas_ifc.model import Model
 
-HERE = os.path.dirname(__file__)
-FILE = os.path.join(
-    HERE,
-    "..",
-    "data",
-    "wall-with-opening-and-window.ifc",
-)
-
-model = Model(FILE)
+model = Model("data/wall-with-opening-and-window.ifc")
 
 print("\n" + "*" * 53)
 print("Query Examples")

@@ -1,17 +1,7 @@
-import os
-from pprint import pprint
-
 from compas_ifc.model import Model
 
-HERE = os.path.dirname(__file__)
-FILE = os.path.join(
-    HERE,
-    "..",
-    "data",
-    "wall-with-opening-and-window.ifc",
-)
+model = Model("data/wall-with-opening-and-window.ifc")
 
-model = Model(FILE)
 project = model.project
 
 print("\n" + "*" * 53)

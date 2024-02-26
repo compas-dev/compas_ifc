@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+* Updated workflow to not use `conda` anymore.
+* Updated `Reader` to re-enable lazy loading.
+
+### Removed
+
+
+## [0.3.0] 2024-02-01
+
+### Added
+
 * Added `entity_opening_geometry`.
 * Added `entity_body_with_opening_geometry`.
 * Added `opening` attribute to `Product`.
@@ -22,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * `entity_body_geometry` no longer includes openings.
 * `parent` of `Element` will now also consider `decompose` relation.
+* Updated all APIs to COMPAS 2.
 
 ### Removed
 

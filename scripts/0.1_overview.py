@@ -1,13 +1,4 @@
-"""
-Overview of IFC file
+from compas_ifc.model import Model
 
-Number of entities
-Size of file
-Project info
-number of key type entities
-Plot of spatial hierarchy
-"""
-
-
-model = IfcModel("...")
-model.summary()
+model = Model("data/wall-with-opening-and-window.ifc")
+model.print_summary()

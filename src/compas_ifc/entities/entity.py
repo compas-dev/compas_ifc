@@ -54,7 +54,7 @@ class Entity:
 
     @property
     def ifc_type(self):
-        if not self._ifc_type and self._entity:
+        if self._entity:
             self._ifc_type = self._entity.is_a()
         else:
             self._ifc_type = "Ifc" + type(self).__name__
