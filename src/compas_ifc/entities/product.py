@@ -119,7 +119,7 @@ class Product(ObjectDefinition):
         from compas_ifc.representation import entity_body_geometry
 
         if not self._body:
-            self._body = entity_body_geometry(self)
+            self._body = entity_body_geometry(self, use_occ=self.model.reader.use_occ)
         return self._body
 
     @body.setter
@@ -131,7 +131,7 @@ class Product(ObjectDefinition):
         from compas_ifc.representation import entity_opening_geometry
 
         if not self._opening:
-            self._opening = entity_opening_geometry(self)
+            self._opening = entity_opening_geometry(self, use_occ=self.model.reader.use_occ)
         return self._opening
 
     @opening.setter
@@ -149,7 +149,7 @@ class Product(ObjectDefinition):
             else:
                 # TODO: double check if this is still triggered with preloaded geometry
                 # raise
-                self._body_with_opening = entity_body_with_opening_geometry(self)
+                self._body_with_opening = entity_body_with_opening_geometry(self, use_occ=self.model.reader.use_occ)
 
         return self._body_with_opening
 

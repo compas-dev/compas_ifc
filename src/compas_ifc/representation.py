@@ -95,7 +95,7 @@ def _entity_transformation(_entity, scale=1.0):
     return scaled_placement
 
 
-def entity_body_geometry(entity: Entity, context="Model", use_occ=True, apply_transformation=True):
+def entity_body_geometry(entity: Entity, context="Model", use_occ=False, apply_transformation=True):
     """
     Construct the body geometry representations of an entity.
 
@@ -133,7 +133,7 @@ def entity_body_geometry(entity: Entity, context="Model", use_occ=True, apply_tr
     return bodies
 
 
-def entity_opening_geometry(entity: Entity, use_occ=True, apply_transformation=True):
+def entity_opening_geometry(entity: Entity, use_occ=False, apply_transformation=True):
     """
     Construct the opening geometry representations of an entity.
     """

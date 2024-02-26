@@ -266,7 +266,6 @@ class IFCWriter(object):
         ifc_entity = self.file.create_entity(entity.ifc_type)
         for key, value in attributes.items():
             if value is not None:
-                print(key, value)
                 setattr(ifc_entity, key, value)
 
         self._entitymap[entity] = ifc_entity
