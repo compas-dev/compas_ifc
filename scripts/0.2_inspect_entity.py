@@ -6,7 +6,7 @@ IFC entities always have these three aspects:
 - (geometry)
 """
 
-from compas_ifc._model import IfcModel
+from compas_ifc.model import IfcModel
 from compas_ifc.entities.generated.IFC4 import IfcWall
 
 

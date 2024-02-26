@@ -15,7 +15,7 @@ class Base(Data):
     reader : IfcReader
     """
 
-    def __new__(cls, entity, reader=None):
+    def __new__(cls, entity: entity_instance, reader=None):
 
         if reader is None:
             schema = "IFC4"
@@ -33,7 +33,7 @@ class Base(Data):
         ifc_cls = getattr(classes, cls_name, None)
         return super(Base, cls).__new__(ifc_cls)
 
-    def __init__(self, entity=None, reader=None):
+    def __init__(self, entity: entity_instance = None, reader=None):
         self.reader = reader
         self.entity = entity
 
@@ -61,6 +61,9 @@ class Base(Data):
     def _get_inverse_attribute(self, name):
         return [self.reader.from_entity(attr) for attr in getattr(self.entity, name)]
 
+    def is_a(self, type_name):
+        return self.entity.is_a(type_name)
+
     def all_attribute_names(self):
         # all_attributes = []
         # def get_attr_names(cls):
@@ -75,6 +78,9 @@ class Base(Data):
         del info["type"]
         return list(info.keys())
 
+    def to_dict(self):
+        return {key: getattr(self, key) for key in self}
+
     def print_attributes(self, max_depth=2):
         attr_tree = Tree()
         root = EntityNode(name=f"ROOT: {self} [{self.__class__.__name__}]")
@@ -82,11 +88,13 @@ class Base(Data):
 
         def add_entity(entity, node, depth):
             if depth < max_depth:
+                if isinstance(entity, list):
+                    entity = dict(enumerate(entity))
                 for key in entity:
                     sub_entity = entity[key]
                     sub_node = EntityNode(name=f"{key}: {sub_entity} [{sub_entity.__class__.__name__}]")
                     node.add(sub_node)
-                    if isinstance(sub_entity, Base):
+                    if isinstance(sub_entity, (Base, list)):
                         add_entity(sub_entity, sub_node, depth + 1)
 
         add_entity(self, root, 0)
@@ -114,7 +122,7 @@ class Base(Data):
             for child_entity in entity.children:
                 name = f"{child_entity}"
                 if child_entity == self:
-                    name += "*"
+                    name = "**" + name + "**"
                 node = EntityNode(name=name)
                 parent_node.add(node)
                 add_entity(child_entity, node)
