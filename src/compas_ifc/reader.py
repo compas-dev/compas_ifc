@@ -204,4 +204,4 @@ class IFCReader(object):
                 if not iterator.next():
                     break
 
-        print("Time to load all geometries ", time.time() - start)
+        print(f"Time to load all {len(self._geometrymap)} geometries {(time.time() - start):.3f}s")
