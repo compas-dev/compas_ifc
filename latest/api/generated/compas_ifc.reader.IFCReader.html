@@ -560,7 +560,7 @@ document.write(`
 <h1>IFCReader</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_ifc.reader.IFCReader">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_ifc.reader.</span></span><span class="sig-name descname"><span class="pre">IFCReader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_ifc.reader.</span></span><span class="sig-name descname"><span class="pre">IFCReader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_occ</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>A class for reading IFC files.</p>
 <dl class="field-list">
@@ -628,7 +628,16 @@ If that is not the case, they are also accessible here.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_entity_by_id.html#compas_ifc.reader.IFCReader.get_entity_by_id" title="compas_ifc.reader.IFCReader.get_entity_by_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entity_by_id</span></code></a></p></td>
 <td><p>Returns the entity with the given id.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.open.html#compas_ifc.reader.IFCReader.open" title="compas_ifc.reader.IFCReader.open"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_preloaded_geometry.html#compas_ifc.reader.IFCReader.get_preloaded_geometry" title="compas_ifc.reader.IFCReader.get_preloaded_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_preloaded_geometry</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.get_preloaded_style.html#compas_ifc.reader.IFCReader.get_preloaded_style" title="compas_ifc.reader.IFCReader.get_preloaded_style"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_preloaded_style</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.load_geometries.html#compas_ifc.reader.IFCReader.load_geometries" title="compas_ifc.reader.IFCReader.load_geometries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_geometries</span></code></a></p></td>
+<td><p>Load all the geometries of the IFC file using a fast multithreaded iterator.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.reader.IFCReader.open.html#compas_ifc.reader.IFCReader.open" title="compas_ifc.reader.IFCReader.open"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
