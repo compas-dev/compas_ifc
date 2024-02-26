@@ -13,6 +13,7 @@ from compas_ifc.entities.site import Site
 
 from .reader import IFCReader
 from .writer import IFCWriter
+import ifcopenshell
 
 
 class Model:
@@ -58,8 +59,8 @@ class Model:
 
     """
 
-    def __init__(self, filepath: str = None, entity_types: dict = None) -> None:
-        self.reader = IFCReader(model=self, entity_types=entity_types)
+    def __init__(self, filepath: str = None, entity_types: dict = None, use_occ=False, schema=None) -> None:
+        self.reader = IFCReader(model=self, entity_types=entity_types, use_occ=use_occ)
         self.writer = IFCWriter(model=self)
         self._new_entities = set()
         self._projects = None
@@ -69,6 +70,10 @@ class Model:
         self._elements = None
         self._building_elements = None
         self._geographic_elements = None
+        self._schema = None
+        if schema:
+            self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
+
         if filepath:
             self.open(filepath)
 
@@ -124,7 +129,7 @@ class Model:
 
     @property
     def schema(self) -> str:
-        return self.reader._schema
+        return self._schema or self.reader._schema
 
     @property
     def project(self) -> Project:

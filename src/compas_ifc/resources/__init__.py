@@ -110,6 +110,7 @@ from .geometricmodel import IfcPolygonalFaceSet_to_brep  # noqa: F401
 from .geometricmodel import IfcTessellatedFaceSet_to_brep  # noqa: F401
 from .geometricmodel import IfcTriangulatedFaceSet_to_brep  # noqa: F401
 from .geometricmodel import IfcShape_to_brep  # noqa: F401
+from .geometricmodel import IfcShape_to_tessellatedbrep  # noqa: F401
 
 # from .geometricmodel import IfcBoxedHalfSpace
 # from .geometricmodel import IfcCartesianPointList

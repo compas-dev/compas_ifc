@@ -25,3 +25,24 @@ def mesh_to_IfcPolygonalFaceSet(file: ifcopenshell.file, mesh: Mesh) -> ifcopens
         Coordinates=file.createIfcCartesianPointList3D(vertices),
         Faces=faces,
     )
+
+
+def mesh_to_IfcShellBasedSurfaceModel(file: ifcopenshell.file, mesh: Mesh) -> ifcopenshell.entity_instance:
+    """
+    Convert a COMPAS mesh to an IFC PolygonalFaceSet.
+    """
+    vertices = {}
+    for key, attr in mesh.vertices(True):
+        vertex = file.createIfcCartesianPoint((float(attr["x"]), float(attr["y"]), float(attr["z"])))
+        vertices[key] = vertex
+
+    faces = []
+    for fkey in mesh.faces():
+        indexes = [vertices[key] for key in mesh.face_vertices(fkey)]
+        polyloop = file.create_entity("IfcPolyLoop", indexes)
+        bound = file.create_entity("IfcFaceOuterBound", polyloop, True)
+        face = file.create_entity("IfcFace", [bound])
+        faces.append(face)
+
+    shell = file.create_entity("IfcOpenShell", faces)
+    return file.create_entity("IfcShellBasedSurfaceModel", [shell])
