@@ -1,7 +1,8 @@
 from compas.data import Data
 from ifcopenshell import entity_instance
-import inspect
 from compas.datastructures import Tree, TreeNode
+
+import importlib
 
 
 class Base(Data):
@@ -14,19 +15,25 @@ class Base(Data):
     reader : IfcReader
     """
 
-    def __new__(cls, entity, *args, **kwargs):
-        # try:
-        #     from . import generated
-        # except ImportError:
-        #     raise ImportError("compas_ifc classes was not generated. Run `python -m compas_ifc.entities.generator`")
+    def __new__(cls, entity, reader=None):
 
-        from . import generated
+        if reader is None:
+            schema = "IFC4"
+        else:
+            schema = reader._schema.name()
+
+        try:
+            classes = importlib.import_module(f"compas_ifc.entities.generated.{schema}")
+        except ImportError:
+            raise ImportError(
+                f"compas_ifc classes for schema {schema} was not generated. Run `python -m compas_ifc.entities.generator`"
+            )
 
         cls_name = entity.is_a()
-        ifc_cls = getattr(generated, cls_name, None)
+        ifc_cls = getattr(classes, cls_name, None)
         return super(Base, cls).__new__(ifc_cls)
 
-    def __init__(self, entity=None, reader=None, **kwargs):
+    def __init__(self, entity=None, reader=None):
         self.reader = reader
         self.entity = entity
 
@@ -92,7 +99,7 @@ class Base(Data):
         raise NotImplementedError
 
     def print_spatial_hierarchy(self):
-        from compas_ifc.entities.generated import IfcObjectDefinition
+        from compas_ifc.entities.generated.IFC4 import IfcObjectDefinition
 
         if not isinstance(self, IfcObjectDefinition):
             raise TypeError("Only IfcObjectDefinition has spatial hierarchy")
@@ -121,7 +128,7 @@ class Base(Data):
         print("")
 
     def print_properties(self):
-        from compas_ifc.entities.generated import IfcObject
+        from compas_ifc.entities.generated.IFC4 import IfcObject
 
         if not isinstance(self, IfcObject):
             raise TypeError("Only IfcObject has properties")

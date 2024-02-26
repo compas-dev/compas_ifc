@@ -2,8 +2,10 @@ import ifcopenshell
 from compas_ifc.entities import extensions
 import inspect
 import types
+import os
 
-schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name("IFC4")
+schema_name = "IFC4"
+schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema_name)
 
 # TODO: maybe make attribute class??
 
@@ -69,6 +71,10 @@ def flaten_select_list(select_type, initial_list=None):
 
 if __name__ == "__main__":
     init_string = ""
+
+    folder = f"src/compas_ifc/entities/generated/{schema_name}/"
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
     for declaration in schema.declarations():
         class_string = template
@@ -136,8 +142,8 @@ if __name__ == "__main__":
 
             init_string += init_template.replace("CLASS_NAME", name)
 
-            with open(f"src/compas_ifc/entities/generated/{name}.py", "w") as f:
+            with open(f"src/compas_ifc/entities/generated/{schema_name}/{name}.py", "w") as f:
                 f.write(class_string)
 
-    with open(f"src/compas_ifc/entities/generated/__init__.py", "w") as f:
+    with open(f"src/compas_ifc/entities/generated/{schema_name}/__init__.py", "w") as f:
         f.write(init_string)

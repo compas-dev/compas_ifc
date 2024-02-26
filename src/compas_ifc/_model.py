@@ -1,10 +1,10 @@
 from compas.data import Data
 from compas_ifc._reader import IFCReader
 from compas_ifc.entities.base import Base
-from compas_ifc.entities.generated import IfcProject
-from compas_ifc.entities.generated import IfcSite
-from compas_ifc.entities.generated import IfcBuilding
-from compas_ifc.entities.generated import IfcBuildingElement
+from compas_ifc.entities.generated.IFC4 import IfcProject
+from compas_ifc.entities.generated.IFC4 import IfcSite
+from compas_ifc.entities.generated.IFC4 import IfcBuilding
+from compas_ifc.entities.generated.IFC4 import IfcBuildingElement
 
 
 class IfcModel(Data):

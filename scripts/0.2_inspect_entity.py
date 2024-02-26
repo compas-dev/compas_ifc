@@ -7,7 +7,7 @@ IFC entities always have these three aspects:
 """
 
 from compas_ifc._model import IfcModel
-from compas_ifc.entities.generated import IfcWall
+from compas_ifc.entities.generated.IFC4 import IfcWall
 
 
 model = IfcModel("data/wall-with-opening-and-window.ifc")

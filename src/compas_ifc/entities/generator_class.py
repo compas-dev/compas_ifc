@@ -1,6 +1,7 @@
 import ifcopenshell
 import inspect
 import types
+import os
 from compas_ifc.entities import extensions
 
 
@@ -9,6 +10,10 @@ class Generator:
         self.schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
 
     def generate(self):
+        folder = f"src/compas_ifc/entities/generated/{self.schema.name()}/"
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
         doc_string = """
 .. autosummary::
     :toctree: generated/
@@ -39,12 +44,12 @@ class Generator:
                 init_string += f"from .{name.lower()} import {name}\n"
                 doc_string += f"    {name}\n"
 
-                with open(f"src/compas_ifc/entities/generated/{name.lower()}.py", "w") as f:
+                with open(f"src/compas_ifc/entities/generated/{self.schema.name()}/{name.lower()}.py", "w") as f:
                     f.write(class_string)
 
         init_string = f'"""{doc_string}"""\n\n{init_string}'
 
-        with open("src/compas_ifc/entities/generated/__init__.py", "w") as f:
+        with open(f"src/compas_ifc/entities/generated/{self.schema.name()}/__init__.py", "w") as f:
             f.write(init_string)
 
 
