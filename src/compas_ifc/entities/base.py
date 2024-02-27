@@ -2,7 +2,7 @@ from compas.data import Data
 from ifcopenshell import entity_instance
 from compas.datastructures import Tree, TreeNode
 import importlib
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, get_type_hints
 
 if TYPE_CHECKING:
     from compas_ifc.reader import IFCReader
@@ -62,12 +62,21 @@ class Base(Data):
         else:
             return attr
 
+    def _set_attribute(self, name, value):
+        cls = self.__class__
+        getter_type_hints = get_type_hints(getattr(cls, name).fget)
+        value_type = getter_type_hints["return"]
+        if not isinstance(value, value_type):
+            raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
+        else:
+            setattr(self.entity, name, value)
+
     def _get_inverse_attribute(self, name):
         return [self.reader.from_entity(attr) for attr in getattr(self.entity, name)]
 
     @property
     def model(self) -> "Model":
-        return self.reader.model # TODO: rather convoluted.
+        return self.reader.model  # TODO: rather convoluted.
 
     def is_a(self, type_name):
         return self.entity.is_a(type_name)
