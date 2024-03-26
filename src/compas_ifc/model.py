@@ -59,7 +59,7 @@ class Model:
 
     """
 
-    def __init__(self, filepath: str = None, entity_types: dict = None, use_occ=False, schema=None) -> None:
+    def __init__(self, filepath: str = None, entity_types: dict = None, use_occ=False, schema=None, load_geometries=True) -> None:
         self.reader = IFCReader(model=self, entity_types=entity_types, use_occ=use_occ)
         self.writer = IFCWriter(model=self)
         self._new_entities = set()
@@ -75,10 +75,10 @@ class Model:
             self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
 
         if filepath:
-            self.open(filepath)
+            self.open(filepath, load_geometries=load_geometries)
 
-    def open(self, filepath: str) -> None:
-        self.reader.open(filepath)
+    def open(self, filepath: str, load_geometries=True) -> None:
+        self.reader.open(filepath, load_geometries=load_geometries)
 
     def save(self, filepath: str) -> None:
         self.writer.save(filepath)

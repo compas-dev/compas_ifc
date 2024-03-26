@@ -53,6 +53,12 @@ class Entity:
         return self._declaration
 
     @property
+    def id(self):
+        if self._entity:
+            return self._entity.id()
+        return None
+
+    @property
     def ifc_type(self):
         if self._entity:
             self._ifc_type = self._entity.is_a()
