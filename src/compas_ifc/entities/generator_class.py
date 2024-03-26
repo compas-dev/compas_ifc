@@ -196,15 +196,27 @@ class AtrtributeGenerator:
             aggregation_string = self.get_aggregation_type(type_of_element)
             return f"list[{aggregation_string}]"
         else:
-            if type_of_element.declared_type().as_select_type():
-                type_of_element_string = self.get_select_type(type_of_element)
-            elif type_of_element.declared_type().as_type_declaration():
-                type_of_element_string = self.get_type_declaration(type_of_element)
+            declared_type = type_of_element.declared_type()
+            if isinstance(declared_type, str):
+                # TODO: this duplicates the code
+                TYPE_MAP = {
+                    "integer": "int",
+                    "logical": "bool",
+                    "boolean": "bool",
+                    "real": "float",
+                    "binary": "bytes",
+                }
+                type_of_element_string = TYPE_MAP[declared_type]
             else:
-                type_of_element_string = type_of_element.declared_type().name()
-                if type_of_element_string != self.parent.name:
-                    self.imports.add(f"from .{type_of_element_string.lower()} import {type_of_element_string}")
-                type_of_element_string = f'"{type_of_element_string}"'
+                if type_of_element.declared_type().as_select_type():
+                    type_of_element_string = self.get_select_type(type_of_element)
+                elif type_of_element.declared_type().as_type_declaration():
+                    type_of_element_string = self.get_type_declaration(type_of_element)
+                else:
+                    type_of_element_string = type_of_element.declared_type().name()
+                    if type_of_element_string != self.parent.name:
+                        self.imports.add(f"from .{type_of_element_string.lower()} import {type_of_element_string}")
+                    type_of_element_string = f'"{type_of_element_string}"'
             return f"list[{type_of_element_string}]"
 
     def get_select_type(self, attribute_type):
@@ -257,6 +269,9 @@ class AtrtributeGenerator:
             TYPE_MAP = {
                 "integer": "int",
                 "logical": "bool",
+                "boolean": "bool",
+                "real": "float",
+                "string": "str",
             }
             self.type = TYPE_MAP[attribute_type]
         elif attribute_type.declared_type().as_select_type():
@@ -373,5 +388,5 @@ class EnumGenerator:
 
 
 if __name__ == "__main__":
-    generator = Generator()
+    generator = Generator(schema="IFC2X3")
     generator.generate()

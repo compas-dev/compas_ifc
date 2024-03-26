@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 
 class Model(Data):
-    def __init__(self, path, use_occ=False):
-        self.reader = IFCReader(path, self, use_occ=use_occ)
+    def __init__(self, path, use_occ=False, load_geometries=True):
+        self.reader = IFCReader(path, self, use_occ=use_occ, load_geometries=load_geometries)
 
     @property
     def entities(self) -> Generator["Base", None, None]:

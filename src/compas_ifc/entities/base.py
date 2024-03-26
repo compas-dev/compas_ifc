@@ -77,6 +77,10 @@ class Base(Data):
     @property
     def model(self) -> "Model":
         return self.reader.model  # TODO: rather convoluted.
+    
+    @property
+    def schema(self):
+        return self.reader._schema.name()
 
     def is_a(self, type_name):
         return self.entity.is_a(type_name)
@@ -124,7 +128,7 @@ class Base(Data):
         raise NotImplementedError
 
     def print_spatial_hierarchy(self):
-        from compas_ifc.entities.generated.IFC4 import IfcObjectDefinition
+        IfcObjectDefinition = getattr(importlib.import_module(f"compas_ifc.entities.generated.{self.schema}"), "IfcObjectDefinition")
 
         if not isinstance(self, IfcObjectDefinition):
             raise TypeError("Only IfcObjectDefinition has spatial hierarchy")
@@ -153,7 +157,7 @@ class Base(Data):
         print("")
 
     def print_properties(self):
-        from compas_ifc.entities.generated.IFC4 import IfcObject
+        IfcObject = getattr(importlib.import_module(f"compas_ifc.entities.generated.{self.schema}"), "IfcObject")
 
         if not isinstance(self, IfcObject):
             raise TypeError("Only IfcObject has properties")

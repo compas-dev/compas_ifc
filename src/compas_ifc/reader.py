@@ -8,7 +8,7 @@ import time
 
 
 class IFCReader(object):
-    def __init__(self, filepath, model, use_occ=False):
+    def __init__(self, filepath, model, use_occ=False, load_geometries=True):
         self.filepath = filepath
         self.model = model
         self.use_occ = use_occ
@@ -18,7 +18,8 @@ class IFCReader(object):
         self._geometrymap = {}
         self._stylemap = {}
         print("IFC file loaded: {}".format(filepath))
-        self.load_geometries()
+        if load_geometries:
+            self.load_geometries()
 
     def file_size(self):
         file_stats = os.stat(self.filepath)
