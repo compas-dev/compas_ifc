@@ -59,7 +59,9 @@ class Model:
 
     """
 
-    def __init__(self, filepath: str = None, entity_types: dict = None, use_occ=False, schema=None, load_geometries=True) -> None:
+    def __init__(
+        self, filepath: str = None, entity_types: dict = None, use_occ=False, schema=None, load_geometries=True
+    ) -> None:
         self.reader = IFCReader(model=self, entity_types=entity_types, use_occ=use_occ)
         self.writer = IFCWriter(model=self)
         self._new_entities = set()
