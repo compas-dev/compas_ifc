@@ -1,8 +1,8 @@
 import ifcopenshell
 import numpy as np
 
-from compas.utilities import geometric_key
 from typing import List
+from compas.tolerance import TOL
 
 from .primities import point_to_ifc_cartesian_point
 from .primities import occ_plane_to_frame
@@ -35,14 +35,14 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep) -> List[ifcopenshel
     lines = {}
 
     def get_ifc_point(point):
-        key = geometric_key(point)
+        key = TOL.geometric_key(point)
         if key in points:
             return points[key]
         points[key] = point_to_ifc_cartesian_point(file, point)
         return points[key]
 
     def get_ifc_line(edge):
-        line_key = geometric_key(edge.first_vertex.point) + "-" + geometric_key(edge.last_vertex.point)
+        line_key = TOL.geometric_key(edge.first_vertex.point) + "-" + TOL.geometric_key(edge.last_vertex.point)
         return lines.get(line_key)
 
     def get_ifc_curve(edge):
@@ -120,7 +120,7 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep) -> List[ifcopenshel
                 SameSense=True,
             )
 
-            line_key = geometric_key(edge.first_vertex.point) + "-" + geometric_key(edge.last_vertex.point)
+            line_key = TOL.geometric_key(edge.first_vertex.point) + "-" + TOL.geometric_key(edge.last_vertex.point)
             lines[line_key] = IfcEdgeCurve
 
         else:
