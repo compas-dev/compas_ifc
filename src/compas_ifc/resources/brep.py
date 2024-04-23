@@ -46,7 +46,7 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep) -> List[ifcopenshel
         return lines.get(line_key)
 
     def get_ifc_curve(edge):
-        curve = edge.curve
+        curve = edge.nurbscurve
         for occ_curve in curves:
             if occ_curve.IsEqual(curve.occ_curve, 1e-6):
                 return curves[occ_curve]
@@ -59,12 +59,12 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep) -> List[ifcopenshel
                 continue
 
             start_vertex = file.create_entity("IfcVertexPoint", get_ifc_point(edge.first_vertex.point))
-            if edge.curve.is_closed:
+            if edge.nurbscurve.is_closed:
                 end_vertex = start_vertex
             else:
                 end_vertex = file.create_entity("IfcVertexPoint", get_ifc_point(edge.last_vertex.point))
 
-            curve = edge.curve
+            curve = edge.nurbscurve
             control_points = [get_ifc_point(point) for point in curve.points]
             weights = curve.weights
 
@@ -194,13 +194,13 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep) -> List[ifcopenshel
                             ifc_row.append(get_ifc_point(point))
                         ifc_control_points.append(ifc_row)
 
-                    if face.nurbssurface.is_u_periodic:
+                    if face.nurbssurface.is_periodic_u:
                         new_row = []
                         for point in control_points[0]:
                             new_row.append(get_ifc_point(point))
                         ifc_control_points.append(new_row)
 
-                    if face.nurbssurface.is_v_periodic:
+                    if face.nurbssurface.is_periodic_v:
                         for i, row in enumerate(ifc_control_points):
                             row.append(get_ifc_point(control_points[i % len(control_points)][0]))
 
@@ -215,20 +215,20 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep) -> List[ifcopenshel
                             ifc_row.append(float(weight))
                         ifc_weights.append(ifc_row)
 
-                    if face.nurbssurface.is_u_periodic:
+                    if face.nurbssurface.is_periodic_u:
                         ifc_weights.append(ifc_weights[0])
-                    if face.nurbssurface.is_v_periodic:
+                    if face.nurbssurface.is_periodic_v:
                         for i, row in enumerate(ifc_weights):
                             row.append(row[0])
 
                     IfcBSplineSurfaceWithKnots = file.create_entity(
                         "IfcRationalBSplineSurfaceWithKnots",
-                        UDegree=face.nurbssurface.u_degree,
-                        VDegree=face.nurbssurface.v_degree,
+                        UDegree=face.nurbssurface.degree_u,
+                        VDegree=face.nurbssurface.degree_v,
                         ControlPointsList=ifc_control_points,
                         SurfaceForm="UNSPECIFIED",
-                        UClosed=face.nurbssurface.is_u_periodic,
-                        VClosed=face.nurbssurface.is_v_periodic,
+                        UClosed=face.nurbssurface.is_periodic_u,
+                        VClosed=face.nurbssurface.is_periodic_v,
                         SelfIntersect=False,  # Seems no way to get this from OCC
                         UMultiplicities=u_mults,
                         VMultiplicities=v_mults,
