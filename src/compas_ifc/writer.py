@@ -274,6 +274,10 @@ class IFCWriter(object):
             # Entity created in memory
             self.write_entity_representation(entity)
 
+        if isinstance(entity, Project):
+            print("Writing project: " + str(entity))
+            run("unit.assign_unit", self.file)
+
         return ifc_entity
 
     def write_entity_pset(self, entity: Entity):
@@ -283,7 +287,10 @@ class IFCWriter(object):
         """Writes the representations of the given entity to the ifc file."""
         if isinstance(entity, Product):
             try:
-                write_body_representation(self.file, entity.body, self._entitymap[entity], self.default_body_context)
+                if entity.body:
+                    write_body_representation(
+                        self.file, entity.body, self._entitymap[entity], self.default_body_context
+                    )
             except Exception as e:
                 print("Error writing body representation of entity: " + str(entity))
                 print(e)
