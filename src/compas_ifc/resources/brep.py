@@ -46,7 +46,7 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep) -> List[ifcopenshel
         return lines.get(line_key)
 
     def get_ifc_curve(edge):
-        curve = edge.nurbscurve
+        curve = edge.curve
         for occ_curve in curves:
             if occ_curve.IsEqual(curve.occ_curve, 1e-6):
                 return curves[occ_curve]
@@ -59,12 +59,12 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep) -> List[ifcopenshel
                 continue
 
             start_vertex = file.create_entity("IfcVertexPoint", get_ifc_point(edge.first_vertex.point))
-            if edge.nurbscurve.is_closed:
+            if edge.curve.is_closed:
                 end_vertex = start_vertex
             else:
                 end_vertex = file.create_entity("IfcVertexPoint", get_ifc_point(edge.last_vertex.point))
 
-            curve = edge.nurbscurve
+            curve = edge.curve
             control_points = [get_ifc_point(point) for point in curve.points]
             weights = curve.weights
 
