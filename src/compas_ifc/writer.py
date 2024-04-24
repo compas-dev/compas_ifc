@@ -7,6 +7,7 @@ from .entities.entity import Entity
 from .entities.product import Product
 from .entities.project import Project
 from .resources.representation import write_body_representation
+from .resources.shapes import frame_to_ifc_axis2_placement_3d
 
 
 class IFCWriter(object):
@@ -43,6 +44,7 @@ class IFCWriter(object):
         self.file = None
         self.model = model
         self._entitymap = {}
+        self._representationmap = {}
         self._default_context = None
         self._default_body_context = None
         self._default_project = None
@@ -273,6 +275,7 @@ class IFCWriter(object):
         if not entity._entity:
             # Entity created in memory
             self.write_entity_representation(entity)
+            self.write_entity_placement(entity)
 
         if isinstance(entity, Project):
             print("Writing project: " + str(entity))
@@ -286,12 +289,26 @@ class IFCWriter(object):
     def write_entity_representation(self, entity: Entity):
         """Writes the representations of the given entity to the ifc file."""
         if isinstance(entity, Product):
-            # try:
-                if entity.body:
-                    write_body_representation(
+            if entity.body:
+                if not id(entity.body) in self._representationmap:
+                    representation = write_body_representation(
                         self.file, entity.body, self._entitymap[entity], self.default_body_context
                     )
-            # except Exception as e:
-            #     print("Error writing body representation of entity: " + str(entity))
-            #     print(e)
-            #     pass
+                    self._representationmap[id(entity.body)] = representation
+                else:
+                    representation = self._representationmap[id(entity.body)]
+                    run(
+                        "geometry.assign_representation",
+                        self.file,
+                        product=self._entitymap[entity],
+                        representation=representation,
+                    )
+
+    def write_entity_placement(self, entity: Entity):
+        """Writes the placement of the given entity to the ifc file."""
+        if isinstance(entity, Product):
+            if entity.frame:
+                # TODO: consider parent frame
+                loacal_placement = frame_to_ifc_axis2_placement_3d(self.file, entity.frame)
+                placement = self.file.create_entity("IfcLocalPlacement", RelativePlacement=loacal_placement)
+                self._entitymap[entity].ObjectPlacement = placement

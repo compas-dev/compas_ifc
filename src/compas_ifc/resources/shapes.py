@@ -6,6 +6,10 @@ from compas.geometry import Cylinder
 from compas.geometry import Sphere
 
 
+def frame_to_ifc_axis2_placement_3d(file, frame):
+    return create_IfcAxis2Placement3D(file, point=frame.point, dir1=frame.zaxis, dir2=frame.xaxis)
+
+
 def create_IfcAxis2Placement3D(file, point=None, dir1=None, dir2=None):
     """
     Create an IFC Axis2Placement3D from a point, a direction and a second direction.

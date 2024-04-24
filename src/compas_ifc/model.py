@@ -1,6 +1,7 @@
 from typing import List
 
 from compas_ifc.entities.element import Element
+from compas_ifc.entities.product import Product
 from compas_ifc.entities.building import Building
 from compas_ifc.entities.buildingelements import BuildingElement
 from compas_ifc.entities.geographicelement import GeographicElement
@@ -180,7 +181,7 @@ class Model:
             self._geographic_elements = self.get_entities_by_type("IfcGeographicElement")
         return self._geographic_elements
 
-    def create(self, cls, attributes, parent=None):
+    def create(self, cls, attributes, parent=None, frame=None):
         """Create an entity and add it to the model.
 
         Parameters
@@ -199,6 +200,8 @@ class Model:
         """
         entity = cls(None, self)
         entity.set_attributes(attributes)
+        if isinstance(entity, Product) and frame:
+            entity.frame = frame
         if parent:
             if isinstance(entity, ObjectDefinition):
                 entity.parent = parent
@@ -212,7 +215,7 @@ class Model:
 
         return entity
 
-    def insert(self, geometry, parent=None, name=None, description=None, cls=None) -> BuildingElementProxy:
+    def insert(self, geometry, parent=None, name=None, description=None, cls=None, frame=None) -> BuildingElementProxy:
         """Insert a geometry into the model. The geometry will be wrapped in a building element proxy.
 
         Parameters
@@ -236,6 +239,7 @@ class Model:
         element = cls(None, self)
         element.body = geometry
         element.parent = parent
+        element.frame = frame
         element["Name"] = name
         element["Description"] = description
         self._new_entities.add(element)

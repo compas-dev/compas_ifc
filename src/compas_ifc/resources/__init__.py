@@ -94,6 +94,7 @@ from .geometry import IfcCartesianTransformationOperator3D_to_frame  # noqa: F40
 
 from .geometricconstraint import IfcGridPlacement_to_transformation  # noqa: F401
 from .geometricconstraint import IfcLocalPlacement_to_transformation  # noqa: F401
+from .geometricconstraint import IfcLocalPlacement_to_frame  # noqa: F401
 
 from .geometricmodel import IfcAdvancedBrep_to_brep  # noqa: F401
 from .geometricmodel import IfcAdvancedBrepWithVoids_to_brep  # noqa: F401
@@ -111,6 +112,8 @@ from .geometricmodel import IfcTessellatedFaceSet_to_brep  # noqa: F401
 from .geometricmodel import IfcTriangulatedFaceSet_to_brep  # noqa: F401
 from .geometricmodel import IfcShape_to_brep  # noqa: F401
 from .geometricmodel import IfcShape_to_tessellatedbrep  # noqa: F401
+
+from .shapes import frame_to_ifc_axis2_placement_3d  # noqa: F401
 
 # from .geometricmodel import IfcBoxedHalfSpace
 # from .geometricmodel import IfcCartesianPointList

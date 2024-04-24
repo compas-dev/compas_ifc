@@ -55,6 +55,7 @@ from compas_ifc.resources import IfcBoundingBox_to_box
 from compas_ifc.resources import IfcCartesianTransformationOperator3D_to_frame
 from compas_ifc.resources import IfcIndexedPolyCurve_to_lines
 from compas_ifc.resources import IfcLocalPlacement_to_transformation
+from compas_ifc.resources import IfcLocalPlacement_to_frame
 from compas_ifc.resources import IfcShape_to_brep
 from compas_ifc.resources import IfcShape_to_tessellatedbrep
 
@@ -93,6 +94,13 @@ def _entity_transformation(_entity, scale=1.0):
         scaled_placement = Scale.from_factors([scale, scale, scale])
 
     return scaled_placement
+
+
+def entity_frame(entity: Entity):
+    """
+    Construct the frame of an entity.
+    """
+    return IfcLocalPlacement_to_frame(entity._entity.ObjectPlacement)
 
 
 def entity_body_geometry(entity: Entity, context="Model", use_occ=False, apply_transformation=True):

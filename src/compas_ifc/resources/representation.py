@@ -65,3 +65,5 @@ def write_body_representation(file, body, ifc_entity, context):
     )
 
     run("geometry.assign_representation", file, product=ifc_entity, representation=representation)
+
+    return representation
