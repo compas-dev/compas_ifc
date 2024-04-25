@@ -6,8 +6,11 @@ from .entities.element import Element
 from .entities.entity import Entity
 from .entities.product import Product
 from .entities.project import Project
+from .entities.root import Root
 from .resources.representation import write_body_representation
 from .resources.shapes import frame_to_ifc_axis2_placement_3d
+
+import time
 
 
 class IFCWriter(object):
@@ -51,6 +54,7 @@ class IFCWriter(object):
         self._default_site = None
         self._default_building = None
         self._default_building_storey = None
+        self._default_owner_history = None
 
     @property
     def default_context(self):
@@ -135,6 +139,36 @@ class IFCWriter(object):
             else:
                 self._default_building_storey = self.write_entity(self.model.building_storeys[0])
         return self._default_building_storey
+
+    @property
+    def default_owner_history(self):
+
+        if not self._default_owner_history:
+            import compas_ifc
+
+            person = self.file.create_entity("IfcPerson")
+            organization = self.file.create_entity("IfcOrganization", Name="compas.dev")
+            person_and_org = self.file.create_entity(
+                "IfcPersonAndOrganization", ThePerson=person, TheOrganization=organization
+            )
+            application = self.file.create_entity(
+                "IfcApplication",
+                ApplicationDeveloper=organization,
+                Version=compas_ifc.__version__,
+                ApplicationFullName="compas_ifc",
+                ApplicationIdentifier="compas_ifc v" + compas_ifc.__version__,
+            )
+
+            owner_history = self.file.create_entity(
+                "IfcOwnerHistory",
+                OwningUser=person_and_org,
+                OwningApplication=application,
+                ChangeAction="ADDED",
+                CreationDate=int(time.time()),
+            )
+
+            self._default_owner_history = owner_history
+        return self._default_owner_history
 
     def create_guid(self):
         return ifcopenshell.guid.new()
@@ -256,6 +290,9 @@ class IFCWriter(object):
             return self._entitymap[entity]
 
         attributes = {}
+        if isinstance(entity, Root):
+            attributes["OwnerHistory"] = self.default_owner_history
+
         for key, value in entity.attributes.items():
             if isinstance(value, Entity):
                 attributes[key] = self.write_entity(value)

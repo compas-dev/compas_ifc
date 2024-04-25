@@ -1,5 +1,10 @@
 from .tessellatedbrep import TessellatedBrep
-from .tessellatedbrepobject import TessellatedBrepObject
+
+try:
+    from .tessellatedbrepobject import TessellatedBrepObject
+except ImportError:
+    pass
+
 from compas.plugins import plugin
 from compas.scene import register
 
