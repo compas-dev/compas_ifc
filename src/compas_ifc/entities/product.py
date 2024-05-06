@@ -17,6 +17,17 @@ class Product(ObjectDefinition):
         The box representation of the product. Converted to COMPAS box.
     body : List[:class:`compas_occ.geometry.Shape`]
         The body representation of the product. Converted to list of OCC shapes (BRep).
+    body_with_opening : List[:class:`compas_occ.geometry.Shape`]
+        The body representation of the product including openings. Converted to list of OCC shapes (BRep).
+    opening : List[:class:`compas_occ`]
+        The opening representation of the product. Converted to list of OCC shapes (BRep).
+    transformation : :class:`compas.geometry.Transformation`
+        The transformation of the product, Calculated from the stack of transformations of the product's parent entities. Read-only.
+    style : dict
+        The style of the product. Converted to dictionary.
+    frame : :class:`compas.geometry.Frame`
+        The frame of the product. Converted to COMPAS frame.
+
 
     """
 
@@ -29,6 +40,7 @@ class Product(ObjectDefinition):
         self._body_with_opening = None
         self._transformation = None
         self._style = None
+        self._frame = None
 
     def classifications(self) -> List[Dict[str, str]]:
         """
@@ -165,9 +177,17 @@ class Product(ObjectDefinition):
             self._transformation = entity_transformation(self)
         return self._transformation
 
-    @transformation.setter
-    def transformation(self, value):
-        self._transformation = value
+    @property
+    def frame(self):
+        from compas_ifc.representation import entity_frame
+
+        if not self._frame and self._entity:
+            self._frame = entity_frame(self)
+        return self._frame
+
+    @frame.setter
+    def frame(self, value):
+        self._frame = value
 
     @property
     def style(self):

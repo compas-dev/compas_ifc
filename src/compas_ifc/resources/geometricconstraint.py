@@ -41,5 +41,27 @@ def IfcLocalPlacement_to_transformation(placement, scale=1) -> Transformation:
     return reduce(mul, matrices[::-1])
 
 
+def IfcLocalPlacement_to_frame(placement) -> Frame:
+    """
+    Convert an IFC LocalPlacement to a COMPAS frame.
+    """
+
+    Location = placement.RelativePlacement.Location
+    Axis = placement.RelativePlacement.Axis
+    RefDirection = placement.RelativePlacement.RefDirection
+
+    if Axis and RefDirection:
+        zaxis = Vector(*Axis.DirectionRatios)
+        xaxis = Vector(*RefDirection.DirectionRatios)
+        yaxis = zaxis.cross(xaxis)
+        xaxis = yaxis.cross(zaxis)
+    else:
+        xaxis = Vector.Xaxis()
+        yaxis = Vector.Yaxis()
+
+    point = Point(*Location.Coordinates)
+    return Frame(point, xaxis, yaxis)
+
+
 def IfcGridPlacement_to_transformation(placement) -> Transformation:
     pass
