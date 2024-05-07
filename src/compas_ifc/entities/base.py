@@ -66,10 +66,23 @@ class Base(Data):
         cls = self.__class__
         getter_type_hints = get_type_hints(getattr(cls, name).fget)
         value_type = getter_type_hints["return"]
-        if not isinstance(value, value_type):
+
+        if hasattr(value_type, "__origin__"):
+            # deal parameterized generic types
+            origin = value_type.__origin__
+            if origin == list:
+                if not isinstance(value, (list, tuple)):
+                    raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
+                value_type = getter_type_hints["return"].__args__[0]
+                if not all(isinstance(item, value_type) for item in value):
+                    raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
+            else:
+                raise NotImplementedError(f"Unsupported generic type {origin}")
+
+        elif not isinstance(value, value_type):
             raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
-        else:
-            setattr(self.entity, name, value)
+
+        setattr(self.entity, name, value)
 
     def _get_inverse_attribute(self, name):
         return [self.reader.from_entity(attr) for attr in getattr(self.entity, name)]
@@ -77,7 +90,7 @@ class Base(Data):
     @property
     def model(self) -> "Model":
         return self.reader.model  # TODO: rather convoluted.
-    
+
     @property
     def schema(self):
         return self.reader._schema.name()
@@ -121,14 +134,16 @@ class Base(Data):
         add_entity(self, root, 0)
 
         print("=" * 80 + "\n" + f"Attributes of {self}\n" + "=" * 80)
-        attr_tree.print_hierarchy()
+        print(attr_tree.get_hierarchy_string(max_depth=max_depth))
         print("")
 
     def attribute_info(self):
         raise NotImplementedError
 
     def print_spatial_hierarchy(self):
-        IfcObjectDefinition = getattr(importlib.import_module(f"compas_ifc.entities.generated.{self.schema}"), "IfcObjectDefinition")
+        IfcObjectDefinition = getattr(
+            importlib.import_module(f"compas_ifc.entities.generated.{self.schema}"), "IfcObjectDefinition"
+        )
 
         if not isinstance(self, IfcObjectDefinition):
             raise TypeError("Only IfcObjectDefinition has spatial hierarchy")
@@ -153,7 +168,7 @@ class Base(Data):
         add_entity(top, root_node)
 
         print("=" * 80 + "\n" + f"Spatial hierarchy of {self}\n" + "=" * 80)
-        spatial_tree.print_hierarchy()
+        print(spatial_tree)
         print("")
 
     def print_properties(self):
