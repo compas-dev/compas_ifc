@@ -9,10 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added support to export to `IFC2x3`.
+* Added support pre-load geometries using `multi-processing`.
+
 ### Changed
 
 * Updated workflow to not use `conda` anymore.
 * Updated `Reader` to re-enable lazy loading.
+* Update repo to use `pyproject.toml`.
 
 ### Removed
 
