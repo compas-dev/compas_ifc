@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Latest",
+    "version": "latest",
+    "url": "https://compas.dev/compas_ifc/latest/"
+  },
+  {
+    "name": "0.4.0 (stable)",
+    "version": "0.4.0",
+    "url": "https://compas.dev/compas_ifc/0.4.0/"
+  },
+  {
+    "name": "0.2.0",
+    "version": "0.2.0",
+    "url": "https://compas.dev/compas_ifc/0.2.0/"
+  }
+]
