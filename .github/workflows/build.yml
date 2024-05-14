@@ -17,7 +17,7 @@ jobs:
         python: ['3.9', '3.10', '3.11']
 
     steps:
-      - uses: compas-dev/compas-actions.build@v3
+      - uses: compas-dev/compas-actions.build@v4
         with:
           python: ${{ matrix.python }}
           invoke_lint: true
