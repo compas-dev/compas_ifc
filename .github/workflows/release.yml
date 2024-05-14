@@ -10,11 +10,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ['3.9', '3.10', '3.11']
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        python: ['3.10', '3.11']
 
     steps:
-      - uses: compas-dev/compas-actions.build@v3
+      - uses: compas-dev/compas-actions.build@v4
         with:
           python: ${{ matrix.python }}
           invoke_lint: true
@@ -24,7 +24,7 @@ jobs:
     needs: build
     runs-on: windows-latest
     steps:
-      - uses: compas-dev/compas-actions.publish@v2
+      - uses: compas-dev/compas-actions.publish@v3
         with:
           pypi_token: ${{ secrets.PYPI }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

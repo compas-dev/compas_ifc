@@ -41,21 +41,21 @@ from functools import reduce
 from operator import mul
 from typing import List
 
+from compas.geometry import Box
+from compas.geometry import Scale
+from compas.geometry import Transformation
 from compas_occ.brep import OCCBrep
 from OCC.Core.BRep import BRep_Builder
 from OCC.Core.TopoDS import TopoDS_Compound
 
-from compas.geometry import Box
-from compas.geometry import Scale
-from compas.geometry import Transformation
-from compas_ifc.entities.entity import Entity
 from compas_ifc.brep import TessellatedBrep
+from compas_ifc.entities.entity import Entity
 from compas_ifc.resources import IfcAxis2Placement3D_to_frame
 from compas_ifc.resources import IfcBoundingBox_to_box
 from compas_ifc.resources import IfcCartesianTransformationOperator3D_to_frame
 from compas_ifc.resources import IfcIndexedPolyCurve_to_lines
-from compas_ifc.resources import IfcLocalPlacement_to_transformation
 from compas_ifc.resources import IfcLocalPlacement_to_frame
+from compas_ifc.resources import IfcLocalPlacement_to_transformation
 from compas_ifc.resources import IfcShape_to_brep
 from compas_ifc.resources import IfcShape_to_tessellatedbrep
 
@@ -87,7 +87,6 @@ def entity_transformation(entity: Entity):
 
 
 def _entity_transformation(_entity, scale=1.0):
-
     if _entity.ObjectPlacement:
         scaled_placement = IfcLocalPlacement_to_transformation(_entity.ObjectPlacement, scale=scale)
     else:

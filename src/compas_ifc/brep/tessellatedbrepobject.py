@@ -1,8 +1,9 @@
-from compas_viewer.scene import ViewerSceneObject
-from .tessellatedbrep import TessellatedBrep
-from compas.datastructures import Mesh
-from compas.colors import Color
 import numpy as np
+from compas.colors import Color
+from compas.datastructures import Mesh
+from compas_viewer.scene import ViewerSceneObject
+
+from .tessellatedbrep import TessellatedBrep
 
 
 class TessellatedBrepObject(ViewerSceneObject):

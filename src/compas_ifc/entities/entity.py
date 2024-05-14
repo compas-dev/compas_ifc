@@ -2,7 +2,6 @@ from typing import Dict
 from typing import Union
 
 # from typing import Optional
-
 import ifcopenshell
 import ifcopenshell.util.element
 import ifcopenshell.util.pset
