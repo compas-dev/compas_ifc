@@ -1,13 +1,12 @@
+from typing import List
+
 import ifcopenshell
 import numpy as np
-
-from typing import List
 from compas.tolerance import TOL
 
-from .primities import point_to_ifc_cartesian_point
-from .primities import occ_plane_to_frame
 from .primities import frame_to_ifc_plane
-
+from .primities import occ_plane_to_frame
+from .primities import point_to_ifc_cartesian_point
 from .shapes import occ_cylinder_to_ifc_cylindrical_surface
 
 
@@ -149,9 +148,7 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep) -> List[ifcopenshel
                         if not IfcEdgeCurve:
                             raise ValueError("Edge not found")
 
-                        ifc_oriented_edge = file.create_entity(
-                            "IFCORIENTEDEDGE", EdgeElement=IfcEdgeCurve, Orientation=oriented
-                        )
+                        ifc_oriented_edge = file.create_entity("IFCORIENTEDEDGE", EdgeElement=IfcEdgeCurve, Orientation=oriented)
                         ifc_oriented_edges.append(ifc_oriented_edge)
 
                     edge_loop = file.create_entity("IfcEdgeLoop", ifc_oriented_edges)
@@ -167,26 +164,18 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep) -> List[ifcopenshel
                     occ_plane = face.occ_adaptor.Plane()
                     frame = occ_plane_to_frame(occ_plane)
                     ifc_plane = frame_to_ifc_plane(file, frame)
-                    IfcAdvancedFace = file.create_entity(
-                        "IfcAdvancedFace", face_bounds, ifc_plane, SameSense=same_sense
-                    )
+                    IfcAdvancedFace = file.create_entity("IfcAdvancedFace", face_bounds, ifc_plane, SameSense=same_sense)
                 elif face.is_cylinder:
                     cylinder = face.occ_adaptor.Cylinder()
                     IfcCylindricalSurface = occ_cylinder_to_ifc_cylindrical_surface(file, cylinder)
-                    IfcAdvancedFace = file.create_entity(
-                        "IfcAdvancedFace", face_bounds, IfcCylindricalSurface, SameSense=same_sense
-                    )
+                    IfcAdvancedFace = file.create_entity("IfcAdvancedFace", face_bounds, IfcCylindricalSurface, SameSense=same_sense)
                 else:
                     control_points = np.array(face.nurbssurface.points.points, dtype=float)
                     control_points = control_points.swapaxes(0, 1)
                     ifc_control_points = []
 
-                    u_knots, u_mults = calculate_knots_and_multiplicities(
-                        list(face.nurbssurface.occ_surface.UKnotSequence())
-                    )
-                    v_knots, v_mults = calculate_knots_and_multiplicities(
-                        list(face.nurbssurface.occ_surface.VKnotSequence())
-                    )
+                    u_knots, u_mults = calculate_knots_and_multiplicities(list(face.nurbssurface.occ_surface.UKnotSequence()))
+                    v_knots, v_mults = calculate_knots_and_multiplicities(list(face.nurbssurface.occ_surface.VKnotSequence()))
 
                     for row in control_points:
                         ifc_row = []
@@ -237,9 +226,7 @@ def brep_to_ifc_advanced_brep(file: ifcopenshell.file, brep) -> List[ifcopenshel
                         WeightsData=ifc_weights,
                     )
 
-                    IfcAdvancedFace = file.create_entity(
-                        "IfcAdvancedFace", face_bounds, IfcBSplineSurfaceWithKnots, SameSense=same_sense
-                    )
+                    IfcAdvancedFace = file.create_entity("IfcAdvancedFace", face_bounds, IfcBSplineSurfaceWithKnots, SameSense=same_sense)
 
                 ifc_faces.append(IfcAdvancedFace)
 

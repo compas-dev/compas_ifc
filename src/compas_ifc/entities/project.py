@@ -4,6 +4,7 @@ from typing import List
 
 from compas.geometry import Frame
 from compas.geometry import Vector
+
 from compas_ifc.entities.objectdefinition import ObjectDefinition
 from compas_ifc.entities.site import Building
 from compas_ifc.entities.site import Site

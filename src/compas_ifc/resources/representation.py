@@ -1,10 +1,9 @@
-from ifcopenshell.api import run
-
 from compas.datastructures import Mesh
 from compas.geometry import Box
 from compas.geometry import Cone
 from compas.geometry import Cylinder
 from compas.geometry import Sphere
+from ifcopenshell.api import run
 
 from .brep import brep_to_ifc_advanced_brep
 from .mesh import mesh_to_IfcPolygonalFaceSet

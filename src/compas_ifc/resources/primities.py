@@ -1,7 +1,7 @@
 import ifcopenshell
-
 from compas.geometry import Frame
 from compas.geometry import Point
+
 from .shapes import create_IfcAxis2Placement3D
 
 

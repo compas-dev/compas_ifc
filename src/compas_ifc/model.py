@@ -1,20 +1,21 @@
 from typing import List
 
-from compas_ifc.entities.element import Element
-from compas_ifc.entities.product import Product
+import ifcopenshell
+
 from compas_ifc.entities.building import Building
 from compas_ifc.entities.buildingelements import BuildingElement
-from compas_ifc.entities.geographicelement import GeographicElement
 from compas_ifc.entities.buildingelements import BuildingElementProxy
 from compas_ifc.entities.buildingstorey import BuildingStorey
-from compas_ifc.entities.objectdefinition import ObjectDefinition
+from compas_ifc.entities.element import Element
 from compas_ifc.entities.entity import Entity
+from compas_ifc.entities.geographicelement import GeographicElement
+from compas_ifc.entities.objectdefinition import ObjectDefinition
+from compas_ifc.entities.product import Product
 from compas_ifc.entities.project import Project
 from compas_ifc.entities.site import Site
 
 from .reader import IFCReader
 from .writer import IFCWriter
-import ifcopenshell
 
 
 class Model:
@@ -60,9 +61,7 @@ class Model:
 
     """
 
-    def __init__(
-        self, filepath: str = None, entity_types: dict = None, use_occ=False, schema=None, load_geometries=True
-    ) -> None:
+    def __init__(self, filepath: str = None, entity_types: dict = None, use_occ=False, schema=None, load_geometries=True) -> None:
         self.reader = IFCReader(model=self, entity_types=entity_types, use_occ=use_occ)
         self.writer = IFCWriter(model=self)
         self._new_entities = set()
