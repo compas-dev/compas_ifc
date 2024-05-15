@@ -14,7 +14,7 @@ class TessellatedBrepObject(ViewerSceneObject):
 
         # TODO: it is not facecolors, it is verexcolor
         if not self.facecolors:
-            self.facecolors = [Color(0.5, 0.5, 0.5) for _ in range(len(self.tessellatedbrep.faces) * 3)]
+            self.facecolors = [Color(0.9, 0.9, 0.9) for _ in range(len(self.tessellatedbrep.faces) * 3)]
 
     def _read_points_data(self):
         pass
@@ -22,7 +22,7 @@ class TessellatedBrepObject(ViewerSceneObject):
     def _read_lines_data(self):
         positions = self.tessellatedbrep.vertices.tolist()
         elements = self.tessellatedbrep.edges.tolist()
-        colors = [Color(0.5, 0.5, 0.5)] * len(elements)
+        colors = [Color(0.1, 0.1, 0.1)] * len(elements)
         return positions, colors, elements
 
     def _read_frontfaces_data(self):
