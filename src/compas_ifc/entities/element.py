@@ -20,7 +20,7 @@ class Element(Product):
 
     @property
     def parent(self):
-        if not self._parent:
+        if not self._parent and self._entity:
             relation = self.contained_in_structure()
             if relation:
                 self._parent = relation["RelatingStructure"]

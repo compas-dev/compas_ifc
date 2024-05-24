@@ -124,21 +124,25 @@ class Project(ObjectDefinition):
 
     @property
     def length_scale(self):
-        unit = self.length_unit
-        if unit:
-            if unit["name"] == "METRE" and not unit["prefix"]:
-                return 1.0
-            if unit["name"] == "METRE" and unit["prefix"] == "CENTI":
-                return 1e-2
-            if unit["name"] == "METRE" and unit["prefix"] == "MILLI":
-                return 1e-3
-        return 1.0
+        if self._entity:
+            unit = self.length_unit
+            if unit:
+                if unit["name"] == "METRE" and not unit["prefix"]:
+                    return 1.0
+                if unit["name"] == "METRE" and unit["prefix"] == "CENTI":
+                    return 1e-2
+                if unit["name"] == "METRE" and unit["prefix"] == "MILLI":
+                    return 1e-3
+            return 1.0
+        else:
+            return 1.0
 
     @property
     def frame(self) -> Frame:
-        for context in self.contexts:
-            if context["type"] == "Model":
-                return context["wcs"]
+        if self._entity:
+            for context in self.contexts:
+                if context["type"] == "Model":
+                    return context["wcs"]
 
     @property
     def north(self) -> Vector:

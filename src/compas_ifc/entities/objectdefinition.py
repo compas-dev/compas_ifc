@@ -25,7 +25,7 @@ class ObjectDefinition(Root):
 
     @property
     def parent(self):
-        if not self._parent:
+        if not self._parent and self._entity:
             relation = self.decomposes()
             if relation:
                 self._parent = relation["RelatingObject"]
@@ -45,6 +45,9 @@ class ObjectDefinition(Root):
         for entity in self.model._new_entities:
             if entity.parent == self and entity not in children:
                 children.append(entity)
+
+        # sort children by name
+        children.sort(key=lambda x: x.name)
         return children
 
     def traverse(self, recursive: bool = True):

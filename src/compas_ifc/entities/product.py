@@ -152,16 +152,22 @@ class Product(ObjectDefinition):
 
     @property
     def body_with_opening(self):
-        from compas_ifc.representation import entity_body_with_opening_geometry
 
-        if not self._body_with_opening:
-            cached_geometry = self.model.reader.get_preloaded_geometry(self)
-            if cached_geometry:
-                self._body_with_opening = cached_geometry
-            else:
-                # TODO: double check if this is still triggered with preloaded geometry
-                # raise
-                self._body_with_opening = entity_body_with_opening_geometry(self, use_occ=self.model.reader.use_occ)
+        if self._entity:
+
+            from compas_ifc.representation import entity_body_with_opening_geometry
+
+            if not self._body_with_opening:
+                cached_geometry = self.model.reader.get_preloaded_geometry(self)
+                if cached_geometry:
+                    self._body_with_opening = cached_geometry
+                else:
+                    # TODO: double check if this is still triggered with preloaded geometry
+                    # raise
+                    self._body_with_opening = entity_body_with_opening_geometry(self, use_occ=self.model.reader.use_occ)
+
+        else:
+            self._body_with_opening = self.body
 
         return self._body_with_opening
 

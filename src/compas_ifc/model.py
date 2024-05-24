@@ -9,13 +9,17 @@ from compas_ifc.entities.buildingstorey import BuildingStorey
 from compas_ifc.entities.element import Element
 from compas_ifc.entities.entity import Entity
 from compas_ifc.entities.geographicelement import GeographicElement
-from compas_ifc.entities.objectdefinition import ObjectDefinition
-from compas_ifc.entities.product import Product
 from compas_ifc.entities.project import Project
 from compas_ifc.entities.site import Site
+from compas_ifc.entities import DEFAULT_ENTITY_TYPES
+from compas.data import json_dump
+from compas.data import json_load
+from uuid import uuid4
 
 from .reader import IFCReader
 from .writer import IFCWriter
+
+import os
 
 
 class Model:
@@ -92,12 +96,15 @@ class Model:
         """Get all entities in the model."""
         return self.reader.get_all_entities() + list(self._new_entities)
 
-    def get_entities_by_type(self, ifc_type: str, include_subtypes: bool = True) -> List[Entity]:
+    def get_entities_by_type(self, ifc_type: str, include_subtypes: bool = True, sort_by_name=True) -> List[Entity]:
         """Get all entities of a specific ifc type in the model. If include_subtypes is True, also return entities of subtypes of the given type."""
         entities = self.reader.get_entities_by_type(ifc_type, include_subtypes)
         for entity in self._new_entities:
-            if entity.ifc_type == ifc_type:
+            if entity.is_a(ifc_type):
                 entities.append(entity)
+
+        if sort_by_name:
+            entities.sort(key=lambda x: getattr(x, "Name", ""))
         return entities
 
     def get_entity_by_global_id(self, global_id) -> Entity:
@@ -121,7 +128,7 @@ class Model:
 
         print("=" * 80)
         print("File: {}".format(self.reader.filepath))
-        print("Size: {} MB".format(self.reader.file_size()))
+        # print("Size: {} MB".format(self.reader.file_size()))
         print("Project: {}".format(self.project.name))
         print("Description: {}".format(self.project.attributes.get("Description", "")))
         print("Number of sites: {}".format(len(self.sites)))
@@ -180,7 +187,7 @@ class Model:
             self._geographic_elements = self.get_entities_by_type("IfcGeographicElement")
         return self._geographic_elements
 
-    def create(self, cls, attributes, parent=None, frame=None):
+    def create(self, cls=None, parent=None, geometry=None, frame=None, **kwargs):
         """Create an entity and add it to the model.
 
         Parameters
@@ -197,16 +204,40 @@ class Model:
         :class:`compas_ifc.entities.Entity`
             The created entity.
         """
+
+        def get_type(type_name):
+
+            types = DEFAULT_ENTITY_TYPES.copy()
+            if self.reader.entity_types:
+                types.update(self.reader.entity_types)
+
+            for key, value in types.items():
+                if key == type_name:
+                    return value
+
+            return BuildingElementProxy
+
+        if not isinstance(cls, type):
+            cls = get_type(cls)
+
         entity = cls(None, self)
-        entity.set_attributes(attributes)
-        if isinstance(entity, Product) and frame:
+        entity.set_attributes(kwargs)
+
+        if frame:
+            if not hasattr(entity, "frame"):
+                raise TypeError(f"{cls} cannot be assigned a frame.")
             entity.frame = frame
+
+        if geometry:
+            if not hasattr(entity, "body"):
+                raise TypeError(f"{cls} cannot be assigned a geometry.")
+            entity.body = geometry
+
         if parent:
-            if isinstance(entity, ObjectDefinition):
-                entity.parent = parent
-            else:
-                print(hasattr(entity, "parent"))
-                raise ValueError(f"{entity} cannot be assigned a parent.")
+            if not hasattr(entity, "parent"):
+                raise TypeError(f"{cls} cannot be assigned a parent.")
+            entity.parent = parent
+
         self._new_entities.add(entity)
 
         if cls == Project:
@@ -243,3 +274,128 @@ class Model:
         element["Description"] = description
         self._new_entities.add(element)
         return element
+
+    def export_session(self, path, export_geometries=True):
+
+        try:
+            from compas_occ.brep import Brep
+            from compas.geometry import Box
+            from compas.geometry import Sphere
+            from compas.geometry import Shape
+            from compas.datastructures import Mesh
+            import shutil
+
+        except ImportError:
+            raise ImportError("The export_session method requires compas_occ to be installed.")
+
+        if os.path.exists(path):
+            if input(f"Directory {path} already exists. Do you want to overwrite it? (Y/n): ") != "n":
+                shutil.rmtree(path)
+            else:
+                return
+
+        os.makedirs(path, exist_ok=True)
+        os.makedirs(os.path.join(path, "geometries"), exist_ok=True)
+
+        geometry_map = {}
+
+        def export_entity(entity: Entity, geometry_map=geometry_map):
+
+            data = {}
+            data["type"] = entity.ifc_type
+            data["name"] = entity.name
+            data["description"] = entity["Description"]
+
+            if entity.children:
+                data["children"] = []
+
+                for child in entity.children:
+                    data["children"].append(export_entity(child))
+
+            if export_geometries and hasattr(entity, "body_with_opening") and entity.body_with_opening:
+
+                if geometry_map.get(id(entity.body_with_opening)):
+                    # TODO: check when reading from existing IFC files.
+                    data["geometry"] = geometry_map[id(entity.body_with_opening)]
+                else:
+                    if isinstance(entity.body_with_opening, Box):
+                        brep = Brep.from_box(entity.body_with_opening)
+                    elif isinstance(entity.body_with_opening, Sphere):
+                        brep = Brep.from_sphere(entity.body_with_opening)
+                    elif isinstance(entity.body_with_opening, Mesh):
+                        brep = Brep.from_mesh(entity.body_with_opening)
+                    elif isinstance(entity.body_with_opening, Shape):
+                        brep = Brep.from_mesh(Mesh.from_shape(entity.body_with_opening))
+                    elif isinstance(entity.body_with_opening, Brep):
+                        brep = entity.body_with_opening
+                    else:
+                        raise ValueError(f"Geometry type {type(entity.body_with_opening)} not supported.")
+
+                    file_name = f"{uuid4()}.stp"
+                    brep.to_step(os.path.join(path, "geometries", file_name))
+                    data["geometry"] = file_name
+                    geometry_map[id(entity.body_with_opening)] = file_name
+
+            if entity.frame:
+                data["frame"] = entity.frame
+
+            return data
+
+        data = export_entity(self.project, geometry_map=geometry_map)
+        json_dump(data, os.path.join(path, "session.json"), pretty=False)
+
+    def load_session(self, path):
+
+        try:
+            from compas_occ.brep import Brep
+            from compas_ifc.entities import DEFAULT_ENTITY_TYPES
+
+        except ImportError:
+            raise ImportError("The load_session method requires compas_occ to be installed.")
+
+        session = json_load(os.path.join(path, "session.json"))
+        geometry_map = {}
+
+        def get_type(type_name):
+            types = DEFAULT_ENTITY_TYPES.copy()
+            if self.reader.entity_types:
+                types.update(self.reader.entity_types)
+
+            for key, value in types.items():
+                if key == type_name:
+                    return value
+
+            return BuildingElementProxy
+
+        def load_entity(data, parent=None, geometry_map=geometry_map):
+
+            ifc_type = get_type(data["type"])
+            entity = self.create(ifc_type, parent=parent, **data["attributes"])
+
+            if "children" in data:
+                for child_data in data["children"]:
+                    load_entity(child_data, entity)
+
+            if "geometry" in data:
+                if geometry_map.get(data["geometry"]):
+                    entity.body = geometry_map.get(data["geometry"])
+                else:
+                    entity.body = Brep.from_step(os.path.join(path, "geometries", data["geometry"]))
+                    geometry_map[data["geometry"]] = entity.body
+
+            if "frame" in data:
+                print(entity)
+                entity.frame = data["frame"]
+
+        load_entity(session, parent=None, geometry_map=geometry_map)
+
+    @classmethod
+    def template(cls, schema="IFC4", building_count=1, storey_count=1):
+        model = cls(schema=schema)
+        project = model.create(Project, Name="Default Project")
+        site = model.create(Site, parent=project, Name="Default Site")
+        for i in range(building_count):
+            building = model.create(Building, parent=site, Name=f"Default Building {i+1}")
+            for j in range(storey_count):
+                model.create(BuildingStorey, parent=building, Name=f"Default Storey {j+1}")
+        return model
