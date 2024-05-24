@@ -3,6 +3,8 @@ from typing import List
 
 from compas_ifc.entities.objectdefinition import ObjectDefinition
 from compas_ifc.helpers import public_attributes
+from compas.geometry import Transformation
+from compas.geometry import Scale
 
 
 class Product(ObjectDefinition):
@@ -153,27 +155,45 @@ class Product(ObjectDefinition):
     @property
     def body_with_opening(self):
 
-        if self._entity:
+        if self._body_with_opening is None:
 
-            from compas_ifc.representation import entity_body_with_opening_geometry
+            if self._entity:
 
-            if not self._body_with_opening:
-                cached_geometry = self.model.reader.get_preloaded_geometry(self)
-                if cached_geometry:
-                    self._body_with_opening = cached_geometry
+                from compas_ifc.representation import entity_body_with_opening_geometry
+
+                if not self._body_with_opening:
+                    cached_geometry = self.model.reader.get_preloaded_geometry(self)
+                    if cached_geometry:
+                        self._body_with_opening = cached_geometry
+                    else:
+                        # TODO: double check if this is still triggered with preloaded geometry
+                        # raise
+                        self._body_with_opening = entity_body_with_opening_geometry(self, use_occ=self.model.reader.use_occ)
+
+            else:
+
+                scale = self.model.project.length_scale
+                T = Transformation.from_frame(self.frame)
+                S = Scale.from_factors([scale, scale, scale])
+                
+                from compas.geometry import Shape
+                if isinstance(self.body, Shape):
+                    geometry = self.body.transformed(S * T)
+                    geometry.scale(scale)
                 else:
-                    # TODO: double check if this is still triggered with preloaded geometry
-                    # raise
-                    self._body_with_opening = entity_body_with_opening_geometry(self, use_occ=self.model.reader.use_occ)
+                    geometry = self.body.transformed(S * T)
 
-        else:
-            self._body_with_opening = self.body
+                self._body_with_opening = geometry
 
         return self._body_with_opening
 
     @body_with_opening.setter
     def body_with_opening(self, value):
         self._body_with_opening = value
+
+    @property
+    def geometry(self):
+        return self.body_with_opening
 
     @property
     def transformation(self):

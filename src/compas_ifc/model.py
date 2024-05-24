@@ -104,7 +104,7 @@ class Model:
                 entities.append(entity)
 
         if sort_by_name:
-            entities.sort(key=lambda x: getattr(x, "name", ""))
+            entities.sort(key=lambda x: x.name if x.name else "")
         return entities
 
     def get_entity_by_global_id(self, global_id) -> Entity:
@@ -405,3 +405,24 @@ class Model:
             for j in range(storey_count):
                 model.create(BuildingStorey, parent=building, Name=f"Default Storey {j+1}")
         return model
+
+    def show(self):
+        try:
+            from compas_viewer import Viewer
+        except ImportError:
+            raise ImportError("The show method requires compas_viewer to be installed.")
+
+        viewer = Viewer()
+
+        def parse_entity(entity, parent=None):
+            if getattr(entity, "geometry", None):
+                if not entity.is_a("IfcSpace"):
+                    viewer.scene.add(entity.geometry, name=entity.name, parent=parent, **entity.style)
+            if entity.children:
+                obj = viewer.scene.add([], name=entity.name, parent=parent)
+                for child in entity.children:
+                    parse_entity(child, parent=obj)
+
+        parse_entity(self.project)
+
+        viewer.show()
