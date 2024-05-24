@@ -104,7 +104,7 @@ class Model:
                 entities.append(entity)
 
         if sort_by_name:
-            entities.sort(key=lambda x: getattr(x, "Name", ""))
+            entities.sort(key=lambda x: getattr(x, "name", ""))
         return entities
 
     def get_entity_by_global_id(self, global_id) -> Entity:
@@ -187,7 +187,7 @@ class Model:
             self._geographic_elements = self.get_entities_by_type("IfcGeographicElement")
         return self._geographic_elements
 
-    def create(self, cls=None, parent=None, geometry=None, frame=None, **kwargs):
+    def create(self, cls=None, parent=None, geometry=None, frame=None, psets=None, **kwargs):
         """Create an entity and add it to the model.
 
         Parameters
@@ -237,6 +237,9 @@ class Model:
             if not hasattr(entity, "parent"):
                 raise TypeError(f"{cls} cannot be assigned a parent.")
             entity.parent = parent
+
+        if psets:
+            entity.psets = psets
 
         self._new_entities.add(entity)
 
@@ -305,6 +308,9 @@ class Model:
             data["type"] = entity.ifc_type
             data["name"] = entity.name
             data["description"] = entity["Description"]
+
+            if entity.psets:
+                data["psets"] = entity.psets
 
             if entity.children:
                 data["children"] = []

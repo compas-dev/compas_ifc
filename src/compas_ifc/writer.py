@@ -320,6 +320,7 @@ class IFCWriter(object):
             # Entity created in memory
             self.write_entity_representation(entity)
             self.write_entity_placement(entity)
+            self.write_entity_pset(entity, ifc_entity)
 
         if isinstance(entity, Project):
             print("Writing project: " + str(entity))
@@ -327,8 +328,10 @@ class IFCWriter(object):
 
         return ifc_entity
 
-    def write_entity_pset(self, entity: Entity):
-        raise NotImplementedError()
+    def write_entity_pset(self, entity: Entity, ifc_entity: ifcopenshell.entity_instance):
+        for name, properties in entity.psets.items():
+            pset = run("pset.add_pset", self.file, product=ifc_entity, name=name)
+            run("pset.edit_pset", self.file, pset=pset, properties=properties)
 
     def write_entity_representation(self, entity: Entity):
         """Writes the representations of the given entity to the ifc file."""

@@ -133,6 +133,10 @@ class Entity:
             self._psets = self._collect_psets()
         return self._psets
 
+    @psets.setter
+    def psets(self, psets: Dict):
+        self._psets = psets
+
     @property
     def properties(self) -> Dict:
         if not self._properties:
