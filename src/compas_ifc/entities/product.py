@@ -175,8 +175,9 @@ class Product(ObjectDefinition):
                 scale = self.model.project.length_scale
                 T = Transformation.from_frame(self.frame)
                 S = Scale.from_factors([scale, scale, scale])
-                
+
                 from compas.geometry import Shape
+
                 if isinstance(self.body, Shape):
                     geometry = self.body.transformed(S * T)
                     geometry.scale(scale)
@@ -218,6 +219,30 @@ class Product(ObjectDefinition):
     @property
     def style(self):
         if not self._style:
-            self._style = self.model.reader.get_preloaded_style(self)
+            if self._entity:
+                self._style = self.model.reader.get_preloaded_style(self)
+            else:
+                self._style = {}
         # TODO: handle non-preloaded situation
         return self._style
+
+    def show(self):
+        try:
+            from compas_viewer import Viewer
+        except ImportError:
+            raise ImportError("The show method requires compas_viewer to be installed.")
+
+        viewer = Viewer()
+
+        def parse_entity(entity, parent=None):
+            if getattr(entity, "geometry", None):
+                if not entity.is_a("IfcSpace"):
+                    viewer.scene.add(entity.geometry, name=entity.name, parent=parent, **entity.style)
+            if entity.children:
+                obj = viewer.scene.add([], name=entity.name, parent=parent)
+                for child in entity.children:
+                    parse_entity(child, parent=obj)
+
+        parse_entity(self)
+
+        viewer.show()
