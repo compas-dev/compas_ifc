@@ -66,11 +66,15 @@ class Entity:
         return self._ifc_type
 
     def is_a(self, ifc_type: str = None):
-        # TODO: this is a bit mess, need to clean up
         if not ifc_type:
             return self.ifc_type
         if not self._entity:
-            return ifc_type == self.ifc_type  # TODO: consider inheritance
+            declaration = self.declaration
+            inheritance = [declaration.name()]
+            while hasattr(declaration, "supertype") and declaration.supertype():
+                inheritance.append(declaration.supertype().name())
+                declaration = declaration.supertype()
+            return ifc_type in inheritance
         return self._entity.is_a(ifc_type)
 
     def __getitem__(self, key: str):
