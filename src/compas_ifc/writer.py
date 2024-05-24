@@ -47,6 +47,8 @@ class IFCWriter(object):
         self.file = None
         self.model = model
         self._entitymap = {}
+        self._relationmap_aggregates = {}
+        self._relationmap_contains = {}
         self._representationmap = {}
         self._default_context = None
         self._default_body_context = None
@@ -262,14 +264,32 @@ class IFCWriter(object):
         child = self._entitymap[entity]
 
         if isinstance(entity, Element):
-            self.file.create_entity(
-                "IfcRelContainedInSpatialStructure",
-                GlobalId=self.create_guid(),
-                RelatingStructure=parent,
-                RelatedElements=[child],
-            )
+            if self._relationmap_contains.get(parent):
+                relation = self._relationmap_contains[parent]
+                children = set(relation.RelatedElements)
+                children.add(child)
+                children = list(children)
+                children.sort(key=lambda x: x.Name)
+                relation.RelatedElements = tuple(children)
+            else:
+                relation = self.file.create_entity(
+                    "IfcRelContainedInSpatialStructure",
+                    GlobalId=self.create_guid(),
+                    RelatingStructure=parent,
+                    RelatedElements=[child],
+                )
+                self._relationmap_contains[parent] = relation
         else:
-            self.file.create_entity("IfcRelAggregates", GlobalId=self.create_guid(), RelatingObject=parent, RelatedObjects=[child])
+            if self._relationmap_aggregates.get(parent):
+                relation = self._relationmap_aggregates[parent]
+                children = set(relation.RelatedObjects)
+                children.add(child)
+                children = list(children)
+                children.sort(key=lambda x: x.Name)
+                relation.RelatedObjects = tuple(children)
+            else:
+                relation = self.file.create_entity("IfcRelAggregates", GlobalId=self.create_guid(), RelatingObject=parent, RelatedObjects=[child])
+                self._relationmap_aggregates[parent] = relation
 
     def write_entity(self, entity: Entity) -> None:
         """Writes the given entity recursively with all its referencing attributes to the ifc file."""
