@@ -50,6 +50,7 @@ class IFCWriter(object):
         self._relationmap_aggregates = {}
         self._relationmap_contains = {}
         self._representationmap = {}
+        self._psetsmap = {}
         self._default_context = None
         self._default_body_context = None
         self._default_project = None
@@ -330,8 +331,14 @@ class IFCWriter(object):
 
     def write_entity_pset(self, entity: Entity, ifc_entity: ifcopenshell.entity_instance):
         for name, properties in entity.psets.items():
-            pset = run("pset.add_pset", self.file, product=ifc_entity, name=name)
-            run("pset.edit_pset", self.file, pset=pset, properties=properties)
+            if id(properties) in self._psetsmap:
+                pset = self._psetsmap[id(properties)]
+                # TODO: This can be mreged too.
+                self.file.create_entity("IfcRelDefinesByProperties", GlobalId=self.create_guid(), RelatingPropertyDefinition=pset, RelatedObjects=[ifc_entity])
+            else:
+                pset = run("pset.add_pset", self.file, product=ifc_entity, name=name)
+                self._psetsmap[id(properties)] = pset
+                run("pset.edit_pset", self.file, pset=pset, properties=properties)
 
     def write_entity_representation(self, entity: Entity):
         """Writes the representations of the given entity to the ifc file."""
