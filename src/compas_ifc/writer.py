@@ -47,7 +47,10 @@ class IFCWriter(object):
         self.file = None
         self.model = model
         self._entitymap = {}
+        self._relationmap_aggregates = {}
+        self._relationmap_contains = {}
         self._representationmap = {}
+        self._psetsmap = {}
         self._default_context = None
         self._default_body_context = None
         self._default_project = None
@@ -262,14 +265,32 @@ class IFCWriter(object):
         child = self._entitymap[entity]
 
         if isinstance(entity, Element):
-            self.file.create_entity(
-                "IfcRelContainedInSpatialStructure",
-                GlobalId=self.create_guid(),
-                RelatingStructure=parent,
-                RelatedElements=[child],
-            )
+            if self._relationmap_contains.get(parent):
+                relation = self._relationmap_contains[parent]
+                children = set(relation.RelatedElements)
+                children.add(child)
+                children = list(children)
+                children.sort(key=lambda x: x.Name)
+                relation.RelatedElements = tuple(children)
+            else:
+                relation = self.file.create_entity(
+                    "IfcRelContainedInSpatialStructure",
+                    GlobalId=self.create_guid(),
+                    RelatingStructure=parent,
+                    RelatedElements=[child],
+                )
+                self._relationmap_contains[parent] = relation
         else:
-            self.file.create_entity("IfcRelAggregates", GlobalId=self.create_guid(), RelatingObject=parent, RelatedObjects=[child])
+            if self._relationmap_aggregates.get(parent):
+                relation = self._relationmap_aggregates[parent]
+                children = set(relation.RelatedObjects)
+                children.add(child)
+                children = list(children)
+                children.sort(key=lambda x: x.Name)
+                relation.RelatedObjects = tuple(children)
+            else:
+                relation = self.file.create_entity("IfcRelAggregates", GlobalId=self.create_guid(), RelatingObject=parent, RelatedObjects=[child])
+                self._relationmap_aggregates[parent] = relation
 
     def write_entity(self, entity: Entity) -> None:
         """Writes the given entity recursively with all its referencing attributes to the ifc file."""
@@ -300,6 +321,7 @@ class IFCWriter(object):
             # Entity created in memory
             self.write_entity_representation(entity)
             self.write_entity_placement(entity)
+            self.write_entity_pset(entity, ifc_entity)
 
         if isinstance(entity, Project):
             print("Writing project: " + str(entity))
@@ -307,8 +329,16 @@ class IFCWriter(object):
 
         return ifc_entity
 
-    def write_entity_pset(self, entity: Entity):
-        raise NotImplementedError()
+    def write_entity_pset(self, entity: Entity, ifc_entity: ifcopenshell.entity_instance):
+        for name, properties in entity.psets.items():
+            if id(properties) in self._psetsmap:
+                pset = self._psetsmap[id(properties)]
+                # TODO: This can be mreged too.
+                self.file.create_entity("IfcRelDefinesByProperties", GlobalId=self.create_guid(), RelatingPropertyDefinition=pset, RelatedObjects=[ifc_entity])
+            else:
+                pset = run("pset.add_pset", self.file, product=ifc_entity, name=name)
+                self._psetsmap[id(properties)] = pset
+                run("pset.edit_pset", self.file, pset=pset, properties=properties)
 
     def write_entity_representation(self, entity: Entity):
         """Writes the representations of the given entity to the ifc file."""

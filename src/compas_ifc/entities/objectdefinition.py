@@ -1,4 +1,5 @@
 from .root import Root
+from compas.datastructures import Tree, TreeNode
 
 
 class ObjectDefinition(Root):
@@ -25,7 +26,7 @@ class ObjectDefinition(Root):
 
     @property
     def parent(self):
-        if not self._parent:
+        if not self._parent and self._entity:
             relation = self.decomposes()
             if relation:
                 self._parent = relation["RelatingObject"]
@@ -45,6 +46,9 @@ class ObjectDefinition(Root):
         for entity in self.model._new_entities:
             if entity.parent == self and entity not in children:
                 children.append(entity)
+
+        # sort children by name
+        children.sort(key=lambda x: x.name)
         return children
 
     def traverse(self, recursive: bool = True):
@@ -112,11 +116,30 @@ class ObjectDefinition(Root):
         -------
         None
         """
+        print("=" * 80)
+        print("SPATIAL HIERARCHY")
+        print(self.spatial_hierarchy.get_hierarchy_string(max_depth=max_level))
+        print("=" * 80)
 
-        def traverse(entity, level=0):
-            if level <= max_level:
-                print("----" * level, entity)
-                for child in entity.children:
-                    traverse(child, level + 1)
 
-        traverse(self)
+    @property
+    def spatial_hierarchy(self) -> Tree:
+
+        tree = Tree()
+
+        class Node(TreeNode):
+            def __repr__(self):
+                return str(self.name)
+
+        root = Node(self)
+
+        tree.add(root)
+
+        def traverse(entity, parent):
+            node = Node(entity)
+            parent.add(node)
+            for child in entity.children:
+                traverse(child, node)
+
+        traverse(self, root)
+        return tree

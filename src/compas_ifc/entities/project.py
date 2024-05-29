@@ -73,6 +73,8 @@ class Project(ObjectDefinition):
         self._contexts = None
         self._sites = None
         self._buildings = None
+        self._length_unit = {"type": "LENGTHUNIT", "name": "METRE", "prefix": "MILLI"}
+        # TODO: deal with other units
 
     @property
     def sites(self) -> List[Site]:
@@ -118,9 +120,16 @@ class Project(ObjectDefinition):
 
     @property
     def length_unit(self):
-        for unit in self.units:
-            if unit["type"] == "LENGTHUNIT":
-                return unit
+        if self._entity:
+            for unit in self.units:
+                if unit["type"] == "LENGTHUNIT":
+                    return unit
+        else:
+            return self._length_unit
+
+    @length_unit.setter
+    def length_unit(self, unit):
+        self._length_unit = unit
 
     @property
     def length_scale(self):
@@ -136,9 +145,10 @@ class Project(ObjectDefinition):
 
     @property
     def frame(self) -> Frame:
-        for context in self.contexts:
-            if context["type"] == "Model":
-                return context["wcs"]
+        if self._entity:
+            for context in self.contexts:
+                if context["type"] == "Model":
+                    return context["wcs"]
 
     @property
     def north(self) -> Vector:
