@@ -376,7 +376,7 @@ class Model:
         def load_entity(data, parent=None, geometry_map=geometry_map):
 
             ifc_type = get_type(data["type"])
-            entity = self.create(ifc_type, parent=parent, **data["attributes"])
+            entity = self.create(ifc_type, parent=parent, Name=data["name"], Description=data.get("description", ""))
 
             if "children" in data:
                 for child_data in data["children"]:
@@ -393,6 +393,9 @@ class Model:
                 print(entity)
                 entity.frame = data["frame"]
 
+            if "psets" in data:
+                entity.psets = data["psets"]
+
         load_entity(session, parent=None, geometry_map=geometry_map)
 
     @classmethod
@@ -406,23 +409,77 @@ class Model:
                 model.create(BuildingStorey, parent=building, Name=f"Default Storey {j+1}")
         return model
 
-    def show(self):
+    def show(self, entity=None):
         try:
             from compas_viewer import Viewer
+            from compas.datastructures import Tree
+            from compas.datastructures import TreeNode
+            from compas_viewer.config import Config
+            from compas_viewer.components import Treeform
+            from compas_viewer.components import Sceneform
         except ImportError:
             raise ImportError("The show method requires compas_viewer to be installed.")
 
-        viewer = Viewer()
+        config = Config()
+        config.ui.sidebar.sceneform = False
+        config.ui.sidedock.show = False
+
+        viewer = Viewer(config=config)
+
+        entity_map = {}
 
         def parse_entity(entity, parent=None):
+            
+            obj = None
             if getattr(entity, "geometry", None):
                 if not entity.is_a("IfcSpace"):
-                    viewer.scene.add(entity.geometry, name=entity.name, parent=parent, **entity.style)
+                    obj = viewer.scene.add(entity.geometry, name=entity.name, parent=parent, **entity.style)
             if entity.children:
                 obj = viewer.scene.add([], name=entity.name, parent=parent)
                 for child in entity.children:
                     parse_entity(child, parent=obj)
+            
+            if obj:
+                entity_map[id(obj)] = entity
 
-        parse_entity(self.project)
+        parse_entity(entity or self.project)
+
+        propertyform = Treeform(Tree(), {"Name": (lambda o: o.name), "value": (lambda o: o.attributes.get("value", ""))})
+
+        def callback(obj):
+
+            entity = entity_map[id(obj)]
+            tree = Tree()
+            root = TreeNode("ROOT")
+            tree.add(root)
+            attribute_node = TreeNode("Attributes")
+            root.add(attribute_node)
+            for name, value in entity.attributes.items():
+                attribute_node.add(TreeNode(name, value=value))
+
+            properties_node = TreeNode("Properties")
+            root.add(properties_node)
+
+            
+            for pset, properties in entity.psets.items():
+                pset_node = TreeNode(pset)
+                properties_node.add(pset_node)
+                for name, value in properties.items():
+                    pset_node.add(TreeNode(name, value=value))
+
+            propertyform.tree = tree
+            propertyform.update()
+
+        def get_name(obj):
+            entity = entity_map.get(id(obj))
+            if entity:
+                return f"[{entity.ifc_type}] {entity.name}"
+            return ""
+
+        sceneform = Sceneform(viewer.scene, {"Name": get_name}, callback=callback)
+        
+
+        viewer.ui.sidebar.widget.addWidget(sceneform)
+        viewer.ui.sidebar.widget.addWidget(propertyform)
 
         viewer.show()

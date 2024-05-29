@@ -43,7 +43,7 @@ class Entity:
         self._ifc_type = None
 
     def __repr__(self):
-        return "<{}:{}>".format(type(self).__name__, self.ifc_type)
+        return "<{}>".format(self.ifc_type)
 
     @property
     def declaration(self):

@@ -227,22 +227,4 @@ class Product(ObjectDefinition):
         return self._style
 
     def show(self):
-        try:
-            from compas_viewer import Viewer
-        except ImportError:
-            raise ImportError("The show method requires compas_viewer to be installed.")
-
-        viewer = Viewer()
-
-        def parse_entity(entity, parent=None):
-            if getattr(entity, "geometry", None):
-                if not entity.is_a("IfcSpace"):
-                    viewer.scene.add(entity.geometry, name=entity.name, parent=parent, **entity.style)
-            if entity.children:
-                obj = viewer.scene.add([], name=entity.name, parent=parent)
-                for child in entity.children:
-                    parse_entity(child, parent=obj)
-
-        parse_entity(self)
-
-        viewer.show()
+        self.model.show(self)

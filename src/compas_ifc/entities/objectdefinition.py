@@ -1,4 +1,5 @@
 from .root import Root
+from compas.datastructures import Tree, TreeNode
 
 
 class ObjectDefinition(Root):
@@ -115,11 +116,30 @@ class ObjectDefinition(Root):
         -------
         None
         """
+        print("=" * 80)
+        print("SPATIAL HIERARCHY")
+        print(self.spatial_hierarchy.get_hierarchy_string(max_depth=max_level))
+        print("=" * 80)
 
-        def traverse(entity, level=0):
-            if level <= max_level:
-                print("----" * level, entity)
-                for child in entity.children:
-                    traverse(child, level + 1)
 
-        traverse(self)
+    @property
+    def spatial_hierarchy(self) -> Tree:
+
+        tree = Tree()
+
+        class Node(TreeNode):
+            def __repr__(self):
+                return str(self.name)
+
+        root = Node(self)
+
+        tree.add(root)
+
+        def traverse(entity, parent):
+            node = Node(entity)
+            parent.add(node)
+            for child in entity.children:
+                traverse(child, node)
+
+        traverse(self, root)
+        return tree

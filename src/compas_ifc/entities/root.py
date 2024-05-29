@@ -21,7 +21,7 @@ class Root(Entity):
             self["Name"] = None
 
     def __repr__(self):
-        return "<{}:{} Name: {}, GlobalId: {}>".format(type(self).__name__, self.ifc_type, self.name, self.global_id)
+        return "<{} Name: {}, GlobalId: {}>".format(self.ifc_type, self.name, self.global_id)
 
     @property
     def global_id(self):
