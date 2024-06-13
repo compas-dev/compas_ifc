@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="3.3 Opening" href="3.3_opening.html" />
+    <link rel="next" title="4.1 Edit Export" href="4.1_edit_export.html" />
     <link rel="prev" title="3.1 Model View" href="3.1_model_view.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -471,11 +471,8 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="2.7_window_info.html">2.3 Window Info</a></li>
 <li class="toctree-l2"><a class="reference internal" href="3.1_model_view.html">3.1 Model View</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">3.2 Element View</a></li>
-<li class="toctree-l2"><a class="reference internal" href="3.3_opening.html">3.3 Opening</a></li>
 <li class="toctree-l2"><a class="reference internal" href="4.1_edit_export.html">4.1 Edit Export</a></li>
-<li class="toctree-l2"><a class="reference internal" href="4.2_create_new.html">4.1 Create New (In Progess)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="5.1_custom_viewer.html">5.0 IFC Viewer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="5.2_attribute_form.html">5.2 Attribute Form</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4.2_create_new.html">4.1 Create New</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -552,21 +549,13 @@ document.write(`
   <section id="element-view">
 <h1>3.2 Element View</h1>
 <p>This example shows how to load an IFC file and display selected element in compas_view2.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">compas_viewer</span> <span class="kn">import</span> <span class="n">Viewer</span>
-<span class="kn">from</span> <span class="nn">compas_ifc.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">compas_ifc.model</span> <span class="kn">import</span> <span class="n">Model</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;data/wall-with-opening-and-window.ifc&quot;</span><span class="p">)</span>
-<span class="n">viewer</span> <span class="o">=</span> <span class="n">Viewer</span><span class="p">()</span>
-
-<span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">get_entities_by_type</span><span class="p">(</span><span class="s2">&quot;IfcWall&quot;</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Converting to brep:&quot;</span><span class="p">,</span> <span class="n">entity</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">body_with_opening</span><span class="p">)</span>
-    <span class="n">viewer</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">body_with_opening</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">entity</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-
-<span class="n">viewer</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;data/Duplex_A_20110907.ifc&quot;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">get_entities_by_type</span><span class="p">(</span><span class="s2">&quot;IfcWindow&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<a class="reference internal image-reference" href="../_images/element.png"><img alt="../_images/element.png" src="../_images/element.png" style="width: 100%;" /></a>
+<a class="reference internal image-reference" href="../_images/element_view.jpg"><img alt="../_images/element_view.jpg" src="../_images/element_view.jpg" style="width: 100%;" /></a>
 </section>
 
 

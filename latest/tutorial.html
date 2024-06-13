@@ -475,11 +475,8 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="examples/2.7_window_info.html">2.3 Window Info</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/3.1_model_view.html">3.1 Model View</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/3.2_element_view.html">3.2 Element View</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/3.3_opening.html">3.3 Opening</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples/4.1_edit_export.html">4.1 Edit Export</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/4.2_create_new.html">4.1 Create New (In Progess)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/5.1_custom_viewer.html">5.0 IFC Viewer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples/5.2_attribute_form.html">5.2 Attribute Form</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/4.2_create_new.html">4.1 Create New</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -555,9 +552,8 @@ document.write(`
 <p>This is a hello-world tutorial for the COMPAS IFC package. It shows how to load an IFC file and and inspect its contents.</p>
 <section id="load-ifc-model">
 <h2>Load IFC model</h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">os</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">compas_ifc.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;wall-with-opening-and-window.ifc&quot;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">compas_ifc.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;data/wall-with-opening-and-window.ifc&quot;</span><span class="p">)</span>
 <span class="go">Opened file: d:\Github\compas_ifc\scripts\..\data\wall-with-opening-and-window.ifc</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">schema</span><span class="p">)</span>
 <span class="go">&lt;schema IFC4&gt;</span>
@@ -614,16 +610,24 @@ document.write(`
 <span class="go">children: []</span>
 </pre></div>
 </div>
-<p>For geomtric information, you can use the <code class="docutils literal notranslate"><span class="pre">body</span></code> property of an entity. This will extract the representation of the entity (if exists) as a <code class="docutils literal notranslate"><span class="pre">compas_occ</span> <span class="pre">BRep</span></code>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">brep</span> <span class="o">=</span> <span class="n">wall</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">brep</span><span class="p">)</span>
+<p>For geomtric information, you can use the <code class="docutils literal notranslate"><span class="pre">geometry</span></code> property of an entity, if you have <code class="docutils literal notranslate"><span class="pre">compas_occ</span></code> installed, the geometry will be in form of <code class="docutils literal notranslate"><span class="pre">Brep</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">geometry</span> <span class="o">=</span> <span class="n">wall</span><span class="o">.</span><span class="n">geometry</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">geometry</span><span class="p">)</span>
 <span class="go">&lt;compas_occ.brep.brep.BRep object at 0x000001F7480C97F0&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">brep</span><span class="o">.</span><span class="n">is_solid</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">geometry</span><span class="o">.</span><span class="n">is_solid</span><span class="p">)</span>
 <span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">brep</span><span class="o">.</span><span class="n">volume</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">geometry</span><span class="o">.</span><span class="n">volume</span><span class="p">)</span>
 <span class="go">1.8</span>
 </pre></div>
 </div>
+</section>
+<section id="visualisation">
+<h2>Visualisation</h2>
+<p>If you have <code class="docutils literal notranslate"><span class="pre">compas_viewer</span></code> installed, you can visualize the model using the <code class="docutils literal notranslate"><span class="pre">model.show()</span></code> function.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/visualisation.jpg"><img alt="_images/visualisation.jpg" src="_images/visualisation.jpg" style="width: 100%;" /></a>
 <p>For more in-depth tutorials, please head to the next <em>Examples</em> section.</p>
 </section>
 </section>
@@ -652,6 +656,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#load-ifc-model">Load IFC model</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#query-entities">Query entities</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#entity-attributes">Entity attributes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualisation">Visualisation</a></li>
 </ul>
   </nav></div>
 
