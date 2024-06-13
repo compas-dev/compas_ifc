@@ -9,9 +9,8 @@ Load IFC model
 
 ::
 
-    >>> import os
     >>> from compas_ifc.model import Model
-    >>> model = Model("wall-with-opening-and-window.ifc")
+    >>> model = Model("data/wall-with-opening-and-window.ifc")
     Opened file: d:\Github\compas_ifc\scripts\..\data\wall-with-opening-and-window.ifc
     >>> print(model.schema)
     <schema IFC4>
@@ -77,16 +76,31 @@ You can also inspect the spatial hierarchy of the model. For example, you can ge
     >>> print("children", wall.children)
     children: []
 
-For geomtric information, you can use the ``body`` property of an entity. This will extract the representation of the entity (if exists) as a ``compas_occ BRep``.
+For geomtric information, you can use the ``geometry`` property of an entity, if you have ``compas_occ`` installed, the geometry will be in form of ``Brep``.
 
 ::
     
-    >>> brep = wall.body[0]
-    >>> print(brep)
+    >>> geometry = wall.geometry
+    >>> print(geometry)
     <compas_occ.brep.brep.BRep object at 0x000001F7480C97F0>
-    >>> print(brep.is_solid)
+    >>> print(geometry.is_solid)
     True
-    >>> print(brep.volume)
+    >>> print(geometry.volume)
     1.8
+
+
+
+
+Visualisation
+================================
+
+If you have ``compas_viewer`` installed, you can visualize the model using the ``model.show()`` function.
+
+::
+
+    >>> model.show()
+
+.. image:: _images/visualisation.jpg
+    :width: 100%
 
 For more in-depth tutorials, please head to the next *Examples* section.

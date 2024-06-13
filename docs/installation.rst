@@ -2,24 +2,20 @@
 Installation
 ********************************************************************************
 
-Install with conda (required)
-================================
-
-Create an environment named ``research`` and install COMPAS from the package channel ``conda-forge``.
+A minimal version of COMPAS IFC can be installed directly with pip.
 
 .. code-block:: bash
 
-    conda create -n ifc -c conda-forge compas compas_occ
+    pip install compas_ifc
 
-Activate the environment. 
-
-.. code-block:: bash
-
-    conda activate ifc
-
-Install compas_ifc and optionally compas_viewer.
+If you want to visualize the IFC model, install COMPAS Viewer as well.
 
 .. code-block:: bash
 
-    pip install compas_ifc compas_viewer
+    pip install compas_viewer
 
+If you need to interact with IFC geometry using OCC Brep, install COMPAS OCC as well.
+
+.. code-block:: bash
+
+    conda install compas_occ
