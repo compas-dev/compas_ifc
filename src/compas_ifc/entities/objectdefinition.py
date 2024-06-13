@@ -1,5 +1,7 @@
+from compas.datastructures import Tree
+from compas.datastructures import TreeNode
+
 from .root import Root
-from compas.datastructures import Tree, TreeNode
 
 
 class ObjectDefinition(Root):
@@ -121,10 +123,8 @@ class ObjectDefinition(Root):
         print(self.spatial_hierarchy.get_hierarchy_string(max_depth=max_level))
         print("=" * 80)
 
-
     @property
     def spatial_hierarchy(self) -> Tree:
-
         tree = Tree()
 
         class Node(TreeNode):

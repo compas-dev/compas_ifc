@@ -1,7 +1,12 @@
+import os
 from typing import List
+from uuid import uuid4
 
 import ifcopenshell
+from compas.data import json_dump
+from compas.data import json_load
 
+from compas_ifc.entities import DEFAULT_ENTITY_TYPES
 from compas_ifc.entities.building import Building
 from compas_ifc.entities.buildingelements import BuildingElement
 from compas_ifc.entities.buildingelements import BuildingElementProxy
@@ -11,15 +16,9 @@ from compas_ifc.entities.entity import Entity
 from compas_ifc.entities.geographicelement import GeographicElement
 from compas_ifc.entities.project import Project
 from compas_ifc.entities.site import Site
-from compas_ifc.entities import DEFAULT_ENTITY_TYPES
-from compas.data import json_dump
-from compas.data import json_load
-from uuid import uuid4
 
 from .reader import IFCReader
 from .writer import IFCWriter
-
-import os
 
 
 class Model:
@@ -206,7 +205,6 @@ class Model:
         """
 
         def get_type(type_name):
-
             types = DEFAULT_ENTITY_TYPES.copy()
             if self.reader.entity_types:
                 types.update(self.reader.entity_types)
@@ -279,14 +277,14 @@ class Model:
         return element
 
     def export_session(self, path, export_geometries=True):
-
         try:
-            from compas_occ.brep import Brep
-            from compas.geometry import Box
-            from compas.geometry import Sphere
-            from compas.geometry import Shape
-            from compas.datastructures import Mesh
             import shutil
+
+            from compas.datastructures import Mesh
+            from compas.geometry import Box
+            from compas.geometry import Shape
+            from compas.geometry import Sphere
+            from compas_occ.brep import Brep
 
         except ImportError:
             raise ImportError("The export_session method requires compas_occ to be installed.")
@@ -303,7 +301,6 @@ class Model:
         geometry_map = {}
 
         def export_entity(entity: Entity, geometry_map=geometry_map):
-
             data = {}
             data["type"] = entity.ifc_type
             data["name"] = entity.name
@@ -319,7 +316,6 @@ class Model:
                     data["children"].append(export_entity(child))
 
             if export_geometries and hasattr(entity, "body_with_opening") and entity.body_with_opening:
-
                 if geometry_map.get(id(entity.body_with_opening)):
                     # TODO: check when reading from existing IFC files.
                     data["geometry"] = geometry_map[id(entity.body_with_opening)]
@@ -351,9 +347,9 @@ class Model:
         json_dump(data, os.path.join(path, "session.json"), pretty=False)
 
     def load_session(self, path):
-
         try:
             from compas_occ.brep import Brep
+
             from compas_ifc.entities import DEFAULT_ENTITY_TYPES
 
         except ImportError:
@@ -374,7 +370,6 @@ class Model:
             return BuildingElementProxy
 
         def load_entity(data, parent=None, geometry_map=geometry_map):
-
             ifc_type = get_type(data["type"])
             entity = self.create(ifc_type, parent=parent, Name=data["name"], Description=data.get("description", ""))
 
@@ -412,24 +407,25 @@ class Model:
     def show(self, entity=None):
         try:
             from compas_viewer import Viewer
-            from compas.datastructures import Tree
-            from compas.datastructures import TreeNode
+
+            # from compas.datastructures import Tree
+            # from compas.datastructures import TreeNode
             from compas_viewer.config import Config
-            from compas_viewer.components import Treeform
-            from compas_viewer.components import Sceneform
+
+            # from compas_viewer.components.treeform import Treeform
+            # from compas_viewer.components import Sceneform
         except ImportError:
             raise ImportError("The show method requires compas_viewer to be installed.")
 
         config = Config()
-        config.ui.sidebar.sceneform = False
-        config.ui.sidedock.show = False
+        # config.ui.sidebar.sceneform = False
+        # config.ui.sidedock.show = False
 
         viewer = Viewer(config=config)
 
         entity_map = {}
 
         def parse_entity(entity, parent=None):
-            
             obj = None
             if getattr(entity, "geometry", None):
                 if not entity.is_a("IfcSpace"):
@@ -438,48 +434,46 @@ class Model:
                 obj = viewer.scene.add([], name=entity.name, parent=parent)
                 for child in entity.children:
                     parse_entity(child, parent=obj)
-            
+
             if obj:
                 entity_map[id(obj)] = entity
 
         parse_entity(entity or self.project)
 
-        propertyform = Treeform(Tree(), {"Name": (lambda o: o.name), "value": (lambda o: o.attributes.get("value", ""))})
+        # propertyform = Treeform(Tree(), {"Name": (lambda o: o.name), "value": (lambda o: o.attributes.get("value", ""))})
 
-        def callback(obj):
+        # def callback(obj):
 
-            entity = entity_map[id(obj)]
-            tree = Tree()
-            root = TreeNode("ROOT")
-            tree.add(root)
-            attribute_node = TreeNode("Attributes")
-            root.add(attribute_node)
-            for name, value in entity.attributes.items():
-                attribute_node.add(TreeNode(name, value=value))
+        #     entity = entity_map[id(obj)]
+        #     tree = Tree()
+        #     root = TreeNode("ROOT")
+        #     tree.add(root)
+        #     attribute_node = TreeNode("Attributes")
+        #     root.add(attribute_node)
+        #     for name, value in entity.attributes.items():
+        #         attribute_node.add(TreeNode(name, value=value))
 
-            properties_node = TreeNode("Properties")
-            root.add(properties_node)
+        #     properties_node = TreeNode("Properties")
+        #     root.add(properties_node)
 
-            
-            for pset, properties in entity.psets.items():
-                pset_node = TreeNode(pset)
-                properties_node.add(pset_node)
-                for name, value in properties.items():
-                    pset_node.add(TreeNode(name, value=value))
+        #     for pset, properties in entity.psets.items():
+        #         pset_node = TreeNode(pset)
+        #         properties_node.add(pset_node)
+        #         for name, value in properties.items():
+        #             pset_node.add(TreeNode(name, value=value))
 
-            propertyform.tree = tree
-            propertyform.update()
+        #     propertyform.tree = tree
+        #     propertyform.update()
 
-        def get_name(obj):
-            entity = entity_map.get(id(obj))
-            if entity:
-                return f"[{entity.ifc_type}] {entity.name}"
-            return ""
+        # def get_name(obj):
+        #     entity = entity_map.get(id(obj))
+        #     if entity:
+        #         return f"[{entity.ifc_type}] {entity.name}"
+        #     return ""
 
-        sceneform = Sceneform(viewer.scene, {"Name": get_name}, callback=callback)
-        
+        # sceneform = Sceneform(viewer.scene, {"Name": get_name}, callback=callback)
 
-        viewer.ui.sidebar.widget.addWidget(sceneform)
-        viewer.ui.sidebar.widget.addWidget(propertyform)
+        # viewer.ui.sidebar.widget.addWidget(sceneform)
+        # viewer.ui.sidebar.widget.addWidget(propertyform)
 
         viewer.show()

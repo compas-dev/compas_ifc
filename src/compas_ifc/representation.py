@@ -44,9 +44,6 @@ from typing import List
 from compas.geometry import Box
 from compas.geometry import Scale
 from compas.geometry import Transformation
-from compas_occ.brep import OCCBrep
-from OCC.Core.BRep import BRep_Builder
-from OCC.Core.TopoDS import TopoDS_Compound
 
 from compas_ifc.brep import TessellatedBrep
 from compas_ifc.entities.entity import Entity
@@ -185,6 +182,10 @@ def entity_body_with_opening_geometry(entity: Entity = None, bodies=None, voids=
         return bodies
 
     if use_occ:
+        from compas_occ.brep import OCCBrep
+        from OCC.Core.BRep import BRep_Builder
+        from OCC.Core.TopoDS import TopoDS_Compound
+
         print("Using OCC for boolean operations.")
         compound = TopoDS_Compound()
         builder = BRep_Builder()
