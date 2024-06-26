@@ -7,14 +7,17 @@ from .tessellatedbrep import TessellatedBrep
 
 
 class TessellatedBrepObject(ViewerSceneObject):
-    def __init__(self, tessellatedbrep: TessellatedBrep, facecolors=None, **kwargs):
-        super().__init__(item=tessellatedbrep, **kwargs)
-        self.tessellatedbrep = tessellatedbrep
+    def __init__(self, facecolors=None, **kwargs):
+        super().__init__(**kwargs)
         self.facecolors = facecolors
 
         # TODO: it is not facecolors, it is verexcolor
         if not self.facecolors:
             self.facecolors = [Color(0.9, 0.9, 0.9) for _ in range(len(self.tessellatedbrep.faces) * 3)]
+
+    @property
+    def tessellatedbrep(self) -> TessellatedBrep:
+        return self.item
 
     def _read_points_data(self):
         pass
