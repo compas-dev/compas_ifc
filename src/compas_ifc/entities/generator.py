@@ -65,6 +65,7 @@ class CLASS_NAME(PARENT_NAME):
         self.imports = set()
         self.attribute_imports = set()
         self.parent = None
+        self.extension = None
         self.attributes = []
         self.inverse_attributes = []
         self.description = ""
@@ -76,6 +77,13 @@ class CLASS_NAME(PARENT_NAME):
         else:
             self.parent = "Base"
             self.imports.add("from compas_ifc.entities.base import Base")
+
+        
+        extension = getattr(extensions, self.name, None)
+        if extension:
+            print("found Extension classes:", extension)
+            self.imports.add(f"from compas_ifc.entities.extensions import {self.name} as {self.name}_Ext   # type: ignore")
+            self.extension = f"{self.name}_Ext"
 
     def get_description(self):
         self.description = f"Wrapper class for {self.name}."
@@ -133,7 +141,10 @@ class CLASS_NAME(PARENT_NAME):
         self.get_attributes()
 
         class_string = self.TEMPLATE.replace("CLASS_NAME", self.name)
-        class_string = class_string.replace("PARENT_NAME", self.parent)
+        if self.extension:
+            class_string = class_string.replace("PARENT_NAME", f"{self.extension}, {self.parent}")
+        else:
+            class_string = class_string.replace("PARENT_NAME", self.parent)
         class_string = class_string.replace("DESCRIPTION", self.description)
 
         for attribute in self.attributes:
@@ -151,7 +162,7 @@ class CLASS_NAME(PARENT_NAME):
 
         class_string = class_string.replace("IMPORTS", import_strings)
 
-        class_string += self.get_extension_methods(self.name)
+        # class_string += self.get_extension_methods(self.name)
 
         return class_string
 
