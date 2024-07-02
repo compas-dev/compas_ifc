@@ -15,4 +15,4 @@ class IfcSpatialStructureElement(IfcSpatialStructureElement):
         if relations:
             children += relations[0].RelatedElements
 
-        return children
+        return list(set(children))
