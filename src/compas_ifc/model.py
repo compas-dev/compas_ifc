@@ -72,6 +72,9 @@ class Model(Data):
     def print_spatial_hierarchy(self, max_depth=3):
         self.project.print_spatial_hierarchy(max_depth=max_depth)
 
+    def save(self, path):
+        self.file.save(path)
+
     def show(self, entity=None):
         try:
             from compas_viewer import Viewer

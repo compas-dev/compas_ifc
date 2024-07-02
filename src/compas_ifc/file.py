@@ -125,3 +125,6 @@ class IFCFile(object):
                     break
 
         print(f"Time to load all {len(self._geometrymap)} geometries {(time.time() - start):.3f}s")
+
+    def save(self, path):
+        self._file.write(path)
