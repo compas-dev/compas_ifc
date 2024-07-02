@@ -1,17 +1,17 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from compas_ifc.entities.generated.IFC4 import IfcSpatialElement
+    from compas_ifc.entities.generated.IFC2X3 import IfcSpatialStructureElement
 else:
-    IfcSpatialElement = object
+    IfcSpatialStructureElement = object
 
 
-class IfcSpatialElement(IfcSpatialElement):
+class IfcSpatialStructureElement(IfcSpatialStructureElement):
     @property
     def children(self):
         children = super().children
         relations = self.ContainsElements()
-        # NOTE: in IFC2X3 this is in IfcSpatialStructureElement
+        # NOTE: in IFC4 this is in IfcSpatialElement
         if relations:
             children += relations[0].RelatedElements
 

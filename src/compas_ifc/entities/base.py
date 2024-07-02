@@ -38,6 +38,7 @@ class Base(Data):
         return super(Base, cls).__new__(ifc_cls)
 
     def __init__(self, entity: entity_instance = None, reader=None):
+        super().__init__()
         self.reader = reader
         self.entity = entity
 

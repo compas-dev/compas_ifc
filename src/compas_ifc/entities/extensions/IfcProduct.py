@@ -45,3 +45,8 @@ class IfcProduct(IfcProduct):
     @opening.setter
     def opening(self, value):
         self._opening = value
+
+
+    @property
+    def geometry(self):
+        return self.body_with_opening

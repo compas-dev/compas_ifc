@@ -72,9 +72,34 @@ class Model(Data):
     def print_spatial_hierarchy(self):
         self.project.print_spatial_hierarchy()
 
-    def show(self):
-        raise NotImplementedError
+    def show(self, entity=None):
+        try:
+            from compas_viewer import Viewer
 
+        except ImportError:
+            raise ImportError("The show method requires compas_viewer to be installed.")
+
+        viewer = Viewer()
+
+        entity_map = {}
+
+        def parse_entity(entity, parent=None):
+            obj = None
+            name = f"[{entity.__class__.__name__}]{entity.Name}"
+            if getattr(entity, "geometry", None):
+                if not entity.is_a("IfcSpace"):
+                    obj = viewer.scene.add(entity.geometry, name=name, parent=parent, **entity.style)
+            if entity.children:
+                obj = viewer.scene.add([], name=name, parent=parent)
+                for child in entity.children:
+                    parse_entity(child, parent=obj)
+
+            if obj:
+                entity_map[id(obj)] = entity
+
+        parse_entity(entity or self.project)
+
+        viewer.show()
 
 if __name__ == "__main__":
     model = Model("data/wall-with-opening-and-window.ifc")
