@@ -69,8 +69,8 @@ class Model(Data):
         print("Number of building elements: {}".format(len(self.building_elements)))
         print("=" * 80)
 
-    def print_spatial_hierarchy(self):
-        self.project.print_spatial_hierarchy()
+    def print_spatial_hierarchy(self, max_depth=3):
+        self.project.print_spatial_hierarchy(max_depth=max_depth)
 
     def show(self, entity=None):
         try:

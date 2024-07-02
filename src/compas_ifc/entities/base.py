@@ -141,7 +141,7 @@ class Base(Data):
     def attribute_info(self):
         raise NotImplementedError
 
-    def print_spatial_hierarchy(self):
+    def print_spatial_hierarchy(self, max_depth=3):
         IfcObjectDefinition = getattr(
             importlib.import_module(f"compas_ifc.entities.generated.{self.schema}"), "IfcObjectDefinition"
         )
@@ -169,7 +169,7 @@ class Base(Data):
         add_entity(top, root_node)
 
         print("=" * 80 + "\n" + f"Spatial hierarchy of {self}\n" + "=" * 80)
-        print(spatial_tree)
+        print(spatial_tree.get_hierarchy_string(max_depth=max_depth))
         print("")
 
     def print_properties(self):
