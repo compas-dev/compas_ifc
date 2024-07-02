@@ -1,5 +1,5 @@
 from compas.data import Data
-from compas_ifc.reader import IFCReader
+from compas_ifc.file import IFCFile
 
 from typing import TYPE_CHECKING
 from typing import Generator
@@ -14,40 +14,40 @@ if TYPE_CHECKING:
 
 class Model(Data):
     def __init__(self, path, use_occ=False, load_geometries=True):
-        self.reader = IFCReader(path, self, use_occ=use_occ, load_geometries=load_geometries)
+        self.file = IFCFile(path, self, use_occ=use_occ, load_geometries=load_geometries)
 
     @property
     def entities(self) -> Generator["Base", None, None]:
-        for entity in self.reader._file:
-            yield self.reader.from_entity(entity)
+        for entity in self.file._file:
+            yield self.file.from_entity(entity)
 
     @property
     def project(self) -> "IfcProject":
-        return self.reader.get_entities_by_type("IfcProject")[0]
+        return self.file.get_entities_by_type("IfcProject")[0]
 
     @property
     def sites(self) -> list["IfcSite"]:
-        return self.reader.get_entities_by_type("IfcSite")
+        return self.file.get_entities_by_type("IfcSite")
 
     @property
     def buildings(self) -> list["IfcBuilding"]:
-        return self.reader.get_entities_by_type("IfcBuilding")
+        return self.file.get_entities_by_type("IfcBuilding")
 
     @property
     def building_elements(self) -> list["IfcBuildingElement"]:
-        return self.reader.get_entities_by_type("IfcBuildingElement")
+        return self.file.get_entities_by_type("IfcBuildingElement")
 
     def get_entities_by_type(self, type_name) -> list["Base"]:
-        return self.reader.get_entities_by_type(type_name)
+        return self.file.get_entities_by_type(type_name)
 
     def get_entities_by_name(self, name) -> list["Base"]:
-        return self.reader.get_entities_by_name(name)
+        return self.file.get_entities_by_name(name)
 
     def get_entity_by_global_id(self, global_id) -> "Base":
-        return self.reader.get_entity_by_global_id(global_id)
+        return self.file.get_entity_by_global_id(global_id)
 
     def get_entity_by_id(self, id) -> "Base":
-        return self.reader.get_entity_by_id(id)
+        return self.file.get_entity_by_id(id)
 
     def print_summary(self):
         """
@@ -60,8 +60,8 @@ class Model(Data):
         Plot of spatial hierarchy"""
 
         print("=" * 80)
-        print("File: {}".format(self.reader.filepath))
-        print("Size: {} MB".format(self.reader.file_size()))
+        print("File: {}".format(self.file.filepath))
+        print("Size: {} MB".format(self.file.file_size()))
         print("Project: {}".format(self.project.Name))
         print("Description: {}".format(self.project.Description))
         print("Number of sites: {}".format(len(self.sites)))

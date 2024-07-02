@@ -16,18 +16,18 @@ class IfcProduct(IfcProduct):
 
     @property
     def body_with_opening(self):
-        return self.reader.get_preloaded_geometry(self)
+        return self.file.get_preloaded_geometry(self)
 
     @property
     def style(self):
-        return self.reader.get_preloaded_style(self)
+        return self.file.get_preloaded_style(self)
 
     @property
     def body(self):
         from compas_ifc.conversions.geometries import entity_body_geometry
 
         if getattr(self, "_body", None) is None:
-            self._body = entity_body_geometry(self, use_occ=self.reader.use_occ)
+            self._body = entity_body_geometry(self, use_occ=self.file.use_occ)
         return self._body
 
     @body.setter
@@ -39,7 +39,7 @@ class IfcProduct(IfcProduct):
         from compas_ifc.conversions.geometries import entity_opening_geometry
 
         if getattr(self, "_opening", None) is None:
-            self._opening = entity_opening_geometry(self, use_occ=self.reader.use_occ)
+            self._opening = entity_opening_geometry(self, use_occ=self.file.use_occ)
         return self._opening
 
     @opening.setter

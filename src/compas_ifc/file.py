@@ -7,7 +7,7 @@ import os
 import multiprocessing
 
 
-class IFCReader(object):
+class IFCFile(object):
     def __init__(self, filepath, model, use_occ=False, load_geometries=True):
         self.filepath = filepath
         self.model = model
@@ -125,14 +125,3 @@ class IFCReader(object):
                     break
 
         print(f"Time to load all {len(self._geometrymap)} geometries {(time.time() - start):.3f}s")
-
-
-if __name__ == "__main__":
-    reader = IFCReader("data/wall-with-opening-and-window.ifc")
-    reader.file_size()
-    # print(len(reader._file))
-    # entities = reader.get_by_type("IfcProject")
-    # entities[0].print_attributes(max_depth=1)
-
-    # for key in entities[0]:
-    #     print(key, entities[0][key])

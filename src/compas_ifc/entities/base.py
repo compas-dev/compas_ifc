@@ -5,7 +5,7 @@ import importlib
 from typing import TYPE_CHECKING, get_type_hints
 
 if TYPE_CHECKING:
-    from compas_ifc.reader import IFCReader
+    from compas_ifc.file import IFCFile
     from compas_ifc.model import Model
 
 
@@ -16,15 +16,15 @@ class Base(Data):
     ----------
     entity : entity_instance
         The IFC entity instance.
-    reader : IfcReader
+    file : Ifcfile
     """
 
-    def __new__(cls, entity: entity_instance, reader: "IFCReader" = None):
+    def __new__(cls, entity: entity_instance, file: "IFCFile" = None):
 
-        if reader is None:
+        if file is None:
             schema = "IFC4"
         else:
-            schema = reader._schema.name()
+            schema = file._schema.name()
 
         try:
             classes = importlib.import_module(f"compas_ifc.entities.generated.{schema}")
@@ -37,9 +37,9 @@ class Base(Data):
         ifc_cls = getattr(classes, cls_name, None)
         return super(Base, cls).__new__(ifc_cls)
 
-    def __init__(self, entity: entity_instance = None, reader=None):
+    def __init__(self, entity: entity_instance = None, file=None):
         super().__init__()
-        self.reader = reader
+        self.file = file
         self.entity = entity
 
     def __repr__(self):
@@ -57,7 +57,7 @@ class Base(Data):
         else:
             attr = entity
         if isinstance(attr, entity_instance):
-            return self.reader.from_entity(attr)
+            return self.file.from_entity(attr)
         if isinstance(attr, (list, tuple)):
             return [self._get_attribute(entity=item) for item in attr]
         else:
@@ -86,15 +86,15 @@ class Base(Data):
         setattr(self.entity, name, value)
 
     def _get_inverse_attribute(self, name):
-        return [self.reader.from_entity(attr) for attr in getattr(self.entity, name)]
+        return [self.file.from_entity(attr) for attr in getattr(self.entity, name)]
 
     @property
     def model(self) -> "Model":
-        return self.reader.model  # TODO: rather convoluted.
+        return self.file.model  # TODO: rather convoluted.
 
     @property
     def schema(self):
-        return self.reader._schema.name()
+        return self.file._schema.name()
 
     def is_a(self, type_name):
         return self.entity.is_a(type_name)
