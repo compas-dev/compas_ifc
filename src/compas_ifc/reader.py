@@ -3,6 +3,8 @@ from compas.geometry import Transformation
 import ifcopenshell
 import numpy as np
 import time
+import os
+import multiprocessing
 
 
 class IFCReader(object):
