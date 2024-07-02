@@ -198,6 +198,8 @@ class Base(Data):
         tree.print_hierarchy()
         print("")
 
+    def show(self):
+        self.model.show(self)
 
 class EntityNode(TreeNode):
     def __repr__(self):
