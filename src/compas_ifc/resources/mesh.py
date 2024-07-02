@@ -1,5 +1,4 @@
 import ifcopenshell
-
 from compas.datastructures import Mesh
 
 

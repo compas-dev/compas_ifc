@@ -1,16 +1,16 @@
+import time
+
 import ifcopenshell
 from ifcopenshell.api import run
 
-from .entities.objectdefinition import ObjectDefinition
 from .entities.element import Element
 from .entities.entity import Entity
+from .entities.objectdefinition import ObjectDefinition
 from .entities.product import Product
 from .entities.project import Project
 from .entities.root import Root
 from .resources.representation import write_body_representation
 from .resources.shapes import frame_to_ifc_axis2_placement_3d
-
-import time
 
 
 class IFCWriter(object):
@@ -47,7 +47,10 @@ class IFCWriter(object):
         self.file = None
         self.model = model
         self._entitymap = {}
+        self._relationmap_aggregates = {}
+        self._relationmap_contains = {}
         self._representationmap = {}
+        self._psetsmap = {}
         self._default_context = None
         self._default_body_context = None
         self._default_project = None
@@ -81,9 +84,7 @@ class IFCWriter(object):
     def default_project(self):
         if not self._default_project:
             if not self.model.projects:
-                self._default_project = self.file.create_entity(
-                    "IfcProject", GlobalId=self.create_guid(), Name="Default Project"
-                )
+                self._default_project = self.file.create_entity("IfcProject", GlobalId=self.create_guid(), Name="Default Project")
                 run("unit.assign_unit", self.file)
             else:
                 self._default_project = self.write_entity(self.model.projects[0])
@@ -93,9 +94,7 @@ class IFCWriter(object):
     def default_site(self):
         if not self._default_site:
             if not self.model.sites:
-                self._default_site = self.file.create_entity(
-                    "IfcSite", Name="Default Site", GlobalId=self.create_guid()
-                )
+                self._default_site = self.file.create_entity("IfcSite", Name="Default Site", GlobalId=self.create_guid())
                 self.file.create_entity(
                     "IfcRelAggregates",
                     GlobalId=self.create_guid(),
@@ -110,9 +109,7 @@ class IFCWriter(object):
     def default_building(self):
         if not self._default_building:
             if not self.model.buildings:
-                self._default_building = self.file.create_entity(
-                    "IfcBuilding", GlobalId=self.create_guid(), Name="Default Building"
-                )
+                self._default_building = self.file.create_entity("IfcBuilding", GlobalId=self.create_guid(), Name="Default Building")
                 self.file.create_entity(
                     "IfcRelAggregates",
                     GlobalId=self.create_guid(),
@@ -127,9 +124,7 @@ class IFCWriter(object):
     def default_building_storey(self):
         if not self._default_building_storey:
             if not self.model.building_storeys:
-                self._default_building_storey = self.file.create_entity(
-                    "IfcBuildingStorey", GlobalId=self.create_guid(), Name="Default Storey"
-                )
+                self._default_building_storey = self.file.create_entity("IfcBuildingStorey", GlobalId=self.create_guid(), Name="Default Storey")
                 self.file.create_entity(
                     "IfcRelAggregates",
                     GlobalId=self.create_guid(),
@@ -142,15 +137,12 @@ class IFCWriter(object):
 
     @property
     def default_owner_history(self):
-
         if not self._default_owner_history:
             import compas_ifc
 
             person = self.file.create_entity("IfcPerson")
             organization = self.file.create_entity("IfcOrganization", Name="compas.dev")
-            person_and_org = self.file.create_entity(
-                "IfcPersonAndOrganization", ThePerson=person, TheOrganization=organization
-            )
+            person_and_org = self.file.create_entity("IfcPersonAndOrganization", ThePerson=person, TheOrganization=organization)
             application = self.file.create_entity(
                 "IfcApplication",
                 ApplicationDeveloper=organization,
@@ -273,16 +265,32 @@ class IFCWriter(object):
         child = self._entitymap[entity]
 
         if isinstance(entity, Element):
-            self.file.create_entity(
-                "IfcRelContainedInSpatialStructure",
-                GlobalId=self.create_guid(),
-                RelatingStructure=parent,
-                RelatedElements=[child],
-            )
+            if self._relationmap_contains.get(parent):
+                relation = self._relationmap_contains[parent]
+                children = set(relation.RelatedElements)
+                children.add(child)
+                children = list(children)
+                children.sort(key=lambda x: x.Name)
+                relation.RelatedElements = tuple(children)
+            else:
+                relation = self.file.create_entity(
+                    "IfcRelContainedInSpatialStructure",
+                    GlobalId=self.create_guid(),
+                    RelatingStructure=parent,
+                    RelatedElements=[child],
+                )
+                self._relationmap_contains[parent] = relation
         else:
-            self.file.create_entity(
-                "IfcRelAggregates", GlobalId=self.create_guid(), RelatingObject=parent, RelatedObjects=[child]
-            )
+            if self._relationmap_aggregates.get(parent):
+                relation = self._relationmap_aggregates[parent]
+                children = set(relation.RelatedObjects)
+                children.add(child)
+                children = list(children)
+                children.sort(key=lambda x: x.Name)
+                relation.RelatedObjects = tuple(children)
+            else:
+                relation = self.file.create_entity("IfcRelAggregates", GlobalId=self.create_guid(), RelatingObject=parent, RelatedObjects=[child])
+                self._relationmap_aggregates[parent] = relation
 
     def write_entity(self, entity: Entity) -> None:
         """Writes the given entity recursively with all its referencing attributes to the ifc file."""
@@ -313,6 +321,7 @@ class IFCWriter(object):
             # Entity created in memory
             self.write_entity_representation(entity)
             self.write_entity_placement(entity)
+            self.write_entity_pset(entity, ifc_entity)
 
         if isinstance(entity, Project):
             print("Writing project: " + str(entity))
@@ -320,17 +329,23 @@ class IFCWriter(object):
 
         return ifc_entity
 
-    def write_entity_pset(self, entity: Entity):
-        raise NotImplementedError()
+    def write_entity_pset(self, entity: Entity, ifc_entity: ifcopenshell.entity_instance):
+        for name, properties in entity.psets.items():
+            if id(properties) in self._psetsmap:
+                pset = self._psetsmap[id(properties)]
+                # TODO: This can be mreged too.
+                self.file.create_entity("IfcRelDefinesByProperties", GlobalId=self.create_guid(), RelatingPropertyDefinition=pset, RelatedObjects=[ifc_entity])
+            else:
+                pset = run("pset.add_pset", self.file, product=ifc_entity, name=name)
+                self._psetsmap[id(properties)] = pset
+                run("pset.edit_pset", self.file, pset=pset, properties=properties)
 
     def write_entity_representation(self, entity: Entity):
         """Writes the representations of the given entity to the ifc file."""
         if isinstance(entity, Product):
             if entity.body:
-                if not id(entity.body) in self._representationmap:
-                    representation = write_body_representation(
-                        self.file, entity.body, self._entitymap[entity], self.default_body_context
-                    )
+                if id(entity.body) not in self._representationmap:
+                    representation = write_body_representation(self.file, entity.body, self._entitymap[entity], self.default_body_context)
                     self._representationmap[id(entity.body)] = representation
                 else:
                     representation = self._representationmap[id(entity.body)]

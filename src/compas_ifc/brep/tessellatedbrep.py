@@ -1,6 +1,6 @@
+import numpy as np
 from compas.geometry import Geometry
 from compas.geometry import transform_points_numpy
-import numpy as np
 
 
 class TessellatedBrep(Geometry):

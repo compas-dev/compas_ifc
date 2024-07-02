@@ -1,8 +1,6 @@
 from compas_ifc.entities.base import Base
 from compas.geometry import Transformation
 import ifcopenshell
-import os
-import multiprocessing
 import numpy as np
 import time
 
@@ -69,9 +67,7 @@ class IFCReader(object):
         if self.use_occ:
             settings.set(settings.USE_PYTHON_OPENCASCADE, True)
 
-        iterator = ifcopenshell.geom.iterator(
-            settings, self._file, multiprocessing.cpu_count(), include=include, exclude=exclude
-        )
+        iterator = ifcopenshell.geom.iterator(settings, self._file, multiprocessing.cpu_count(), include=include, exclude=exclude)
         start = time.time()
         if iterator.initialize():
             while True:

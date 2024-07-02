@@ -85,9 +85,7 @@ class BuildingElement(Element):
         from compas_ifc.representation import entity_body_with_opening_geometry
 
         if not self._composite_body_with_opening:
-            self._composite_body_with_opening = entity_body_with_opening_geometry(
-                entity=self, bodies=self.composite_body, voids=self.composite_opening
-            )
+            self._composite_body_with_opening = entity_body_with_opening_geometry(entity=self, bodies=self.composite_body, voids=self.composite_opening)
         return self._composite_body_with_opening
 
     @composite_body_with_opening.setter

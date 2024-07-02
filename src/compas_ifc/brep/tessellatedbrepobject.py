@@ -1,19 +1,23 @@
-from compas_viewer.scene import ViewerSceneObject
-from .tessellatedbrep import TessellatedBrep
-from compas.datastructures import Mesh
-from compas.colors import Color
 import numpy as np
+from compas.colors import Color
+from compas.datastructures import Mesh
+from compas_viewer.scene import ViewerSceneObject
+
+from .tessellatedbrep import TessellatedBrep
 
 
 class TessellatedBrepObject(ViewerSceneObject):
-    def __init__(self, tessellatedbrep: TessellatedBrep, facecolors=None, **kwargs):
-        super().__init__(item=tessellatedbrep, **kwargs)
-        self.tessellatedbrep = tessellatedbrep
+    def __init__(self, facecolors=None, **kwargs):
+        super().__init__(**kwargs)
         self.facecolors = facecolors
 
         # TODO: it is not facecolors, it is verexcolor
         if not self.facecolors:
-            self.facecolors = [Color(0.5, 0.5, 0.5) for _ in range(len(self.tessellatedbrep.faces) * 3)]
+            self.facecolors = [Color(0.9, 0.9, 0.9) for _ in range(len(self.tessellatedbrep.faces) * 3)]
+
+    @property
+    def tessellatedbrep(self) -> TessellatedBrep:
+        return self.item
 
     def _read_points_data(self):
         pass
@@ -21,7 +25,7 @@ class TessellatedBrepObject(ViewerSceneObject):
     def _read_lines_data(self):
         positions = self.tessellatedbrep.vertices.tolist()
         elements = self.tessellatedbrep.edges.tolist()
-        colors = [Color(0.5, 0.5, 0.5)] * len(elements)
+        colors = [Color(0.1, 0.1, 0.1)] * len(elements)
         return positions, colors, elements
 
     def _read_frontfaces_data(self):

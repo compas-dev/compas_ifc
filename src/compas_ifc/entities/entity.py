@@ -2,7 +2,6 @@ from typing import Dict
 from typing import Union
 
 # from typing import Optional
-
 import ifcopenshell
 import ifcopenshell.util.element
 import ifcopenshell.util.pset
@@ -44,7 +43,7 @@ class Entity:
         self._ifc_type = None
 
     def __repr__(self):
-        return "<{}:{}>".format(type(self).__name__, self.ifc_type)
+        return "<{}>".format(self.ifc_type)
 
     @property
     def declaration(self):
@@ -67,11 +66,15 @@ class Entity:
         return self._ifc_type
 
     def is_a(self, ifc_type: str = None):
-        # TODO: this is a bit mess, need to clean up
         if not ifc_type:
             return self.ifc_type
         if not self._entity:
-            return ifc_type == self.ifc_type  # TODO: consider inheritance
+            declaration = self.declaration
+            inheritance = [declaration.name()]
+            while hasattr(declaration, "supertype") and declaration.supertype():
+                inheritance.append(declaration.supertype().name())
+                declaration = declaration.supertype()
+            return ifc_type in inheritance
         return self._entity.is_a(ifc_type)
 
     def __getitem__(self, key: str):
@@ -129,6 +132,10 @@ class Entity:
         if not self._psets:
             self._psets = self._collect_psets()
         return self._psets
+
+    @psets.setter
+    def psets(self, psets: Dict):
+        self._psets = psets
 
     @property
     def properties(self) -> Dict:

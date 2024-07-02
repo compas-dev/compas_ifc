@@ -1,10 +1,9 @@
-from ifcopenshell.api import run
-
 from compas.datastructures import Mesh
 from compas.geometry import Box
 from compas.geometry import Cone
 from compas.geometry import Cylinder
 from compas.geometry import Sphere
+from ifcopenshell.api import run
 
 from .brep import brep_to_ifc_advanced_brep
 from .mesh import mesh_to_IfcPolygonalFaceSet
@@ -16,7 +15,10 @@ from .shapes import sphere_to_IfcSphere
 
 
 def write_body_representation(file, body, ifc_entity, context):
-    from compas_occ.brep import OCCBrep
+    try:
+        from compas_occ.brep import OCCBrep
+    except ImportError:
+        OCCBrep = None
 
     def _body_to_shape(body):
         if isinstance(body, Box):
@@ -32,7 +34,7 @@ def write_body_representation(file, body, ifc_entity, context):
                 shape = mesh_to_IfcPolygonalFaceSet(file, body)
             else:
                 shape = mesh_to_IfcShellBasedSurfaceModel(file, body)
-        elif isinstance(body, OCCBrep):
+        elif OCCBrep and isinstance(body, OCCBrep):
             shape = brep_to_ifc_advanced_brep(file, body)
         else:
             raise Exception("Unsupported body type.")

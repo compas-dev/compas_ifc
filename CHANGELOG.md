@@ -11,8 +11,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+### Removed
+
+
+## [0.6.0] 2024-06-26
+
+### Added
+
+### Changed
+
+### Removed
+
+
+## [0.5.1] 2024-06-14
+
+### Added
+
+### Changed
+
+* Locked `ifcopenshell` to `0.7.0.240406` to avoid mathutils build failures.
+
+### Removed
+
+
+## [0.5.0] 2024-06-13
+
+### Added
+
+### Changed
+
+### Removed
+
+
+## [0.4.1] 2024-05-15
+
+### Added
+
+### Changed
+
+### Removed
+
+
+## [0.4.0] 2024-05-14
+
+### Added
+
+* Added support to export to `IFC2x3`.
+* Added support pre-load geometries using `multi-processing`.
+
+### Changed
+
 * Updated workflow to not use `conda` anymore.
 * Updated `Reader` to re-enable lazy loading.
+* Update repo to use `pyproject.toml`.
 
 ### Removed
 
