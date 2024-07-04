@@ -9,15 +9,26 @@ from .tessellatedbrep import TessellatedBrep
 class TessellatedBrepObject(ViewerSceneObject):
     def __init__(self, facecolors=None, **kwargs):
         super().__init__(**kwargs)
-        self.facecolors = facecolors
 
-        # TODO: it is not facecolors, it is verexcolor
-        if not self.facecolors:
+        # NOTE: it is not facecolors, it is verexcolor
+        if not facecolors:
             self.facecolors = [Color(0.9, 0.9, 0.9) for _ in range(len(self.tessellatedbrep.faces) * 3)]
+        else:
+            facecolors = np.array(facecolors)
+            self.facecolors = facecolors
+            if np.mean(facecolors[:, 3]) < 1:
+                # If mean alpha is less than 1, means the object has transparency
+                self.opacity = 0.999  # Trigger the render order sorting of object
 
     @property
     def tessellatedbrep(self) -> TessellatedBrep:
         return self.item
+
+    @property
+    def bounding_box_center(self):
+        if self._bounding_box_center is None:
+            self._bounding_box_center = self.tessellatedbrep.vertices.mean(axis=0)
+        return self._bounding_box_center
 
     def _read_points_data(self):
         pass
