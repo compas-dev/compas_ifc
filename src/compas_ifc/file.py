@@ -1,6 +1,7 @@
 from compas_ifc.entities.base import Base
 from compas.geometry import Transformation
 import ifcopenshell
+from ifcopenshell.api import run
 import numpy as np
 import time
 import os
@@ -8,17 +9,29 @@ import multiprocessing
 
 
 class IFCFile(object):
-    def __init__(self, filepath, model, use_occ=False, load_geometries=True):
-        self.filepath = filepath
-        self.model = model
-        self.use_occ = use_occ
-        self._file = ifcopenshell.open(filepath)
-        self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
+    def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True):
+
         self._entitymap = {}
         self._geometrymap = {}
         self._stylemap = {}
-        print("IFC file loaded: {}".format(filepath))
-        if load_geometries:
+        self._relationmap_aggregates = {}  # map of IfcRelAggregates
+        self._relationmap_contains = {}  # map of IfcRelContainedInSpatialStructure
+        self._default_context = None
+        self._default_body_context = None
+
+        self.filepath = filepath
+        self.model = model
+        self.use_occ = use_occ
+        if filepath is None:
+            self._file = ifcopenshell.file(schema=schema)
+            print("IFC file created in schema: {}".format(schema))
+        else:
+            self._file = ifcopenshell.open(filepath)
+            print("IFC file loaded: {}".format(filepath))
+
+        self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
+
+        if load_geometries and filepath is not None:
             self.load_geometries()
 
     def file_size(self):
@@ -128,3 +141,64 @@ class IFCFile(object):
 
     def save(self, path):
         self._file.write(path)
+
+    def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, psets=None, **kwargs):
+        if isinstance(cls, type):
+            cls_name = cls.__name__
+        else:
+            cls_name = cls
+
+        entity = self._create_entity(cls_name, **kwargs)
+
+        if parent:
+            if hasattr(entity, "ContainedInStructure"):
+                self._create_entity("IfcRelContainedInSpatialStructure", RelatingStructure=parent, RelatedElements=[entity])
+            else:
+                self._create_entity("IfcRelAggregates", RelatingObject=parent, RelatedObjects=[entity])
+
+        if geometry:
+            # TODO: Deal with instancing
+            entity.geometry = geometry
+
+        if frame:
+            entity.frame = frame
+
+        return entity
+
+    def _create_entity(self, cls_name, **kwargs):
+        for key, value in kwargs.items():
+            if isinstance(value, Base):
+                kwargs[key] = value.entity
+            elif isinstance(value, (list, tuple)):
+                kwargs[key] = [v.entity if isinstance(v, Base) else v for v in value]
+        entity = self._file.create_entity(cls_name, **kwargs)
+        return self.from_entity(entity)
+
+    @property
+    def default_body_context(self):
+        contexts = self._file.by_type("IfcGeometricRepresentationSubContext")
+        for context in contexts:
+            if context.ContextIdentifier == "Body":
+                self._default_body_context = context
+                break
+        if not self._default_body_context:
+            self._default_body_context = run(
+                "context.add_context",
+                self._file,
+                context_type="Model",
+                context_identifier="Body",
+                target_view="MODEL_VIEW",
+                parent=self.default_context,
+            )
+        return self._default_body_context
+
+    @property
+    def default_context(self):
+        contexts = self._file.by_type("IfcGeometricRepresentationContext")
+        for context in contexts:
+            if context.ContextType == "Model":
+                self._default_context = context
+                break
+        if not self._default_context:
+            self._default_context = run("context.add_context", self._file, context_type="Model")
+        return self._default_context

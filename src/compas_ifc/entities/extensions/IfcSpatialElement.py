@@ -10,9 +10,6 @@ class IfcSpatialElement(IfcSpatialElement):
     @property
     def children(self):
         children = super().children
-        relations = self.ContainsElements()
+        children += sum([relation.RelatedElements for relation in self.ContainsElements()], [])
         # NOTE: in IFC2X3 this is in IfcSpatialStructureElement
-        if relations:
-            children += relations[0].RelatedElements
-
         return list(set(children))

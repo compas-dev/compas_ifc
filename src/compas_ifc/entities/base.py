@@ -29,9 +29,7 @@ class Base(Data):
         try:
             classes = importlib.import_module(f"compas_ifc.entities.generated.{schema}")
         except ImportError:
-            raise ImportError(
-                f"compas_ifc classes for schema {schema} was not generated. Run `python -m compas_ifc.entities.generator`"
-            )
+            raise ImportError(f"compas_ifc classes for schema {schema} was not generated. Run `python -m compas_ifc.entities.generator`")
 
         cls_name = entity.is_a()
         ifc_cls = getattr(classes, cls_name, None)
@@ -64,24 +62,30 @@ class Base(Data):
             return attr
 
     def _set_attribute(self, name, value):
-        cls = self.__class__
-        getter_type_hints = get_type_hints(getattr(cls, name).fget)
-        value_type = getter_type_hints["return"]
+        # TODO: re-enable strong type checking
+        # cls = self.__class__
+        # getter_type_hints = get_type_hints(getattr(cls, name).fget)
+        # value_type = getter_type_hints["return"]
 
-        if hasattr(value_type, "__origin__"):
-            # deal parameterized generic types
-            origin = value_type.__origin__
-            if origin == list:
-                if not isinstance(value, (list, tuple)):
-                    raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
-                value_type = getter_type_hints["return"].__args__[0]
-                if not all(isinstance(item, value_type) for item in value):
-                    raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
-            else:
-                raise NotImplementedError(f"Unsupported generic type {origin}")
+        # if hasattr(value_type, "__origin__"):
+        #     # deal parameterized generic types
+        #     origin = value_type.__origin__
+        #     if origin == list:
+        #         if not isinstance(value, (list, tuple)):
+        #             raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
+        #         value_type = getter_type_hints["return"].__args__[0]
+        #         if not all(isinstance(item, value_type) for item in value):
+        #             raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
+        #     else:
+        #         raise NotImplementedError(f"Unsupported generic type {origin}")
 
-        elif not isinstance(value, value_type):
-            raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
+        # elif not isinstance(value, value_type):
+        #     raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
+
+        if isinstance(value, Base):
+            value = value.entity
+        elif isinstance(value, (list, tuple)):
+            value = [v.entity if isinstance(v, Base) else v for v in value]
 
         setattr(self.entity, name, value)
 
@@ -142,9 +146,7 @@ class Base(Data):
         raise NotImplementedError
 
     def print_spatial_hierarchy(self, max_depth=3):
-        IfcObjectDefinition = getattr(
-            importlib.import_module(f"compas_ifc.entities.generated.{self.schema}"), "IfcObjectDefinition"
-        )
+        IfcObjectDefinition = getattr(importlib.import_module(f"compas_ifc.entities.generated.{self.schema}"), "IfcObjectDefinition")
 
         if not isinstance(self, IfcObjectDefinition):
             raise TypeError("Only IfcObjectDefinition has spatial hierarchy")
@@ -200,6 +202,7 @@ class Base(Data):
 
     def show(self):
         self.model.show(self)
+
 
 class EntityNode(TreeNode):
     def __repr__(self):

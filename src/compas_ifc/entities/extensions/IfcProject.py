@@ -32,7 +32,7 @@ class IfcProject(IfcProject):
         contexts = []
 
         for context in self.RepresentationContexts:
-            north = Vector(*context.TrueNorth.DirectionRatios)
+            north = Vector(*context.TrueNorth.DirectionRatios) if context.TrueNorth else None
             wcs = IfcAxis2Placement3D_to_frame(context.WorldCoordinateSystem)
             contexts.append(
                 {

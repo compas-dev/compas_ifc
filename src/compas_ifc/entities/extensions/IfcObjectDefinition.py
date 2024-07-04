@@ -21,20 +21,14 @@ class IfcObjectDefinition(IfcObjectDefinition):
 
     @property
     def children(self):
-        relations = self.IsDecomposedBy()
-        if relations:
-            return relations[0].RelatedObjects
-        else:
-            return []
+        return sum([relation.RelatedObjects for relation in self.IsDecomposedBy()], [])
 
     @property
     def descendants(self):
         descendants = []
-
         for child in self.children:
             descendants.append(child)
             descendants.extend(child.descendants)
-
         return descendants
 
     @property
