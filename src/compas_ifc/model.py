@@ -119,7 +119,7 @@ class Model(Data):
     @classmethod
     def template(cls, schema="IFC4", building_count=1, storey_count=1):
         model = cls(schema=schema)
-        project = model.create("IfcProject", Name="Default Project")
+        project = model.file.default_project
         site = model.create("IfcSite", parent=project, Name="Default Site")
         for i in range(building_count):
             building = model.create("IfcBuilding", parent=site, Name=f"Default Building {i+1}")

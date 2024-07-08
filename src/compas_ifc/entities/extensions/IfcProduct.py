@@ -31,7 +31,7 @@ class IfcProduct(IfcProduct):
         # Update the representation in the IFC file
         # TODO: delete existing representation
         # TODO: make this function more transparent
-        write_body_representation(self.file._file, geometry, self.entity, self.file.default_body_context)
+        write_body_representation(self.file._file, geometry, self.entity, self.file.default_body_context.entity)
 
     @property
     def frame(self):

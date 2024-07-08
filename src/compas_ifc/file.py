@@ -7,6 +7,7 @@ import numpy as np
 from compas.geometry import Transformation
 from ifcopenshell.api import run
 
+import compas_ifc
 from compas_ifc.entities.base import Base
 
 
@@ -19,6 +20,9 @@ class IFCFile(object):
         self._relationmap_contains = {}  # map of IfcRelContainedInSpatialStructure
         self._default_context = None
         self._default_body_context = None
+        self._default_units = None
+        self._default_owner_history = None
+        self._default_project = None
 
         self.filepath = filepath
         self.model = model
@@ -175,30 +179,86 @@ class IFCFile(object):
         return self.from_entity(entity)
 
     @property
-    def default_body_context(self):
-        contexts = self._file.by_type("IfcGeometricRepresentationSubContext")
-        for context in contexts:
-            if context.ContextIdentifier == "Body":
-                self._default_body_context = context
-                break
-        if not self._default_body_context:
-            self._default_body_context = run(
-                "context.add_context",
-                self._file,
-                context_type="Model",
-                context_identifier="Body",
-                target_view="MODEL_VIEW",
-                parent=self.default_context,
-            )
-        return self._default_body_context
+    def default_project(self):
+
+        projects = self._file.by_type("IfcProject")
+        if projects:
+            self._default_project = self.from_entity(projects[0])
+        else:
+            self._default_project = self._create_entity("IfcProject", Name="Default Project")
+            self._default_units
+            self.default_body_context
+            self.default_owner_history
+            return self._default_project
+
+        return self._default_project
+
+    @property
+    def default_units(self):
+        if not self._default_units:
+            if self.default_project.UnitsInContext:
+                self._default_units = self.default_project.UnitsInContext
+            else:
+                self._default_units = self.from_entity(run("unit.assign_unit", self._file))
+        return self._default_units
 
     @property
     def default_context(self):
-        contexts = self._file.by_type("IfcGeometricRepresentationContext")
-        for context in contexts:
-            if context.ContextType == "Model":
-                self._default_context = context
-                break
         if not self._default_context:
-            self._default_context = run("context.add_context", self._file, context_type="Model")
+            contexts = self.get_entities_by_type("IfcGeometricRepresentationContext")
+            for context in contexts:
+                if context.ContextType == "Model":
+                    self._default_context = context
+                    return self._default_context
+
+            self._default_context = self.from_entity(run("context.add_context", self._file, context_type="Model"))
         return self._default_context
+
+    @property
+    def default_body_context(self):
+        if not self._default_body_context:
+            contexts = self.get_entities_by_type("IfcGeometricRepresentationSubContext")
+            for context in contexts:
+                if context.ContextIdentifier == "Body":
+                    self._default_body_context = context
+                    return self._default_body_context
+
+            self._default_body_context = self.from_entity(
+                run(
+                    "context.add_context",
+                    self._file,
+                    context_type="Model",
+                    context_identifier="Body",
+                    target_view="MODEL_VIEW",
+                    parent=self.default_context.entity,
+                )
+            )
+
+        return self._default_body_context
+
+    @property
+    def default_owner_history(self):
+        # We will create a new owner history since we are updating the file
+        if not self._default_owner_history:
+
+            person = self._create_entity("IfcPerson")
+            organization = self._create_entity("IfcOrganization", Name="compas.dev")
+            person_and_org = self._create_entity("IfcPersonAndOrganization", ThePerson=person, TheOrganization=organization)
+            application = self._create_entity(
+                "IfcApplication",
+                ApplicationDeveloper=organization,
+                Version=compas_ifc.__version__,
+                ApplicationFullName="compas_ifc",
+                ApplicationIdentifier="compas_ifc v" + compas_ifc.__version__,
+            )
+
+            owner_history = self._create_entity(
+                "IfcOwnerHistory",
+                OwningUser=person_and_org,
+                OwningApplication=application,
+                ChangeAction="ADDED",
+                CreationDate=int(time.time()),
+            )
+
+            self._default_owner_history = owner_history
+        return self._default_owner_history
