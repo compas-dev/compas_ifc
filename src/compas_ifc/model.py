@@ -85,6 +85,7 @@ class Model(Data):
     def show(self, entity=None):
         try:
             from compas_viewer import Viewer
+            from compas_viewer.components import Treeform
 
         except ImportError:
             raise ImportError("The show method requires compas_viewer to be installed.")
@@ -103,6 +104,8 @@ class Model(Data):
             else:
                 obj = viewer.scene.add([], name=name, parent=parent)
 
+            obj.attributes["entity"] = entity
+
             for child in entity.children:
                 parse_entity(child, parent=obj)
 
@@ -110,6 +113,15 @@ class Model(Data):
                 entity_map[id(obj)] = entity
 
         parse_entity(entity or self.project)
+
+        treeform = Treeform()
+        viewer.ui.sidebar.widget.addWidget(treeform)
+
+        def update_treeform(form, node):
+            entity = node.attributes["entity"]
+            treeform.update_from_dict({"Attributes": entity.attributes, "Properties": entity.properties})
+
+        viewer.ui.sidebar.sceneform.callback = update_treeform
 
         viewer.show()
 

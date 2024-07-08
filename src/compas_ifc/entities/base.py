@@ -118,6 +118,10 @@ class Base(Data):
         del info["type"]
         return list(info.keys())
 
+    @property
+    def attributes(self):
+        return self.to_dict()
+
     def to_dict(self):
         return {key: getattr(self, key) for key in self}
 

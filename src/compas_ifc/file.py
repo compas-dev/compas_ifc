@@ -180,7 +180,6 @@ class IFCFile(object):
 
     @property
     def default_project(self):
-
         projects = self._file.by_type("IfcProject")
         if projects:
             self._default_project = self.from_entity(projects[0])
@@ -240,7 +239,6 @@ class IFCFile(object):
     def default_owner_history(self):
         # We will create a new owner history since we are updating the file
         if not self._default_owner_history:
-
             person = self._create_entity("IfcPerson")
             organization = self._create_entity("IfcOrganization", Name="compas.dev")
             person_and_org = self._create_entity("IfcPersonAndOrganization", ThePerson=person, TheOrganization=organization)
