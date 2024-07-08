@@ -18,7 +18,6 @@ if __name__ == "__main__":
         class_string = template
 
         if declaration.as_enumeration_type():
-
             name = declaration.name()
             class_string = class_string.replace("CLASS_NAME", name)
 
@@ -33,4 +32,3 @@ if __name__ == "__main__":
 
             with open(f"src/compas_ifc/entities/generated/{name}.py", "w") as f:
                 f.write(class_string)
-

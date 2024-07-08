@@ -7,7 +7,6 @@ else:
 
 
 class IfcSite(IfcSite):
-
     @property
     def buildings(self):
         return self.children_by_type("IfcBuilding", recursive=True)
@@ -15,7 +14,7 @@ class IfcSite(IfcSite):
     @property
     def building_elements(self):
         return self.children_by_type("IfcBuildingElement", recursive=True)
-    
+
     @property
     def geographic_elements(self):
         return self.children_by_type("IfcGeographicElement", recursive=True)

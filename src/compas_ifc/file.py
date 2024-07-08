@@ -1,16 +1,17 @@
-from compas_ifc.entities.base import Base
-from compas.geometry import Transformation
-import ifcopenshell
-from ifcopenshell.api import run
-import numpy as np
-import time
-import os
 import multiprocessing
+import os
+import time
+
+import ifcopenshell
+import numpy as np
+from compas.geometry import Transformation
+from ifcopenshell.api import run
+
+from compas_ifc.entities.base import Base
 
 
 class IFCFile(object):
     def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True):
-
         self._entitymap = {}
         self._geometrymap = {}
         self._stylemap = {}
@@ -41,7 +42,6 @@ class IFCFile(object):
         return size_in_mb
 
     def from_entity(self, entity):
-
         if not isinstance(entity, ifcopenshell.entity_instance):
             raise TypeError("Input is not an ifcopenshell.entity_instance")
 

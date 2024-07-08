@@ -1,7 +1,9 @@
-import ifcopenshell
 import inspect
-import types
 import os
+import types
+
+import ifcopenshell
+
 from compas_ifc.entities import extensions
 
 
@@ -78,7 +80,6 @@ class CLASS_NAME(PARENT_NAME):
             self.parent = "Base"
             self.imports.add("from compas_ifc.entities.base import Base")
 
-        
         extension = getattr(extensions, self.name, None)
         if extension:
             print("found Extension classes:", extension)

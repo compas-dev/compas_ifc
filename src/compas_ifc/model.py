@@ -1,17 +1,18 @@
-from compas.data import Data
-from compas_ifc.file import IFCFile
-from compas.geometry import Transformation
-
 from typing import TYPE_CHECKING
 from typing import Generator
 
+from compas.data import Data
+from compas.geometry import Transformation
+
+from compas_ifc.file import IFCFile
+
 if TYPE_CHECKING:
     from compas_ifc.entities.base import Base
+    from compas_ifc.entities.generated.IFC4 import IfcBuilding
+    from compas_ifc.entities.generated.IFC4 import IfcBuildingElement
+    from compas_ifc.entities.generated.IFC4 import IfcBuildingStorey
     from compas_ifc.entities.generated.IFC4 import IfcProject
     from compas_ifc.entities.generated.IFC4 import IfcSite
-    from compas_ifc.entities.generated.IFC4 import IfcBuilding
-    from compas_ifc.entities.generated.IFC4 import IfcBuildingStorey
-    from compas_ifc.entities.generated.IFC4 import IfcBuildingElement
 
 
 class Model(Data):
@@ -114,7 +115,7 @@ class Model(Data):
 
     def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, psets=None, **kwargs):
         return self.file.create(cls=cls, parent=parent, geometry=geometry, frame=frame, psets=psets, **kwargs)
-    
+
     @classmethod
     def template(cls, schema="IFC4", building_count=1, storey_count=1):
         model = cls(schema=schema)
@@ -125,6 +126,7 @@ class Model(Data):
             for j in range(storey_count):
                 model.create("IfcBuildingStorey", parent=building, Name=f"Default Storey {j+1}")
         return model
+
 
 if __name__ == "__main__":
     model = Model("data/wall-with-opening-and-window.ifc")

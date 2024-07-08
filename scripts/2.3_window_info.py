@@ -3,6 +3,7 @@ from compas_ifc.model import Model
 
 model = Model("data/wall-with-opening-and-window.ifc")
 window = model.get_entities_by_type("IfcWindow")[0]
+window.print_spatial_hierarchy(max_depth=5)
 
 # =============================================================================
 # Info

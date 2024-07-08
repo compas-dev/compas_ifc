@@ -1,7 +1,4 @@
 import ifcopenshell
-from compas_ifc.entities import extensions
-import inspect
-import types
 
 schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name("IFC4")
 
@@ -28,7 +25,6 @@ if __name__ == "__main__":
         class_string = template
 
         if declaration.as_type_declaration():
-
             name = declaration.name()
 
             print(name)
@@ -39,7 +35,7 @@ if __name__ == "__main__":
             if ifc_type.startswith("AGGREGATE OF"):
                 value_type = ifc_type.split("OF ")[1]
                 if value_type == "ENTITY INSTANCE":
-                    python_type = "list" # TODO: handle this
+                    python_type = "list"  # TODO: handle this
                 else:
                     python_type = f"list[{TYPE_MAP[value_type]}]"
             else:
@@ -55,5 +51,3 @@ if __name__ == "__main__":
 
     # with open(f"src/compas_ifc/entities/generated/__init__.py", "w") as f:
     #     f.write(init_string)
-
-

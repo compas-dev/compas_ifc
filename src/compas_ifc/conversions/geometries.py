@@ -1,9 +1,10 @@
-from compas_ifc.resources import IfcShape_to_brep  # TODO: move this
-from compas_ifc.resources import IfcShape_to_tessellatedbrep  # TODO: move this
-from compas_ifc.resources import IfcLocalPlacement_to_transformation  # TODO: move this
+from typing import TYPE_CHECKING
+
 from compas.geometry import Scale
 
-from typing import TYPE_CHECKING
+from compas_ifc.resources import IfcLocalPlacement_to_transformation  # TODO: move this
+from compas_ifc.resources import IfcShape_to_brep  # TODO: move this
+from compas_ifc.resources import IfcShape_to_tessellatedbrep  # TODO: move this
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcElement
@@ -41,10 +42,10 @@ def entity_body_geometry(entity: "IfcElement", context="Model", use_occ=False, a
 
     for item in representation.Items:
         if use_occ:
-            brep = IfcShape_to_brep(item.entity) # TODO: improve this, should just give item
+            brep = IfcShape_to_brep(item.entity)  # TODO: improve this, should just give item
             bodies.append(brep)
         else:
-            tessellatedbrep = IfcShape_to_tessellatedbrep(item.entity) # TODO: improve this, should just give item
+            tessellatedbrep = IfcShape_to_tessellatedbrep(item.entity)  # TODO: improve this, should just give item
             bodies.append(tessellatedbrep)
 
     if apply_transformation:
@@ -70,12 +71,12 @@ def entity_opening_geometry(entity: "IfcElement", use_occ=False, apply_transform
         for representation in element.Representation.Representations:
             for item in representation.Items:
                 if use_occ:
-                    brep = IfcShape_to_brep(item.entity) # TODO: improve this, should just give item
+                    brep = IfcShape_to_brep(item.entity)  # TODO: improve this, should just give item
                     if apply_transformation:
                         brep.transform(transformation)
                     voids.append(brep)
                 else:
-                    tessellatedbrep = IfcShape_to_tessellatedbrep(item.entity) # TODO: improve this, should just give item
+                    tessellatedbrep = IfcShape_to_tessellatedbrep(item.entity)  # TODO: improve this, should just give item
                     if apply_transformation:
                         tessellatedbrep.transform(transformation)
                     voids.append(tessellatedbrep)

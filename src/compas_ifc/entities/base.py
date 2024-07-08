@@ -1,8 +1,10 @@
-from compas.data import Data
-from ifcopenshell import entity_instance
-from compas.datastructures import Tree, TreeNode
 import importlib
-from typing import TYPE_CHECKING, get_type_hints
+from typing import TYPE_CHECKING
+
+from compas.data import Data
+from compas.datastructures import Tree
+from compas.datastructures import TreeNode
+from ifcopenshell import entity_instance
 
 if TYPE_CHECKING:
     from compas_ifc.file import IFCFile
@@ -20,7 +22,6 @@ class Base(Data):
     """
 
     def __new__(cls, entity: entity_instance, file: "IFCFile" = None):
-
         if file is None:
             schema = "IFC4"
         else:
@@ -145,7 +146,7 @@ class Base(Data):
     def attribute_info(self):
         raise NotImplementedError
 
-    def print_spatial_hierarchy(self, max_depth=3):
+    def print_spatial_hierarchy(self, max_depth=5):
         IfcObjectDefinition = getattr(importlib.import_module(f"compas_ifc.entities.generated.{self.schema}"), "IfcObjectDefinition")
 
         if not isinstance(self, IfcObjectDefinition):

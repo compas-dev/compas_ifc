@@ -7,9 +7,8 @@ else:
 
 
 class IfcObjectDefinition(IfcObjectDefinition):
-
     def __repr__(self):
-        return "<#{} {} \"{}\">".format(self.entity.id(), self.__class__.__name__, self.Name)
+        return '<#{} {} "{}">'.format(self.entity.id(), self.__class__.__name__, self.Name)
 
     @property
     def parent(self):

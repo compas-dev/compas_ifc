@@ -3,13 +3,13 @@ import ifcopenshell
 # TODO: pre-generate all classes.
 # TODO: separate ifcopenshell APIs
 
-class Factory:
 
+class Factory:
     EXTENSIONS = {}
 
     def __init__(self, schema: str = "IFC4") -> None:
         self.schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
-    
+
     def get_extensions(self, name, declaration):
         name = declaration.name()
         inheritances = [name]
@@ -18,7 +18,7 @@ class Factory:
             name = supertype.name()
             inheritances.append(name)
             supertype = supertype.supertype()
-        
+
         inheritances = inheritances[::-1]
         extensions = []
         for cls in inheritances:
@@ -27,7 +27,6 @@ class Factory:
         return tuple(extensions)
 
     def create_class(self, name):
-
         declaration = self.schema.declaration_by_name(name)
         extensions = self.get_extensions(name, declaration)
 
@@ -50,7 +49,6 @@ class Factory:
         return type(name, extensions, attributes)
 
     def create_getter(self, attribute, setter=True):
-
         name = attribute.name()
 
         @property
@@ -58,6 +56,7 @@ class Factory:
             return getattr(self._entity, name)
 
         if setter:
+
             @prop.setter
             def prop(self, value):
                 if not hasattr(self._entity, name):
@@ -86,16 +85,16 @@ class Factory:
 
                 setattr(self._entity, name, value)
 
-        
         return prop
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     file = ifcopenshell.open("data/wall-with-opening-and-window.ifc")
     _entity = file[34]
     declaration = _entity.is_a()
 
     from extensions import EXTENSIONS
+
     Factory.EXTENSIONS = EXTENSIONS
     print(Factory.EXTENSIONS)
 

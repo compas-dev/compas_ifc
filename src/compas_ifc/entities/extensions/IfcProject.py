@@ -7,7 +7,6 @@ else:
 
 
 class IfcProject(IfcProject):
-
     @property
     def sites(self):
         return self.children_by_type("IfcSite", recursive=True)
@@ -27,6 +26,7 @@ class IfcProject(IfcProject):
     @property
     def contexts(self):
         from compas.geometry import Vector
+
         from compas_ifc.resources import IfcAxis2Placement3D_to_frame
 
         contexts = []
@@ -65,7 +65,7 @@ class IfcProject(IfcProject):
         for unit in self.units:
             if unit["type"] == "LENGTHUNIT":
                 return unit
-    
+
     @property
     def length_scale(self):
         unit = self.length_unit
@@ -77,7 +77,7 @@ class IfcProject(IfcProject):
             if unit["name"] == "METRE" and unit["prefix"] == "MILLI":
                 return 1e-3
         return 1.0
-    
+
     @property
     def frame(self):
         for context in self.contexts:

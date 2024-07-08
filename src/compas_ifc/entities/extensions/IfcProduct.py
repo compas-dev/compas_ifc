@@ -7,7 +7,6 @@ else:
 
 
 class IfcProduct(IfcProduct):
-
     @property
     def style(self):
         return self.file.get_preloaded_style(self)
