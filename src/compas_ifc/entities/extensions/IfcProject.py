@@ -49,7 +49,8 @@ class IfcProject(IfcProject):
     @property
     def units(self):
         units = []
-        for unit in self.UnitsInContext.Units:
+        units_in_context = self.UnitsInContext or self.file.get_entities_by_type("IfcUnitAssignment")[0]
+        for unit in units_in_context.Units:
             if unit.is_a("IfcSIUnit"):
                 units.append(
                     {

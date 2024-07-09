@@ -91,6 +91,16 @@ class Model(Data):
             raise ImportError("The show method requires compas_viewer to be installed.")
 
         viewer = Viewer()
+        length_unit = self.project.length_unit
+        print(f"Using length unit: {length_unit}")
+        if length_unit["name"] == "METRE" and length_unit["prefix"] == "MILLI":
+            viewer.unit = "mm"
+        elif length_unit["name"] == "METRE" and length_unit["prefix"] == "CENTI":
+            viewer.unit = "cm"
+        elif length_unit["name"] == "METRE" and not length_unit["prefix"]:
+            viewer.unit = "m"
+        else:
+            raise ValueError(f"Unsupported length unit: {length_unit}")
 
         entity_map = {}
 
@@ -125,8 +135,8 @@ class Model(Data):
 
         viewer.show()
 
-    def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, psets=None, **kwargs):
-        return self.file.create(cls=cls, parent=parent, geometry=geometry, frame=frame, psets=psets, **kwargs)
+    def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        return self.file.create(cls=cls, parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
 
     @classmethod
     def template(cls, schema="IFC4", building_count=1, storey_count=1):
