@@ -26,5 +26,8 @@ class IfcObject(IfcObject):
             else:
                 pset = run("pset.add_pset", self.file._file, product=self.entity, name=name)
                 self._psetsmap[id(properties)] = pset
+                for key, value in properties.items():
+                    if not isinstance(value, (str, int, float)):
+                        properties[key] = str(value)
                 run("pset.edit_pset", self.file._file, pset=pset, properties=properties)
                 # TODO: remove unused psets

@@ -146,7 +146,7 @@ class IFCFile(object):
     def save(self, path):
         self._file.write(path)
 
-    def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, psets=None, **kwargs):
+    def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, properties=None, **kwargs):
         if isinstance(cls, type):
             cls_name = cls.__name__
         else:
@@ -167,6 +167,9 @@ class IFCFile(object):
         if frame:
             entity.frame = frame
 
+        if properties:
+            entity.properties = properties
+
         return entity
 
     def _create_entity(self, cls_name, **kwargs):
@@ -185,7 +188,7 @@ class IFCFile(object):
             self._default_project = self.from_entity(projects[0])
         else:
             self._default_project = self._create_entity("IfcProject", Name="Default Project")
-            self._default_units
+            self.default_units
             self.default_body_context
             self.default_owner_history
             return self._default_project
