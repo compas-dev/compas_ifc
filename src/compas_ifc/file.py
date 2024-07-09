@@ -105,7 +105,7 @@ class IFCFile(object):
                             shellcolors.append(style)
 
                     self._geometrymap[shape.data.id] = brep
-                    self._stylemap[shape.data.id] = {"shellcolors": shellcolors, "use_rgba": True}
+                    self._stylemap[shape.data.id] = {"shellcolors": shellcolors}
 
                 else:
                     from .brep import TessellatedBrep
