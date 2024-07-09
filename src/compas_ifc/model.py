@@ -129,7 +129,7 @@ class Model(Data):
 
         def update_treeform(form, node):
             entity = node.attributes["entity"]
-            treeform.update_from_dict({"Attributes": entity.attributes, "Properties": entity.properties})
+            treeform.update_from_dict({"Attributes": entity.attributes, "Properties": getattr(entity, "properties", {})})
 
         viewer.ui.sidebar.sceneform.callback = update_treeform
 

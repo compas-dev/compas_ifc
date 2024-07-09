@@ -174,12 +174,23 @@ class IFCFile(object):
         return entity
 
     def _create_entity(self, cls_name, **kwargs):
+
+        camel_case_kwargs = {}
+
         for key, value in kwargs.items():
             if isinstance(value, Base):
                 kwargs[key] = value.entity
             elif isinstance(value, (list, tuple)):
                 kwargs[key] = [v.entity if isinstance(v, Base) else v for v in value]
-        entity = self._file.create_entity(cls_name, **kwargs)
+
+            # if key is a snake_case key, convert it to camelCase
+            if key[0].isupper():
+                camel_case_kwargs[key] = kwargs[key]
+            else:
+                camel_case_key = "".join([word.capitalize() for word in key.split("_")])
+                camel_case_kwargs[camel_case_key] = kwargs[key]
+
+        entity = self._file.create_entity(cls_name, **camel_case_kwargs)
         return self.from_entity(entity)
 
     @property
