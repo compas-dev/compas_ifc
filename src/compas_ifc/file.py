@@ -83,6 +83,7 @@ class IFCFile(object):
         import ifcopenshell.geom
 
         settings = ifcopenshell.geom.settings()
+        settings.set(settings.CONVERT_BACK_UNITS, True)
         if self.use_occ:
             settings.set(settings.USE_PYTHON_OPENCASCADE, True)
 
