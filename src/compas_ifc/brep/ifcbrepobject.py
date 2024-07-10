@@ -9,7 +9,7 @@ try:
         def __init__(self, shellcolors=None, **kwargs):
             super().__init__(**kwargs)
             self.shells = [shell.to_tesselation(TOL.lineardeflection)[0] for shell in self.brep.shells]
-            self.shellcolors = shellcolors
+            self.shellcolors = shellcolors or [self.facecolor.rgba for _ in self.shells]
             self._bounding_box_center = None
 
         @property
