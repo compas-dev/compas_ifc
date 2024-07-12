@@ -1,14 +1,11 @@
 *******************************************************************************
-compas_ifc.reader
+compas_ifc.entities.generated
 *******************************************************************************
-
-.. currentmodule:: compas_ifc.reader
+Generated IFC class wrappers.
 
 Classes
 =======
 
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
+.. automodule:: compas_ifc.entities.generated
+    :members:
 
-    IFCReader

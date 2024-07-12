@@ -9,24 +9,25 @@ print("*" * 53 + "\n")
 print("\nEntities by type")
 print("=" * 53 + "\n")
 
-all_entities = model.get_all_entities()
+
+print("Total number of entities: ", len(list(model.entities)))
+for i, entity in enumerate(model.entities):
+    print(entity)
+    if i > 5:
+        print("...\n")
+        break
+
 spatial_elements = model.get_entities_by_type("IfcSpatialElement")
-building_elements = model.get_entities_by_type("IfcBuildingElement")
-
-print("Total number of entities: ", len(all_entities))
-for entity in all_entities[-5:]:
-    print(entity)
-print("...\n")
-
 print("Total number of spatial elements: ", len(spatial_elements))
-for entity in spatial_elements[-5:]:
+for entity in spatial_elements:
     print(entity)
-print("...\n")
+print()
 
+building_elements = model.get_entities_by_type("IfcBuildingElement")
 print("Total number of building elements: ", len(building_elements))
-for entity in building_elements[-5:]:
+for entity in building_elements:
     print(entity)
-print("...\n")
+print()
 
 
 print("\nEntities by name")

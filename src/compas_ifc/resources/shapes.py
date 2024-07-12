@@ -37,7 +37,7 @@ def box_to_IfcBlock(file: ifcopenshell.file, box: Box) -> ifcopenshell.entity_in
     """
     Convert a COMPAS box to an IFC Block.
     """
-    pt = box.frame.point
+    pt = box.frame.point.copy()
     pt -= [box.xsize / 2, box.ysize / 2, box.zsize / 2]
     return file.create_entity(
         "IfcBlock",

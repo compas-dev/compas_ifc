@@ -3,9 +3,7 @@ from compas_ifc.model import Model
 
 model = Model("data/wall-with-opening-and-window.ifc")
 
-assert len(model.projects) > 0
-
-project = model.projects[0]
+project = model.project
 
 # =============================================================================
 # Info
@@ -15,17 +13,13 @@ print("\n" + "*" * 53)
 print("Project")
 print("*" * 53 + "\n")
 
-project.print_inheritance()
-
 print("\nAttributes")
 print("=" * 53 + "\n")
 
-pprint(project.attributes)
+pprint(project.to_dict())
 
-print("\nProperties")
-print("=" * 53 + "\n")
+project.print_attributes(max_depth=3)
 
-pprint(project.properties)
 
 print("\nRepresentation Contexts")
 print("=" * 53 + "\n")

@@ -2,22 +2,8 @@ from pprint import pprint
 from compas_ifc.model import Model
 
 model = Model("data/wall-with-opening-and-window.ifc")
-
-assert len(model.projects) > 0
-
-project = model.projects[0]
-assert len(project.sites) > 0
-
-site = project.sites[0]
-assert len(site.buildings) > 0
-
-building = site.buildings[0]
-assert len(building.building_storeys) > 0
-
-storey = building.building_storeys[0]
-assert len(storey.windows) > 0
-
-window = storey.windows[0]
+window = model.get_entities_by_type("IfcWindow")[0]
+window.print_spatial_hierarchy(max_depth=5)
 
 # =============================================================================
 # Info
@@ -27,12 +13,10 @@ print("\n" + "*" * 53)
 print("Window")
 print("*" * 53 + "\n")
 
-window.print_inheritance()
-
 print("\nAttributes")
 print("=" * 53 + "\n")
 
-pprint(window.attributes)
+pprint(window.to_dict())
 
 print("\nProperties")
 print("=" * 53 + "\n")

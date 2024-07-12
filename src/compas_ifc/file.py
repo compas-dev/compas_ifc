@@ -1,0 +1,294 @@
+import multiprocessing
+import os
+import time
+
+import ifcopenshell
+import numpy as np
+from compas.geometry import Transformation
+from ifcopenshell.api import run
+
+import compas_ifc
+from compas_ifc.entities.base import Base
+
+
+class IFCFile(object):
+    def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True):
+
+        self.ensure_classes_generated()
+        self._entitymap = {}
+        self._geometrymap = {}
+        self._stylemap = {}
+        self._relationmap_aggregates = {}  # map of IfcRelAggregates
+        self._relationmap_contains = {}  # map of IfcRelContainedInSpatialStructure
+        self._default_context = None
+        self._default_body_context = None
+        self._default_units = None
+        self._default_owner_history = None
+        self._default_project = None
+
+        self.filepath = filepath
+        self.model = model
+        self.use_occ = use_occ
+        if filepath is None:
+            self._file = ifcopenshell.file(schema=schema)
+            print("IFC file created in schema: {}".format(schema))
+        else:
+            self._file = ifcopenshell.open(filepath)
+            print("IFC file loaded: {}".format(filepath))
+
+        self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
+
+        if load_geometries and filepath is not None:
+            self.load_geometries()
+
+    def ensure_classes_generated(self):
+        try:
+            from compas_ifc.entities.generated import IFC2X3  # noqa: F401
+            from compas_ifc.entities.generated import IFC4  # noqa: F401
+        except ImportError:
+            print("IFC classes not found. Generating classes...")
+            from compas_ifc.entities.generator import Generator
+
+            generator = Generator(schema="IFC2X3")
+            generator.generate()
+
+            generator = Generator(schema="IFC4")
+            generator.generate()
+            print("IFC classes generated.\n\n")
+
+    def file_size(self):
+        file_stats = os.stat(self.filepath)
+        size_in_mb = file_stats.st_size / (1024 * 1024)
+        size_in_mb = round(size_in_mb, 2)
+        return size_in_mb
+
+    def from_entity(self, entity):
+        if not isinstance(entity, ifcopenshell.entity_instance):
+            raise TypeError("Input is not an ifcopenshell.entity_instance")
+
+        _id = entity.id()
+
+        if _id in self._entitymap:
+            return self._entitymap[_id]
+        else:
+            entity = Base(entity, self)
+            self._entitymap[_id] = entity
+            return entity
+
+    def get_entities_by_type(self, type_name) -> list[Base]:
+        entities = self._file.by_type(type_name)
+        return [self.from_entity(entity) for entity in entities]
+
+    def get_entities_by_name(self, name) -> list[Base]:
+        return [entity for entity in self.get_entities_by_type("IfcRoot") if entity.Name == name]
+
+    def get_entity_by_global_id(self, global_id) -> Base:
+        return self.from_entity(self._file.by_guid(global_id))
+
+    def get_entity_by_id(self, id) -> Base:
+        return self.from_entity(self._file.by_id(id))
+
+    def get_preloaded_geometry(self, entity):
+        return self._geometrymap.get(entity.entity.id())
+
+    def get_preloaded_style(self, entity):
+        return self._stylemap.get(entity.entity.id(), {})
+
+    def load_geometries(self, include=None, exclude=None):
+        """Load all the geometries of the IFC file using a fast multithreaded iterator."""
+        print("Loading geometries...")
+        import ifcopenshell.geom
+
+        settings = ifcopenshell.geom.settings()
+        settings.set(settings.CONVERT_BACK_UNITS, True)
+        if self.use_occ:
+            settings.set(settings.USE_PYTHON_OPENCASCADE, True)
+
+        iterator = ifcopenshell.geom.iterator(settings, self._file, multiprocessing.cpu_count(), include=include, exclude=exclude)
+        start = time.time()
+        if iterator.initialize():
+            while True:
+                shape = iterator.get()
+                if self.use_occ:
+                    from compas_occ.brep import OCCBrep
+
+                    brep = OCCBrep.from_shape(shape.geometry)
+
+                    shellcolors = []
+                    for style_id, style in zip(shape.style_ids, shape.styles):
+                        if style_id == -1:
+                            shellcolors.append((0.5, 0.5, 0.5, 1.0))
+                        else:
+                            shellcolors.append(style)
+
+                    self._geometrymap[shape.data.id] = brep
+                    self._stylemap[shape.data.id] = {"shellcolors": shellcolors}
+
+                else:
+                    from .brep import TessellatedBrep
+
+                    matrix = shape.transformation.matrix.data
+                    faces = shape.geometry.faces
+                    edges = shape.geometry.edges
+                    verts = shape.geometry.verts
+
+                    matrix = np.array(matrix).reshape((4, 3))
+                    matrix = np.hstack([matrix, np.array([[0], [0], [0], [1]])])
+                    matrix = matrix.transpose()
+                    transformation = Transformation.from_matrix(matrix.tolist())
+
+                    facecolors = []
+                    for m_id in shape.geometry.material_ids:
+                        if m_id == -1:
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            facecolors.append([0.5, 0.5, 0.5, 1])
+                            continue
+                        material = shape.geometry.materials[m_id]
+                        color = (*material.diffuse, 1 - material.transparency)
+                        facecolors.append(color)
+                        facecolors.append(color)
+                        facecolors.append(color)
+
+                    brep = TessellatedBrep(vertices=verts, edges=edges, faces=faces)
+
+                    brep.transform(transformation)
+                    self._geometrymap[shape.id] = brep
+                    self._stylemap[shape.id] = {"facecolors": facecolors}
+
+                if not iterator.next():
+                    break
+
+        print(f"Time to load all {len(self._geometrymap)} geometries {(time.time() - start):.3f}s")
+
+    def save(self, path):
+        self._file.write(path)
+
+    def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        if isinstance(cls, type):
+            cls_name = cls.__name__
+        else:
+            cls_name = cls
+
+        entity = self._create_entity(cls_name, **kwargs)
+
+        if parent:
+            if hasattr(entity, "ContainedInStructure"):
+                self._create_entity("IfcRelContainedInSpatialStructure", RelatingStructure=parent, RelatedElements=[entity])
+            else:
+                self._create_entity("IfcRelAggregates", RelatingObject=parent, RelatedObjects=[entity])
+
+        if geometry:
+            # TODO: Deal with instancing
+            entity.geometry = geometry
+
+        if frame:
+            entity.frame = frame
+
+        if properties:
+            entity.properties = properties
+
+        return entity
+
+    def _create_entity(self, cls_name, **kwargs):
+
+        camel_case_kwargs = {}
+
+        for key, value in kwargs.items():
+            if isinstance(value, Base):
+                kwargs[key] = value.entity
+            elif isinstance(value, (list, tuple)):
+                kwargs[key] = [v.entity if isinstance(v, Base) else v for v in value]
+
+            # if key is a snake_case key, convert it to camelCase
+            if key[0].isupper():
+                camel_case_kwargs[key] = kwargs[key]
+            else:
+                camel_case_key = "".join([word.capitalize() for word in key.split("_")])
+                camel_case_kwargs[camel_case_key] = kwargs[key]
+
+        entity = self._file.create_entity(cls_name, **camel_case_kwargs)
+        return self.from_entity(entity)
+
+    @property
+    def default_project(self):
+        projects = self._file.by_type("IfcProject")
+        if projects:
+            self._default_project = self.from_entity(projects[0])
+        else:
+            self._default_project = self._create_entity("IfcProject", Name="Default Project")
+            self.default_units
+            self.default_body_context
+            self.default_owner_history
+            return self._default_project
+
+        return self._default_project
+
+    @property
+    def default_units(self):
+        if not self._default_units:
+            if self.default_project.UnitsInContext:
+                self._default_units = self.default_project.UnitsInContext
+            else:
+                self._default_units = self.from_entity(run("unit.assign_unit", self._file))
+        return self._default_units
+
+    @property
+    def default_context(self):
+        if not self._default_context:
+            contexts = self.get_entities_by_type("IfcGeometricRepresentationContext")
+            for context in contexts:
+                if context.ContextType == "Model":
+                    self._default_context = context
+                    return self._default_context
+
+            self._default_context = self.from_entity(run("context.add_context", self._file, context_type="Model"))
+        return self._default_context
+
+    @property
+    def default_body_context(self):
+        if not self._default_body_context:
+            contexts = self.get_entities_by_type("IfcGeometricRepresentationSubContext")
+            for context in contexts:
+                if context.ContextIdentifier == "Body":
+                    self._default_body_context = context
+                    return self._default_body_context
+
+            self._default_body_context = self.from_entity(
+                run(
+                    "context.add_context",
+                    self._file,
+                    context_type="Model",
+                    context_identifier="Body",
+                    target_view="MODEL_VIEW",
+                    parent=self.default_context.entity,
+                )
+            )
+
+        return self._default_body_context
+
+    @property
+    def default_owner_history(self):
+        # We will create a new owner history since we are updating the file
+        if not self._default_owner_history:
+            person = self._create_entity("IfcPerson")
+            organization = self._create_entity("IfcOrganization", Name="compas.dev")
+            person_and_org = self._create_entity("IfcPersonAndOrganization", ThePerson=person, TheOrganization=organization)
+            application = self._create_entity(
+                "IfcApplication",
+                ApplicationDeveloper=organization,
+                Version=compas_ifc.__version__,
+                ApplicationFullName="compas_ifc",
+                ApplicationIdentifier="compas_ifc v" + compas_ifc.__version__,
+            )
+
+            owner_history = self._create_entity(
+                "IfcOwnerHistory",
+                OwningUser=person_and_org,
+                OwningApplication=application,
+                ChangeAction="ADDED",
+                CreationDate=int(time.time()),
+            )
+
+            self._default_owner_history = owner_history
+        return self._default_owner_history

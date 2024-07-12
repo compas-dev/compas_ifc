@@ -60,14 +60,13 @@ class IFCReader(object):
         self._geometrymap = {}
         self._stylemap = {}
 
-    def open(self, filepath: str, load_geometries=True):
+    def open(self, filepath: str):
         self.filepath = filepath
         self._file = ifcopenshell.open(filepath)
         self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
         self._entitymap = {}
         print("Opened file: {}".format(filepath))
-        if load_geometries:
-            self.load_geometries()
+        self.load_geometries()
 
     def get_entity(self, entity: ifcopenshell.entity_instance):
         """

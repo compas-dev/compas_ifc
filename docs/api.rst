@@ -13,10 +13,8 @@ Modules
     :maxdepth: 1
     :titlesonly:
 
-    api/compas_ifc.model
-    api/compas_ifc.reader
-    api/compas_ifc.writer
-    api/compas_ifc.entities
+    api/compas_ifc.entities.generated
+    api/compas_ifc.entities.base
 
 
 
