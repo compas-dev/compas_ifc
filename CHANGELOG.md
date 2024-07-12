@@ -9,10 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added full python class mapping for `IFC4` and `IFC2x3` using `compas_ifc.entities.Generator`.
+* All `IFC4` and `IFC2x3` classes are now available in `compas_ifc.entities.generated` module.
+* All generated classes are strongly typed and have docstrings.
+* Added `compas_ifc.entities.extensions` module to extend generated IFC classes.
+* Added `show` function to visualize IFC model and individual entities.
+* Added `max_depth` in `print_spatial_hierarchy` functions.
+* Added `building_storeys` to `compas_ifc.model.Model`.
+* Added `compas_ifc.brep.IFCBrepObject`.
+
 ### Changed
+
+* Combined `compas_ifc.reader.Reader` and `compas_ifc.writer.Writer` into `compas_ifc.file.IFCFile`.
+* Updated `create` in `compas_ifc.model.Model` to accept snake_case keyword arguments.
 
 ### Removed
 
+* Removed all `compas_ifc.entities.Entity` based class wrappers, use fully mapped classes in `compas_ifc.entities.generated` instead.
+* Removed `representation.py` and `helper.py`.
 
 ## [0.6.0] 2024-06-26
 
