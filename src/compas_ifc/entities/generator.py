@@ -12,9 +12,10 @@ class Generator:
         self.schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
 
     def generate(self):
-        folder = f"src/compas_ifc/entities/generated/{self.schema.name()}/"
-        if not os.path.exists(folder):
-            os.makedirs(folder)
+        HERE = os.path.dirname(__file__)
+        FOLDER = os.path.join(HERE, "generated", self.schema.name())
+        if not os.path.exists(FOLDER):
+            os.makedirs(FOLDER)
 
         doc_string = """
 .. autosummary::
@@ -24,6 +25,8 @@ class Generator:
 
 """
         init_string = ""
+
+        count = 0
 
         for declaration in self.schema.declarations():
             class_string = None
@@ -46,13 +49,16 @@ class Generator:
                 init_string += f"from .{name.lower()} import {name}\n"
                 doc_string += f"    {name}\n"
 
-                with open(f"src/compas_ifc/entities/generated/{self.schema.name()}/{name.lower()}.py", "w") as f:
+                with open(os.path.join(FOLDER, f"{name.lower()}.py"), "w") as f:
                     f.write(class_string)
+                    count += 1
 
         init_string = f'"""{doc_string}"""\n\n{init_string}'
 
-        with open(f"src/compas_ifc/entities/generated/{self.schema.name()}/__init__.py", "w") as f:
+        with open(os.path.join(FOLDER, "__init__.py"), "w") as f:
             f.write(init_string)
+
+        print(f"Generated {count} classes for at {FOLDER}.")
 
 
 class EntityGenerator:
@@ -82,7 +88,7 @@ class CLASS_NAME(PARENT_NAME):
 
         extension = getattr(extensions, self.name, None)
         if extension:
-            print("found Extension classes:", extension)
+            print("Found extension class:", extension)
             self.imports.add(f"from compas_ifc.entities.extensions import {self.name} as {self.name}_Ext   # type: ignore")
             self.extension = f"{self.name}_Ext"
 

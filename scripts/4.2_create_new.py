@@ -16,9 +16,10 @@ mesh.scale(1000)
 
 storey = model.building_storeys[0]
 
-element1 = model.create("IfcWall", geometry=box, frame=Frame([0, 0, 0]), Name="Wall", parent=storey)
-element3 = model.create("IfcRoof", geometry=mesh, frame=Frame([0, 0, 5000]), Name="Roof", parent=storey)
-element2 = model.create(geometry=sphere, frame=Frame([0, 5000, 0]), Name="Sphere", parent=storey)
+element1 = model.create("IfcWall", geometry=box, frame=Frame([0, 0, 0]), name="Wall", parent=storey)
+element2 = model.create("IfcRoof", geometry=mesh, frame=Frame([0, 0, 5000]), name="Roof", parent=storey)
+element3 = model.create(geometry=sphere, frame=Frame([0, 5000, 0]), name="Sphere", parent=storey, properties={"Custom_Pset": {"Custom_Property": "Custom Value"}})
 
+model.print_spatial_hierarchy(max_depth=5)
 model.show()
 model.save("temp/create_geometry.ifc")

@@ -1,5 +1,9 @@
 from typing import TYPE_CHECKING
 
+from compas_ifc.resources import IfcLocalPlacement_to_frame
+from compas_ifc.resources.representation import write_body_representation
+from compas_ifc.resources.shapes import frame_to_ifc_axis2_placement_3d
+
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcProduct
 else:
@@ -25,7 +29,6 @@ class IfcProduct(IfcProduct):
 
     @geometry.setter
     def geometry(self, geometry):
-        from compas_ifc.resources.representation import write_body_representation
 
         self._geometry = geometry
         # Update the representation in the IFC file
@@ -35,8 +38,6 @@ class IfcProduct(IfcProduct):
 
     @property
     def frame(self):
-        from compas_ifc.representation import IfcLocalPlacement_to_frame
-
         if not getattr(self, "_frame", None):
             if self.ObjectPlacement:
                 self._frame = IfcLocalPlacement_to_frame(self.ObjectPlacement)
@@ -48,7 +49,6 @@ class IfcProduct(IfcProduct):
 
     @frame.setter
     def frame(self, frame):
-        from compas_ifc.resources.shapes import frame_to_ifc_axis2_placement_3d
 
         self._frame = frame
         # Update the placement in the IFC file

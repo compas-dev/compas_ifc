@@ -13,6 +13,8 @@ from compas_ifc.entities.base import Base
 
 class IFCFile(object):
     def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True):
+
+        self.ensure_classes_generated()
         self._entitymap = {}
         self._geometrymap = {}
         self._stylemap = {}
@@ -38,6 +40,21 @@ class IFCFile(object):
 
         if load_geometries and filepath is not None:
             self.load_geometries()
+
+    def ensure_classes_generated(self):
+        try:
+            from compas_ifc.entities.generated import IFC2X3  # noqa: F401
+            from compas_ifc.entities.generated import IFC4  # noqa: F401
+        except ImportError:
+            print("IFC classes not found. Generating classes...")
+            from compas_ifc.entities.generator import Generator
+
+            generator = Generator(schema="IFC2X3")
+            generator.generate()
+
+            generator = Generator(schema="IFC4")
+            generator.generate()
+            print("IFC classes generated.\n\n")
 
     def file_size(self):
         file_stats = os.stat(self.filepath)

@@ -18,5 +18,6 @@ model.save("temp/change_project_name.ifc")
 print("\nExport selected entities")
 print("=" * 53 + "\n")
 
+# TODO: re-enable export functionality
 # window = model.get_entities_by_type("IfcWindow")[0]
 # model.export([window], "temp/selected_entities.ifc")
