@@ -23,15 +23,14 @@ try:
             return self._bounding_box_center
 
         def _read_frontfaces_data(self):
-            positions = np.array([], dtype=float).reshape(0, 3)
+            positions = []
             elements = np.array([], dtype=int).reshape(0, 3)
             colors = []
 
             for shell, color in zip(self.shells, self.shellcolors):
                 shell_positions, shell_elements = shell.to_vertices_and_faces()
-                shell_positions = np.array(shell_positions)
                 shell_elements = np.array(shell_elements) + len(positions)
-                positions = np.vstack((positions, shell_positions))
+                positions += shell_positions
                 elements = np.vstack((elements, shell_elements))
                 colors += [Color(*color)] * len(shell_positions)  # TODO: this is terrible
                 if color[3] < 1:
@@ -40,17 +39,16 @@ try:
             return positions, colors, elements
 
         def _read_backfaces_data(self):
-            positions = np.array([], dtype=float).reshape(0, 3)
+            positions = []
             elements = np.array([], dtype=int).reshape(0, 3)
             colors = []
 
             for shell, color in zip(self.shells, self.shellcolors):
                 shell_positions, shell_elements = shell.to_vertices_and_faces()
-                shell_positions = np.array(shell_positions)
                 for element in shell_elements:
                     element.reverse()
                 shell_elements = np.array(shell_elements) + len(positions)
-                positions = np.vstack((positions, shell_positions))
+                positions += shell_positions
                 elements = np.vstack((elements, shell_elements))
                 colors += [Color(*color)] * len(shell_positions)
 
