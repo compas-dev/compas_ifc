@@ -29,7 +29,6 @@ class IfcProduct(IfcProduct):
 
     @geometry.setter
     def geometry(self, geometry):
-
         self._geometry = geometry
         # Update the representation in the IFC file
         # TODO: delete existing representation
@@ -49,7 +48,6 @@ class IfcProduct(IfcProduct):
 
     @frame.setter
     def frame(self, frame):
-
         self._frame = frame
         # Update the placement in the IFC file
         # TODO: consider parent frame

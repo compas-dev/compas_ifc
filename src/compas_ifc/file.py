@@ -13,7 +13,6 @@ from compas_ifc.entities.base import Base
 
 class IFCFile(object):
     def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True):
-
         self.ensure_classes_generated()
         self._entitymap = {}
         self._geometrymap = {}
@@ -191,7 +190,6 @@ class IFCFile(object):
         return entity
 
     def _create_entity(self, cls_name, **kwargs):
-
         camel_case_kwargs = {}
 
         for key, value in kwargs.items():
