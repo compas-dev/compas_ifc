@@ -20,6 +20,14 @@ class Model(Data):
         self.file = IFCFile(self, filepath=filepath, schema=schema, use_occ=use_occ, load_geometries=load_geometries)
 
     @property
+    def schema(self):
+        return self.file.schema
+
+    @property
+    def schema_name(self):
+        return self.file.schema_name
+
+    @property
     def entities(self) -> Generator["Base", None, None]:
         for entity in self.file._file:
             yield self.file.from_entity(entity)
@@ -79,8 +87,11 @@ class Model(Data):
     def print_spatial_hierarchy(self, max_depth=3):
         self.project.print_spatial_hierarchy(max_depth=max_depth)
 
-    def save(self, path):
+    def save(self, path: str):
         self.file.save(path)
+
+    def export(self, path: str, entities: list["Base"] = [], as_snippet: bool = False, export_materials: bool = True, export_properties: bool = True):
+        self.file.export(path, entities=entities, as_snippet=as_snippet, export_materials=export_materials, export_properties=export_properties)
 
     def show(self, entity=None):
         try:

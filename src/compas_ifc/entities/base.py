@@ -101,8 +101,11 @@ class Base(Data):
     def schema(self):
         return self.file._schema.name()
 
-    def is_a(self, type_name):
-        return self.entity.is_a(type_name)
+    def is_a(self, type_name=None):
+        if type_name:
+            return self.entity.is_a(type_name)
+        else:
+            return self.entity.is_a()
 
     def all_attribute_names(self):
         # all_attributes = []
