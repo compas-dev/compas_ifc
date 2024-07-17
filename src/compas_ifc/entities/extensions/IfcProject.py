@@ -52,30 +52,24 @@ class IfcProject(IfcProject):
         units_in_context = self.UnitsInContext or self.file.get_entities_by_type("IfcUnitAssignment")[0]
         for unit in units_in_context.Units:
             if unit.is_a("IfcSIUnit"):
-                units.append(
-                    {
-                        "type": unit.UnitType,
-                        "name": unit.Name,
-                        "prefix": unit.Prefix,
-                    }
-                )
+                units.append(unit)
         return units
 
     @property
     def length_unit(self):
         for unit in self.units:
-            if unit["type"] == "LENGTHUNIT":
+            if unit["UnitType"] == "LENGTHUNIT":
                 return unit
 
     @property
     def length_scale(self):
         unit = self.length_unit
         if unit:
-            if unit["name"] == "METRE" and not unit["prefix"]:
+            if unit.Name == "METRE" and not unit.Prefix:
                 return 1.0
-            if unit["name"] == "METRE" and unit["prefix"] == "CENTI":
+            if unit.Name == "METRE" and unit.Prefix == "CENTI":
                 return 1e-2
-            if unit["name"] == "METRE" and unit["prefix"] == "MILLI":
+            if unit.Name == "METRE" and unit.Prefix == "MILLI":
                 return 1e-3
         return 1.0
 

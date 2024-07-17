@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Added `export` method to `IFCFile` and `Model` to export selected list of entities.
 * Added `update_linear_deflection` to `Model`.
+* Added `unit` attribute to `Model`.
+* Added `unit` keyword argument to `Model.template()`.
 
 ### Changed
 

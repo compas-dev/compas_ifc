@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 class Model(Data):
     def __init__(self, filepath=None, schema=None, use_occ=False, load_geometries=True):
         self.file = IFCFile(self, filepath=filepath, schema=schema, use_occ=use_occ, load_geometries=load_geometries)
+        if filepath:
+            self.update_linear_deflection()
 
     @property
     def schema(self):
@@ -52,6 +54,27 @@ class Model(Data):
     @property
     def building_elements(self) -> list["IfcBuildingElement"]:
         return self.file.get_entities_by_type("IfcBuildingElement")
+
+    @property
+    def unit(self):
+        length_unit = self.project.length_unit
+        if length_unit.Name == "METRE" and length_unit.Prefix == "MILLI":
+            return "mm"
+        elif length_unit.Name == "METRE" and length_unit.Prefix == "CENTI":
+            return "cm"
+        elif length_unit.Name == "METRE" and not length_unit.Prefix:
+            return "m"
+
+    @unit.setter
+    def unit(self, value):
+        if value == "mm":
+            self.project.length_unit.Prefix = "MILLI"
+        elif value == "cm":
+            self.project.length_unit.Prefix = "CENTI"
+        elif value == "m":
+            self.project.length_unit.Prefix = None
+        else:
+            raise ValueError("Invalid unit. Use 'mm', 'cm', or 'm'.")
 
     def get_entities_by_type(self, type_name) -> list["Base"]:
         return self.file.get_entities_by_type(type_name)
@@ -103,16 +126,8 @@ class Model(Data):
             raise ImportError("The show method requires compas_viewer to be installed.")
 
         viewer = Viewer()
-        length_unit = self.project.length_unit
-        print(f"Using length unit: {length_unit}")
-        if length_unit["name"] == "METRE" and length_unit["prefix"] == "MILLI":
-            viewer.unit = "mm"
-        elif length_unit["name"] == "METRE" and length_unit["prefix"] == "CENTI":
-            viewer.unit = "cm"
-        elif length_unit["name"] == "METRE" and not length_unit["prefix"]:
-            viewer.unit = "m"
-        else:
-            raise ValueError(f"Unsupported length unit: {length_unit}")
+        print(f"Unit: {self.unit}")
+        viewer.unit = self.unit
 
         entity_map = {}
 
@@ -151,16 +166,15 @@ class Model(Data):
         return self.file.create(cls=cls, parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
 
     def update_linear_deflection(self):
-        length_unit = self.project.length_unit
-        if length_unit["name"] == "METRE" and length_unit["prefix"] == "MILLI":
+        if self.unit == "mm":
             TOL.lineardeflection = 1
-        elif length_unit["name"] == "METRE" and length_unit["prefix"] == "CENTI":
+        elif self.unit == "cm":
             TOL.lineardeflection = 1e-1
-        elif length_unit["name"] == "METRE" and not length_unit["prefix"]:
+        elif self.unit == "m":
             TOL.lineardeflection = 1e-3
 
     @classmethod
-    def template(cls, schema="IFC4", building_count=1, storey_count=1):
+    def template(cls, schema="IFC4", building_count=1, storey_count=1, unit="mm"):
         model = cls(schema=schema)
         project = model.file.default_project
         site = model.create("IfcSite", parent=project, Name="Default Site")
@@ -169,6 +183,7 @@ class Model(Data):
             for j in range(storey_count):
                 model.create("IfcBuildingStorey", parent=building, Name=f"Default Storey {j+1}")
 
+        model.unit = unit
         model.update_linear_deflection()
         return model
 
