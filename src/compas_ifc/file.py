@@ -172,13 +172,11 @@ class IFCFile(object):
         self._file.write(path)
 
     def export(self, path: str, entities: list[Base] = [], as_snippet: bool = False, export_materials: bool = True, export_properties: bool = True, export_styles: bool = True):
-
         new_file = IFCFile(None, schema=self.schema_name)
 
         exported = {}
 
         def export_entity(entity: Base, file: IFCFile):
-
             if entity.is_a("IfcOwnerHistory"):
                 return file.default_owner_history
 
@@ -203,12 +201,12 @@ class IFCFile(object):
                     attr = export_entity(attr, file)
                 elif isinstance(attr, (list, tuple)) and all(isinstance(a, Base) for a in attr):
                     attr = [export_entity(a, file) for a in attr]
-                
+
                 try:
                     setattr(new_entity, key, attr)
                 except TypeError as e:
                     if e.args[0] == "Unable to set derived attribute":
-                        pass # TODO: follow up with ifcopenshell why this is the case.
+                        pass  # TODO: follow up with ifcopenshell why this is the case.
                     else:
                         print("Failed setting", entity, key, attr, " Error message:", e)
 
