@@ -10,8 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Added `export` method to `IFCFile` and `Model` to export selected list of entities.
+* Added `update_linear_deflection` to `Model`.
 
 ### Changed
+
+* Automatically convert `Brep` to `Mesh` when assigned in `IFC2X3`.
 
 ### Removed
 

@@ -3,6 +3,7 @@ from typing import Generator
 
 from compas.data import Data
 from compas.geometry import Transformation
+from compas.tolerance import TOL
 
 from compas_ifc.file import IFCFile
 
@@ -149,6 +150,15 @@ class Model(Data):
     def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, properties=None, **kwargs):
         return self.file.create(cls=cls, parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
 
+    def update_linear_deflection(self):
+        length_unit = self.project.length_unit
+        if length_unit["name"] == "METRE" and length_unit["prefix"] == "MILLI":
+            TOL.lineardeflection = 1
+        elif length_unit["name"] == "METRE" and length_unit["prefix"] == "CENTI":
+            TOL.lineardeflection = 1e-1
+        elif length_unit["name"] == "METRE" and not length_unit["prefix"]:
+            TOL.lineardeflection = 1e-3
+
     @classmethod
     def template(cls, schema="IFC4", building_count=1, storey_count=1):
         model = cls(schema=schema)
@@ -158,6 +168,8 @@ class Model(Data):
             building = model.create("IfcBuilding", parent=site, Name=f"Default Building {i+1}")
             for j in range(storey_count):
                 model.create("IfcBuildingStorey", parent=building, Name=f"Default Storey {j+1}")
+
+        model.update_linear_deflection()
         return model
 
 

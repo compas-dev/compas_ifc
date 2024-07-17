@@ -3,6 +3,7 @@ from compas.geometry import Box
 from compas.geometry import Cone
 from compas.geometry import Cylinder
 from compas.geometry import Sphere
+from compas.tolerance import TOL
 from ifcopenshell.api import run
 
 from .brep import brep_to_ifc_advanced_brep
@@ -35,7 +36,11 @@ def write_body_representation(file, body, ifc_entity, context):
             else:
                 shape = mesh_to_IfcShellBasedSurfaceModel(file, body)
         elif OCCBrep and isinstance(body, OCCBrep):
-            shape = brep_to_ifc_advanced_brep(file, body)
+            if file.schema == "IFC2X3":
+                print("IFC2X3 does not support advanced brep, converting representation of {} to mesh.".format(ifc_entity))
+                shape = mesh_to_IfcShellBasedSurfaceModel(file, body.to_viewmesh(linear_deflection=TOL.lineardeflection)[0])
+            else:
+                shape = brep_to_ifc_advanced_brep(file, body)
         else:
             raise Exception("Unsupported body type.")
         return shape

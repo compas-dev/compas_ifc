@@ -34,6 +34,7 @@ class IFCFile(object):
         else:
             self._file = ifcopenshell.open(filepath)
             print("IFC file loaded: {}".format(filepath))
+            self.model.update_linear_deflection()
 
         self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
 
