@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from ifcopenshell.api import run
 from ifcopenshell.util.element import get_psets
+from ifcopenshell.util.element import get_quantities
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcObject
@@ -14,7 +15,7 @@ class IfcObject(IfcObject):
 
     @property
     def properties(self):
-        return get_psets(self.entity)
+        return get_psets(self.entity, psets_only=True)
 
     @properties.setter
     def properties(self, psets):
@@ -31,3 +32,8 @@ class IfcObject(IfcObject):
                         properties[key] = str(value)
                 run("pset.edit_pset", self.file._file, pset=pset, properties=properties)
                 # TODO: remove unused psets
+
+    @property
+    def quantities(self):
+        qtos = get_psets(self.entity, qtos_only=True)
+        return get_quantities(qtos)

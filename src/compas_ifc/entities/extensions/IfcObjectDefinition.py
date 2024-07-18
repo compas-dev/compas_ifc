@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from ifcopenshell.util.element import get_material
+
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcObjectDefinition
 else:
@@ -32,9 +34,7 @@ class IfcObjectDefinition(IfcObjectDefinition):
 
     @property
     def material(self):
-        from ifcopenshell.util.element import get_material
-
-        return get_material(self.entity)
+        return self.file.from_entity(get_material(self.entity))
 
     def children_by_type(self, type_name, recursive=False):
         if not recursive:

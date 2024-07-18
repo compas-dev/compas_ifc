@@ -125,8 +125,24 @@ class Base(Data):
     def attributes(self):
         return self.to_dict()
 
-    def to_dict(self):
-        return {key: getattr(self, key) for key in self}
+    def to_dict(self, recursive=False, ignore_fields=[], include_fields=[]):
+        data = {}
+        for key in self:
+            if key in ignore_fields:
+                continue
+
+            if include_fields and key not in include_fields:
+                continue
+
+            value = getattr(self, key)
+
+            if recursive and isinstance(value, Base):
+                value = value.to_dict(recursive=recursive)
+            elif recursive and isinstance(value, (list, tuple)):
+                value = [item.to_dict(recursive=recursive) if isinstance(item, Base) else item for item in value]
+
+            data[key] = value
+        return data
 
     def print_attributes(self, max_depth=2):
         attr_tree = Tree()

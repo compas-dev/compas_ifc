@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `update_linear_deflection` to `Model`.
 * Added `unit` attribute to `Model`.
 * Added `unit` keyword argument to `Model.template()`.
+* Added `recursive`, `ignore_fields`, `include_fields` options to `Base.to_dict()`.
+* Added `quantities` to `compas_ifc.entities.extensions.IfcObject`.
 
 ### Changed
 
