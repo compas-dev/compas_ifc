@@ -56,6 +56,9 @@ class Base(Data):
         else:
             attr = entity
         if isinstance(attr, entity_instance):
+            # NOTE: Double check.
+            if hasattr(attr, "wrappedValue"):
+                return attr.wrappedValue
             return self.file.from_entity(attr)
         if isinstance(attr, (list, tuple)):
             return [self._get_attribute(entity=item) for item in attr]
@@ -128,6 +131,9 @@ class Base(Data):
     def to_dict(self, recursive=False, ignore_fields=[], include_fields=[]):
         data = {}
         for key in self:
+
+            print(self, key, getattr(self.entity, key), type(getattr(self.entity, key)))
+
             if key in ignore_fields:
                 continue
 

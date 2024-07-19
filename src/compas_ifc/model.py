@@ -166,6 +166,7 @@ class Model(Data):
         return self.file.create(cls=cls, parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
 
     def update_linear_deflection(self):
+        # TODO: deal with conversion based units like "FOOT"
         if self.unit == "mm":
             TOL.lineardeflection = 1
         elif self.unit == "cm":

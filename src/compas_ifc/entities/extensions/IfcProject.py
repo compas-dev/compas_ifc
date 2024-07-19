@@ -51,7 +51,7 @@ class IfcProject(IfcProject):
         units = []
         units_in_context = self.UnitsInContext or self.file.get_entities_by_type("IfcUnitAssignment")[0]
         for unit in units_in_context.Units:
-            if unit.is_a("IfcSIUnit"):
+            if unit.is_a("IfcSIUnit") or unit.is_a("IfcConversionBasedUnit"):
                 units.append(unit)
         return units
 
