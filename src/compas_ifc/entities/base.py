@@ -135,7 +135,6 @@ class Base(Data):
     def to_dict(self, recursive=False, ignore_fields=[], include_fields=[]):
         data = {}
         for key in self:
-
             if key in ignore_fields:
                 continue
 

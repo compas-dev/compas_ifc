@@ -203,7 +203,6 @@ class AtrtributeGenerator:
         pass
 """
 
-
     TYPE_MAP = {
         "DOUBLE": "float",
         "INT": "int",

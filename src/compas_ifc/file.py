@@ -1,6 +1,8 @@
 import multiprocessing
 import os
 import time
+from typing import Any
+from typing import Union
 
 import ifcopenshell
 import numpy as np
@@ -9,8 +11,6 @@ from ifcopenshell.api import run
 
 import compas_ifc
 from compas_ifc.entities.base import Base
-
-from typing import Any, Union
 
 
 class IFCFile(object):
@@ -179,7 +179,6 @@ class IFCFile(object):
         exported = {}
 
         def export_entity(entity: Union[Base, Any], file: IFCFile):
-
             if not isinstance(entity, Base):
                 return entity
 
@@ -203,7 +202,6 @@ class IFCFile(object):
                     file._create_entity("IfcRelAggregates", RelatingObject=new_parent_entity, RelatedObjects=[new_entity])
 
             for key, attr in entity.attributes.items():
-
                 # Skip Representation and ObjectPlacement if not in the list of entities to export
                 if key in ["Representation", "ObjectPlacement"] and entity not in entities:
                     continue
