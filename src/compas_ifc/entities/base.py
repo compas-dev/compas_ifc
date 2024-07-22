@@ -91,7 +91,8 @@ class Base(Data):
         elif isinstance(value, (list, tuple)):
             value = [v.entity if isinstance(v, Base) else v for v in value]
 
-        setattr(self.entity, name, value)
+        if getattr(self.entity, name) != value:
+            setattr(self.entity, name, value)
 
     def _get_inverse_attribute(self, name):
         return [self.file.from_entity(attr) for attr in getattr(self.entity, name)]
