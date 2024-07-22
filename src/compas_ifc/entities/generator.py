@@ -101,8 +101,14 @@ class CLASS_NAME(PARENT_NAME):
         # all_attributes = self.declaration.all_attributes()
         # all_inverse_attributes = self.declaration.all_inverse_attributes()
 
-        for attribute in self.declaration.attributes():
-            self.attributes.append(AtrtributeGenerator(attribute, self))
+        derived = self.declaration.derived()
+        attribute_names = [attr.name() for attr in self.declaration.attributes()]
+
+        for i, attribute in enumerate(self.declaration.all_attributes()):
+            if attribute.name() in attribute_names:
+                self.attributes.append(AtrtributeGenerator(attribute, self, False))
+            elif derived[i]:
+                self.attributes.append(AtrtributeGenerator(attribute, self, True))
 
         inverse_attributes_from_supertype = []
         if self.declaration.supertype():
@@ -185,6 +191,18 @@ class AtrtributeGenerator:
     def ATTRIBUTE_NAME(self, value: ATTRIBUTE_TYPE):
         return self._set_attribute("ATTRIBUTE_NAME", value)
 """
+    TEMPLATE_DERIVED = """
+    @property
+    def ATTRIBUTE_NAME(self)-> ATTRIBUTE_TYPE:
+        \"\"\"DESCRIPTION\"\"\"
+        return self._get_attribute("ATTRIBUTE_NAME")
+
+    @ATTRIBUTE_NAME.setter
+    def ATTRIBUTE_NAME(self, value: ATTRIBUTE_TYPE):
+        # Derived attribute
+        pass
+"""
+
 
     TYPE_MAP = {
         "DOUBLE": "float",
@@ -195,9 +213,10 @@ class AtrtributeGenerator:
         "BINARY": "bytes",
     }
 
-    def __init__(self, attribute, parent):
+    def __init__(self, attribute, parent, is_derived):
         self.parent = parent
         self.attribute = attribute
+        self.is_derived = is_derived
         self.name = attribute.name()
         self.imports = set()
         self.type = None
@@ -305,7 +324,10 @@ class AtrtributeGenerator:
 
     def generate(self):
         self.get_attribute_type()
-        attribute_string = self.TEMPLATE.replace("ATTRIBUTE_NAME", self.name)
+        if self.is_derived:
+            attribute_string = self.TEMPLATE_DERIVED.replace("ATTRIBUTE_NAME", self.name)
+        else:
+            attribute_string = self.TEMPLATE.replace("ATTRIBUTE_NAME", self.name)
         attribute_string = attribute_string.replace("ATTRIBUTE_TYPE", str(self.type))
         attribute_string = attribute_string.replace("DESCRIPTION", self.description)
 
