@@ -34,7 +34,11 @@ class IfcObjectDefinition(IfcObjectDefinition):
 
     @property
     def material(self):
-        return self.file.from_entity(get_material(self.entity))
+        material = get_material(self.entity)
+        if material:
+            return self.file.from_entity(material)
+        else:
+            return None
 
     def children_by_type(self, type_name, recursive=False):
         if not recursive:
