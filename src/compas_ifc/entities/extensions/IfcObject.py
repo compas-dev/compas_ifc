@@ -29,7 +29,13 @@ class IfcObject(IfcObject):
             if id(properties) in psetsmap:
                 pset = psetsmap[id(properties)]
                 # TODO: Check if relation already exists
-                self.file._create_entity("IfcRelDefinesByProperties", GlobalId=ifcopenshell.guid.new(), RelatingPropertyDefinition=pset, RelatedObjects=[self.entity])
+                self.file._create_entity(
+                    "IfcRelDefinesByProperties",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=self.file.default_owner_history,
+                    RelatingPropertyDefinition=pset,
+                    RelatedObjects=[self.entity],
+                )
 
             else:
                 pset = run("pset.add_pset", self.file._file, product=self.entity, name=name)
