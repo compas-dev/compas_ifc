@@ -5,7 +5,12 @@
     "url": "https://compas.dev/compas_ifc/latest/"
   },
   {
-    "name": "1.0.0 (stable)",
+    "name": "1.1.0 (stable)",
+    "version": "1.1.0",
+    "url": "https://compas.dev/compas_ifc/1.1.0/"
+  },
+  {
+    "name": "1.0.0",
     "version": "1.0.0",
     "url": "https://compas.dev/compas_ifc/1.0.0/"
   },
