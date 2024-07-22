@@ -10,6 +10,8 @@ from ifcopenshell.api import run
 import compas_ifc
 from compas_ifc.entities.base import Base
 
+from typing import Any, Union
+
 
 class IFCFile(object):
     def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True):
@@ -176,7 +178,11 @@ class IFCFile(object):
 
         exported = {}
 
-        def export_entity(entity: Base, file: IFCFile):
+        def export_entity(entity: Union[Base, Any], file: IFCFile):
+
+            if not isinstance(entity, Base):
+                return entity
+
             if entity.is_a("IfcOwnerHistory"):
                 return file.default_owner_history
 
@@ -197,18 +203,17 @@ class IFCFile(object):
                     file._create_entity("IfcRelAggregates", RelatingObject=new_parent_entity, RelatedObjects=[new_entity])
 
             for key, attr in entity.attributes.items():
+
+                # Skip Representation and ObjectPlacement if not in the list of entities to export
+                if key in ["Representation", "ObjectPlacement"] and entity not in entities:
+                    continue
+
                 if isinstance(attr, Base):
                     attr = export_entity(attr, file)
-                elif isinstance(attr, (list, tuple)) and all(isinstance(a, Base) for a in attr):
+                elif isinstance(attr, (list, tuple)):
                     attr = [export_entity(a, file) for a in attr]
 
-                try:
-                    setattr(new_entity, key, attr)
-                except TypeError as e:
-                    if e.args[0] == "Unable to set derived attribute":
-                        pass  # TODO: follow up with ifcopenshell why this is the case.
-                    else:
-                        print("Failed setting", entity, key, attr, " Error message:", e)
+                setattr(new_entity, key, attr)
 
             if export_properties and hasattr(entity, "properties"):
                 new_entity.properties = entity.properties
