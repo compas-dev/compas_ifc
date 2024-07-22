@@ -16,7 +16,10 @@ class IfcObject(IfcObject):
 
     @property
     def properties(self):
-        return get_psets(self.entity, psets_only=True)
+        psets = get_psets(self.entity, psets_only=True)
+        for pset in psets.values():
+            del pset["id"]
+        return psets
 
     @properties.setter
     def properties(self, psets):
