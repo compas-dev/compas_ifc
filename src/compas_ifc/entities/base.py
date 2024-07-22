@@ -34,7 +34,10 @@ class Base(Data):
 
         cls_name = entity.is_a()
         ifc_cls = getattr(classes, cls_name, None)
-        return super(Base, cls).__new__(ifc_cls)
+        if ifc_cls:
+            return super(Base, cls).__new__(ifc_cls)
+        else:
+            return entity
 
     def __init__(self, entity: entity_instance = None, file=None):
         super().__init__()
@@ -57,8 +60,8 @@ class Base(Data):
             attr = entity
         if isinstance(attr, entity_instance):
             # NOTE: Double check.
-            if hasattr(attr, "wrappedValue"):
-                return attr.wrappedValue
+            # if hasattr(attr, "wrappedValue"):
+            #     return attr.wrappedValue
             return self.file.from_entity(attr)
         if isinstance(attr, (list, tuple)):
             return [self._get_attribute(entity=item) for item in attr]
@@ -132,8 +135,6 @@ class Base(Data):
     def to_dict(self, recursive=False, ignore_fields=[], include_fields=[]):
         data = {}
         for key in self:
-
-            print(self, key, getattr(self.entity, key), type(getattr(self.entity, key)))
 
             if key in ignore_fields:
                 continue
