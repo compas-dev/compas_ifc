@@ -142,6 +142,8 @@ class Base(Data):
                 continue
 
             value = getattr(self, key)
+            if hasattr(value, "wrappedValue"):
+                value = value.wrappedValue
 
             if recursive and isinstance(value, Base):
                 value = value.to_dict(recursive=recursive)
