@@ -14,7 +14,7 @@ from compas_ifc.entities.base import Base
 
 
 class IFCFile(object):
-    def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True):
+    def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True, verbose=True):
         self.ensure_classes_generated()
         self._entitymap = {}
         self._geometrymap = {}
@@ -30,12 +30,15 @@ class IFCFile(object):
         self.filepath = filepath
         self.model = model
         self.use_occ = use_occ
+        self.verbose = verbose
         if filepath is None:
             self._file = ifcopenshell.file(schema=schema)
-            print("IFC file created in schema: {}".format(schema))
+            if self.verbose:
+                print("IFC file created in schema: {}".format(schema))
         else:
             self._file = ifcopenshell.open(filepath)
-            print("IFC file loaded: {}".format(filepath))
+            if self.verbose:
+                print("IFC file loaded: {}".format(filepath))
 
         self._schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(self._file.schema)
 
@@ -55,7 +58,8 @@ class IFCFile(object):
             from compas_ifc.entities.generated import IFC2X3  # noqa: F401
             from compas_ifc.entities.generated import IFC4  # noqa: F401
         except ImportError:
-            print("IFC classes not found. Generating classes...")
+            if self.verbose:
+                print("IFC classes not found. Generating classes...")
             from compas_ifc.entities.generator import Generator
 
             generator = Generator(schema="IFC2X3")
@@ -63,7 +67,8 @@ class IFCFile(object):
 
             generator = Generator(schema="IFC4")
             generator.generate()
-            print("IFC classes generated.\n\n")
+            if self.verbose:
+                print("IFC classes generated.\n\n")
 
     def file_size(self):
         file_stats = os.stat(self.filepath)
@@ -105,7 +110,8 @@ class IFCFile(object):
 
     def load_geometries(self, include=None, exclude=None):
         """Load all the geometries of the IFC file using a fast multithreaded iterator."""
-        print("Loading geometries...")
+        if self.verbose:
+            print("Loading geometries...")
         import ifcopenshell.geom
 
         settings = ifcopenshell.geom.settings()
@@ -168,7 +174,8 @@ class IFCFile(object):
                 if not iterator.next():
                     break
 
-        print(f"Time to load all {len(self._geometrymap)} geometries {(time.time() - start):.3f}s")
+        if self.verbose:
+            print(f"Time to load all {len(self._geometrymap)} geometries {(time.time() - start):.3f}s")
 
     def save(self, path):
         self._file.write(path)

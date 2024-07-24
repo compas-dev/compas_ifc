@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `compas_ifc.entities.extensions.IfcContext` to extend `IfcContext` class.
+* Added `verbose` option to `Model` and `IFCFile`.
+
 ### Changed
 
 ### Removed

@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 
 
 class Model(Data):
-    def __init__(self, filepath=None, schema=None, use_occ=False, load_geometries=True):
-        self.file = IFCFile(self, filepath=filepath, schema=schema, use_occ=use_occ, load_geometries=load_geometries)
+    def __init__(self, filepath=None, schema=None, use_occ=False, load_geometries=True, verbose=True):
+        self.file = IFCFile(self, filepath=filepath, schema=schema, use_occ=use_occ, load_geometries=load_geometries, verbose=verbose)
         if filepath:
             self.update_linear_deflection()
 

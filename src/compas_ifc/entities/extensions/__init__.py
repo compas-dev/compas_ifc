@@ -1,5 +1,6 @@
 from .IfcObjectDefinition import IfcObjectDefinition  # noqa: F401
 from .IfcObject import IfcObject  # noqa: F401
+from .IfcContext import IfcContext  # noqa: F401
 from .IfcElement import IfcElement  # noqa: F401
 from .IfcSpatialElement import IfcSpatialElement  # noqa: F401
 from .IfcSpatialStructureElement import IfcSpatialStructureElement  # noqa: F401
