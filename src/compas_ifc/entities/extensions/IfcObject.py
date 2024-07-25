@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 import ifcopenshell.guid
 from ifcopenshell.api import run
 from ifcopenshell.util.element import get_psets
-from ifcopenshell.util.element import get_quantities
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcObject
@@ -52,4 +51,6 @@ class IfcObject(IfcObject):
     @property
     def quantities(self):
         qtos = get_psets(self.entity, qtos_only=True)
-        return get_quantities(qtos)
+        for qto in qtos.values():
+            del qto["id"]
+        return qtos

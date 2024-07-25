@@ -133,6 +133,18 @@ class Base(Data):
         return self.to_dict()
 
     def to_dict(self, recursive=False, ignore_fields=[], include_fields=[]):
+        def iter_list(values):
+            _values = []
+            for value in values:
+                if hasattr(value, "wrappedValue"):
+                    value = value.wrappedValue
+                elif isinstance(value, Base):
+                    value = value.to_dict(recursive=recursive)
+                elif isinstance(value, (list, tuple)):
+                    value = iter_list(value)
+                _values.append(value)
+            return _values
+
         data = {}
         for key in self:
             if key in ignore_fields:
@@ -148,9 +160,10 @@ class Base(Data):
             if recursive and isinstance(value, Base):
                 value = value.to_dict(recursive=recursive)
             elif recursive and isinstance(value, (list, tuple)):
-                value = [item.to_dict(recursive=recursive) if isinstance(item, Base) else item for item in value]
+                value = iter_list(value)
 
             data[key] = value
+
         return data
 
     def print_attributes(self, max_depth=2):
