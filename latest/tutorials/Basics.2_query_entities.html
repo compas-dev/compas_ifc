@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="../_static/compas.ico" type="image/x-icon">
-    <title>compas_ifc.entities.base &#8212; COMPAS IFC</title>
+    <title>Basics.2 Query Entities &#8212; COMPAS IFC</title>
   
   
   
@@ -52,13 +52,15 @@
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api/compas_ifc.entities.base';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/Basics.2_query_entities';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/compas-dev/compas_ifc/gh-pages/versions.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'latest';
         </script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Basics.3 Spatial Hierarchy" href="Basics.3_spatial_hierarchy.html" />
+    <link rel="prev" title="Basics.1 Project Overview" href="Basics.1_overview.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -162,7 +164,7 @@
                     </li>
                 
 
-                    <li class="nav-item">
+                    <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="../tutorials.html">
                         Tutorials
                       </a>
@@ -285,10 +287,6 @@ document.write(`
   
 
   
-    <label class="sidebar-toggle secondary-toggle" for="__secondary">
-      <span class="fa-solid fa-outdent"></span>
-    </label>
-  
 </div>
 
     </nav>
@@ -328,7 +326,7 @@ document.write(`
                     </li>
                 
 
-                    <li class="nav-item">
+                    <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="../tutorials.html">
                         Tutorials
                       </a>
@@ -430,20 +428,20 @@ document.write(`
     <div class="sidebar-primary-items__start sidebar-primary__section">
         <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
-        <ul class="nav bd-sidenav">
+        <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials.html">Tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/Basics.1_overview.html">Basics.1 Project Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/Basics.2_query_entities.html">Basics.2 Query Entities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/Basics.3_spatial_hierarchy.html">Basics.3 Spatial Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/Basics.4_element_info.html">Basics.4 Element info</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/Basics.5_visualization.html">Basics.5 Visualization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/Basics.6_edit_export.html">Basics.6 Edit and Export</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/Basics.7_create_new.html">Basics.7 Create New IFC Model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/Advanced.1_units.html">Advanced.1 Units</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/Advanced.2_sessions.html">Advanced.1 Sessions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/Advanced.3_custom_extensions.html">Advanced.3 Custom Class Extensions</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../tutorials.html">Tutorials</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="Basics.1_overview.html">Basics.1 Project Overview</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Basics.2 Query Entities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Basics.3_spatial_hierarchy.html">Basics.3 Spatial Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Basics.4_element_info.html">Basics.4 Element info</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Basics.5_visualization.html">Basics.5 Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Basics.6_edit_export.html">Basics.6 Edit and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Basics.7_create_new.html">Basics.7 Create New IFC Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Advanced.1_units.html">Advanced.1 Units</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Advanced.2_sessions.html">Advanced.1 Sessions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Advanced.3_custom_extensions.html">Advanced.3 Custom Class Extensions</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
@@ -491,7 +489,10 @@ document.write(`
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page">compas_ifc.entities.base</li>
+    
+    <li class="breadcrumb-item"><a href="../tutorials.html" class="nav-link">Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Basics.2 Query Entities</li>
   </ul>
 </nav>
 </div>
@@ -508,19 +509,108 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="compas-ifc-entities-base">
-<h1>compas_ifc.entities.base</h1>
-<p>Generated IFC class wrappers.</p>
-<section id="classes">
-<h2>Classes</h2>
-<table class="autosummary longtable table autosummary">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.base.Base.html" title="compas_ifc.entities.base.Base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Base</span></code></a></p></td>
-<td><p>Base class for all IFC entities.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
+  <section id="basics-2-query-entities">
+<h1>Basics.2 Query Entities</h1>
+<p>This example shows how to query entities from an IFC model.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">compas_ifc.model</span> <span class="kn">import</span> <span class="n">Model</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;data/wall-with-opening-and-window.ifc&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;*&quot;</span> <span class="o">*</span> <span class="mi">53</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Query Examples&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;*&quot;</span> <span class="o">*</span> <span class="mi">53</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Entities by type&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">53</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">all_entities</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_all_entities</span><span class="p">()</span>
+<span class="n">spatial_elements</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_entities_by_type</span><span class="p">(</span><span class="s2">&quot;IfcSpatialElement&quot;</span><span class="p">)</span>
+<span class="n">building_elements</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_entities_by_type</span><span class="p">(</span><span class="s2">&quot;IfcBuildingElement&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Total number of entities: &quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_entities</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">all_entities</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Total number of spatial elements: &quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">spatial_elements</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">spatial_elements</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Total number of building elements: &quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">building_elements</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">building_elements</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Entities by name&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">53</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Window for Test Example&quot;</span>
+<span class="n">entities</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_entities_by_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Found entities with the name: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Entities by id&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">53</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">global_id</span> <span class="o">=</span> <span class="s2">&quot;3ZYW59sxj8lei475l7EhLU&quot;</span>
+<span class="n">entity</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_entity_by_global_id</span><span class="p">(</span><span class="n">global_id</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Found entity with the global id: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">global_id</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="nb">id</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">entity</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_entity_by_id</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Found entity with the id: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Example Output:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>*****************************************************
+Query Examples
+*****************************************************
+
+
+Entities by type
+=====================================================
+
+Total number of entities:  133
+&lt;Entity:IfcOrganization&gt;
+&lt;Entity:IfcPerson&gt;
+&lt;Entity:IfcPersonAndOrganization&gt;
+&lt;Entity:IfcOwnerHistory&gt;
+&lt;Project:IfcProject Name: Default Project, GlobalId: 28hypXUBvBefc20SI8kfA$&gt;
+...
+
+Total number of spatial elements:  3
+&lt;BuildingStorey:IfcBuildingStorey Name: Default Building Storey, GlobalId: 2GNgSHJ5j9BRUjqT$7tE8w&gt;
+&lt;Building:IfcBuilding Name: Default Building, GlobalId: 0AqAhXVxvCy9m0OX1nxY1A&gt;
+&lt;Site:IfcSite Name: Default Site, GlobalId: 1cwlDi_hLEvPsClAelBNnz&gt;
+...
+
+Total number of building elements:  2
+&lt;Window:IfcWindow Name: Window for Test Example, GlobalId: 0tA4DSHd50le6Ov9Yu0I9X&gt;
+&lt;Wall:IfcWallStandardCase Name: Wall for Test Example, GlobalId: 3ZYW59sxj8lei475l7EhLU&gt;
+...
+
+
+Entities by name
+=====================================================
+
+Found entities with the name: Window for Test Example
+[&lt;ObjectDefinition:IfcWindowType Name: Window for Test Example, GlobalId: 0Ps4H3X0nAxfqkHNemLE6f&gt;, &lt;Window:IfcWindow Name: Window for Test Example, GlobalId: 0tA4DSHd50le6Ov9Yu0I9X&gt;]
+
+Entities by id
+=====================================================
+
+Found entity with the global id: 3ZYW59sxj8lei475l7EhLU
+&lt;Wall:IfcWall Name: Wall for Test Example, GlobalId: 3ZYW59sxj8lei475l7EhLU&gt;
+
+Found entity with the id: 1
+&lt;Project:IfcProject Name: Default Project, GlobalId: 28hypXUBvBefc20SI8kfA$&gt;
+</pre></div>
+</div>
 </section>
 
 
@@ -535,20 +625,6 @@ document.write(`
             </div>
             
             
-              
-                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
-
-  <div class="sidebar-secondary-item">
-  <div class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> On this page
-  </div>
-  <nav class="bd-toc-nav page-toc">
-    <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
-</ul>
-  </nav></div>
-
-</div></div>
               
             
           </div>
