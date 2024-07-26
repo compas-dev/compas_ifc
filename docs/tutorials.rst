@@ -1,8 +1,32 @@
 ********************************************************************************
-Tutorial
+Tutorials
 ********************************************************************************
 
+.. rst-class:: lead
 This is a hello-world tutorial for the COMPAS IFC package. It shows how to load an IFC file and and inspect its contents.
+
+Installation
+================================
+
+
+A minimal version of COMPAS IFC can be installed directly with pip.
+
+.. code-block:: bash
+
+    pip install compas_ifc
+
+If you want to visualize the IFC model, install COMPAS Viewer as well.
+
+.. code-block:: bash
+
+    pip install compas_viewer
+
+If you need to interact with IFC geometry using OCC Brep or CGAL for boolean operations, install COMPAS OCC and COMPAS CGAL througn conda-forge.
+
+.. code-block:: bash
+
+    conda install compas_occ compas_occ -c conda-forge
+
 
 Load IFC model
 ================================
@@ -103,4 +127,26 @@ If you have ``compas_viewer`` installed, you can visualize the model using the `
 .. image:: _images/visualisation.jpg
     :width: 100%
 
-For more in-depth tutorials, please head to the next *Examples* section.
+
+More Examples
+=============
+
+Below are more examples of how to use the COMPAS IFC package.
+(Please note these are still under construction)
+
+
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+   :glob:
+
+   tutorials/Basics.1_overview.rst
+   tutorials/Basics.2_query_entities.rst
+   tutorials/Basics.3_spatial_hierarchy.rst
+   tutorials/Basics.4_element_info.rst
+   tutorials/Basics.5_visualization.rst
+   tutorials/Basics.6_edit_export.rst
+   tutorials/Basics.7_create_new.rst
+   tutorials/Advanced.1_units.rst
+   tutorials/Advanced.2_sessions.rst
+   tutorials/Advanced.3_custom_extensions.rst

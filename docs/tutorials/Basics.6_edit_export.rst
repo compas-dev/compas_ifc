@@ -1,5 +1,5 @@
 *******************************************************************************
-4.1 Edit Export
+Basics.6 Edit and Export
 *******************************************************************************
 
 This example shows how to edit attributes of an entity, save to a new file or export the selected entities.

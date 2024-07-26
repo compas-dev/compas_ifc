@@ -1,5 +1,5 @@
 *******************************************************************************
-4.1 Create New
+Basics.7 Create New IFC Model
 *******************************************************************************
 
 This example shows how to create a new IFC model from scratch.

@@ -1,5 +1,5 @@
 *******************************************************************************
-1.2 Traverse Hierarchy
+Basics.3 Spatial Hierarchy
 *******************************************************************************
 
 This example shows how to traverse the spatial and inheritance hierarchy of an IFC model.

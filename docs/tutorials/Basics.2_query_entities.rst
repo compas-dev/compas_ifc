@@ -1,5 +1,5 @@
 *******************************************************************************
-1.1 Query Entities
+Basics.2 Query Entities
 *******************************************************************************
 
 This example shows how to query entities from an IFC model.

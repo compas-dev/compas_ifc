@@ -1,8 +1,30 @@
 *******************************************************************************
-2.1 Project Info
+Basics.1 Project Overview
 *******************************************************************************
 
-This example shows how to access the project information of an IFC file.
+This example shows how to load an IFC file and print a summary of the model.
+
+.. code-block:: python
+
+    from compas_ifc.model import Model
+
+    model = Model("data/wall-with-opening-and-window.ifc")
+    model.print_summary()
+
+
+.. code-block:: none
+
+    ================================================================================
+    File: data/wall-with-opening-and-window.ifc
+    Size: 0.01 MB
+    Project: Default Project
+    Description: Description of Default Project
+    Number of sites: 1
+    Number of buildings: 1
+    Number of building elements: 2
+    ================================================================================
+
+
 
 .. code-block:: python
 
@@ -11,9 +33,7 @@ This example shows how to access the project information of an IFC file.
 
     model = Model("data/wall-with-opening-and-window.ifc")
 
-    assert len(model.projects) > 0
-
-    project = model.projects[0]
+    project = model.project
 
     # =============================================================================
     # Info

@@ -1,5 +1,5 @@
 *******************************************************************************
-2.3 Window Info
+Basics.4 Element info
 *******************************************************************************
 
 This example shows how to get information of a building element, such as a window.

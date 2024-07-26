@@ -4,17 +4,17 @@ API Reference
 
 .. rst-class:: lead
 
-This is the auto-generated API reference for COMPAS IFC.
+Comming soon...
 
-Modules
-=======
+.. Modules
+.. =======
 
-.. toctree::
-    :maxdepth: 1
-    :titlesonly:
+.. .. toctree::
+..     :maxdepth: 1
+..     :titlesonly:
 
-    api/compas_ifc.entities.generated
-    api/compas_ifc.entities.base
+..     api/compas_ifc.entities.generated
+..     api/compas_ifc.entities.base
 
 
 

@@ -1,10 +1,5 @@
 ********************************************************************************
-Examples
+Archtiecture
 ********************************************************************************
 
-.. toctree::
-   :maxdepth: 1
-   :titlesonly:
-   :glob:
-
-   examples/*
+This section is still under construction. Please check back later.
