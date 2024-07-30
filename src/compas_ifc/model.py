@@ -114,8 +114,8 @@ class Model(Data):
     def save(self, path: str):
         self.file.save(path)
 
-    def export(self, path: str, entities: list["Base"] = [], as_snippet: bool = False, export_materials: bool = True, export_properties: bool = True):
-        self.file.export(path, entities=entities, as_snippet=as_snippet, export_materials=export_materials, export_properties=export_properties)
+    def export(self, path: str, entities: list["Base"] = [], as_snippet: bool = False, export_materials: bool = True, export_properties: bool = True, export_styles: bool = True):
+        self.file.export(path, entities=entities, as_snippet=as_snippet, export_materials=export_materials, export_properties=export_properties, export_styles=export_styles)
 
     def show(self, entity=None):
         try:
@@ -164,6 +164,9 @@ class Model(Data):
 
     def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, properties=None, **kwargs):
         return self.file.create(cls=cls, parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
+
+    def remove(self, entity):
+        self.file.remove(entity)
 
     def update_linear_deflection(self):
         # TODO: deal with conversion based units like "FOOT"

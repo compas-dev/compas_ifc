@@ -268,6 +268,17 @@ class IFCFile(object):
 
         return entity
 
+    def remove(self, entity):
+        if isinstance(entity, Base):
+            entity = [entity]
+
+        print(f"Removing {len(entity)} entities...")
+        ifcopenshell.util.element.batch_remove_deep2(self._file)
+        for e in entity:
+            ifcopenshell.util.element.remove_deep2(self._file, e.entity)
+        self._file = ifcopenshell.util.element.unbatch_remove_deep2(self._file)
+        print("Removal done.")
+
     def _create_entity(self, cls_name, **kwargs):
         camel_case_kwargs = {}
 
