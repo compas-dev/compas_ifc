@@ -11,6 +11,19 @@ if TYPE_CHECKING:
     from compas_ifc.model import Model
 
 
+class TypeDefinition:
+    def __init__(self, entity: entity_instance = None, file=None):
+        self.file = file
+        self.entity = entity
+
+    @property
+    def value(self):
+        return self.entity.wrappedValue
+
+    def __repr__(self):
+        return "<{} {}>".format(self.entity.is_a(), self.value)
+
+
 class Base(Data):
     """Base class for all IFC entities.
 
@@ -36,8 +49,8 @@ class Base(Data):
         ifc_cls = getattr(classes, cls_name, None)
         if ifc_cls:
             return super(Base, cls).__new__(ifc_cls)
-        else:
-            return entity
+        elif hasattr(entity, "wrappedValue"):
+            return TypeDefinition(entity, file)
 
     def __init__(self, entity: entity_instance = None, file=None):
         super().__init__()
@@ -89,13 +102,25 @@ class Base(Data):
         # elif not isinstance(value, value_type):
         #     raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
 
-        if isinstance(value, Base):
-            value = value.entity
-        elif isinstance(value, (list, tuple)):
-            value = [v.entity if isinstance(v, Base) else v for v in value]
+        def prepare_value(value):
+            if isinstance(value, Base):
+                return value.entity
+            elif isinstance(value, TypeDefinition):
+                return value.entity
+            else:
+                return value
+
+        if isinstance(value, (list, tuple)):
+            value = [prepare_value(v) for v in value]
+        else:
+            value = prepare_value(value)
 
         if getattr(self.entity, name) != value:
-            setattr(self.entity, name, value)
+            try:
+                setattr(self.entity, name, value)
+            except Exception as e:
+                print(f"Error setting {name} of {self} to {value}")
+                raise e
 
     def _get_inverse_attribute(self, name):
         return [self.file.from_entity(attr) for attr in getattr(self.entity, name)]
@@ -107,6 +132,9 @@ class Base(Data):
     @property
     def schema(self):
         return self.file._schema.name()
+
+    def id(self):
+        return self.entity.id()
 
     def is_a(self, type_name=None):
         if type_name:
@@ -132,14 +160,14 @@ class Base(Data):
     def attributes(self):
         return self.to_dict()
 
-    def to_dict(self, recursive=False, ignore_fields=[], include_fields=[]):
+    def to_dict(self, recursive=False, ignore_fields=[], include_fields=[], convert_type_definitions=False):
         def iter_list(values):
             _values = []
             for value in values:
-                if hasattr(value, "wrappedValue"):
-                    value = value.wrappedValue
-                elif isinstance(value, Base):
-                    value = value.to_dict(recursive=recursive)
+                if isinstance(value, Base):
+                    value = value.to_dict(recursive=recursive, ignore_fields=ignore_fields, include_fields=include_fields)
+                elif convert_type_definitions and isinstance(value, TypeDefinition):
+                    value = value.value
                 elif isinstance(value, (list, tuple)):
                     value = iter_list(value)
                 _values.append(value)
@@ -154,13 +182,13 @@ class Base(Data):
                 continue
 
             value = getattr(self, key)
-            if hasattr(value, "wrappedValue"):
-                value = value.wrappedValue
 
             if recursive and isinstance(value, Base):
-                value = value.to_dict(recursive=recursive)
+                value = value.to_dict(recursive=recursive, ignore_fields=ignore_fields, include_fields=include_fields)
             elif recursive and isinstance(value, (list, tuple)):
                 value = iter_list(value)
+            elif convert_type_definitions and isinstance(value, TypeDefinition):
+                value = value.value
 
             data[key] = value
 

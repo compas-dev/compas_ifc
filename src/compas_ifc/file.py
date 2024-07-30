@@ -82,11 +82,12 @@ class IFCFile(object):
 
         _id = entity.id()
 
-        if _id in self._entitymap:
+        if _id in self._entitymap and _id != 0:
             return self._entitymap[_id]
         else:
             entity = Base(entity, self)
-            self._entitymap[_id] = entity
+            if _id != 0:
+                self._entitymap[_id] = entity
             return entity
 
     def get_entities_by_type(self, type_name) -> list[Base]:
@@ -230,10 +231,11 @@ class IFCFile(object):
                         new_material_entity = export_entity(relation.RelatingMaterial, file)
                         file._create_entity("IfcRelAssociatesMaterial", RelatingMaterial=new_material_entity, RelatedObjects=[new_entity])
 
-            if export_styles and hasattr(entity, "StyledByItem"):
+            if export_styles and hasattr(entity, "StyledByItem") and entity.entity.id():
                 # TODO: create style settor on class extension.
                 for style_item in entity.StyledByItem():
-                    export_entity(style_item, file)
+                    styles = [export_entity(s, file) for s in style_item.Styles]
+                    file._create_entity("IfcStyledItem", Styles=styles, Item=new_entity)
 
             return new_entity
 
