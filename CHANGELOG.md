@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Added `compas_ifc.entities.extensions.IfcContext` to extend `IfcContext` class.
 * Added `verbose` option to `Model` and `IFCFile`.
+* Added `compas_ifc.entities.TypeDefinition` class.
+* Added `remove()` to `Model` for removing entities.
 
 ### Changed
 
