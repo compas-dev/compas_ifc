@@ -203,7 +203,7 @@ class IFCFile(object):
             exported[entity] = new_entity
 
             if parent and not as_snippet:
-                if hasattr(entity, "ContainedInStructure"):
+                if hasattr(entity, "ContainedInStructure") and entity.ContainedInStructure():
                     file._create_entity("IfcRelContainedInSpatialStructure", RelatingStructure=new_parent_entity, RelatedElements=[new_entity])
                 else:
                     file._create_entity("IfcRelAggregates", RelatingObject=new_parent_entity, RelatedObjects=[new_entity])
