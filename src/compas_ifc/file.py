@@ -15,6 +15,8 @@ from compas_ifc.entities.base import Base
 
 class IFCFile(object):
     def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True, verbose=True):
+
+        self.verbose = verbose
         self.ensure_classes_generated()
         self._entitymap = {}
         self._geometrymap = {}
@@ -30,7 +32,6 @@ class IFCFile(object):
         self.filepath = filepath
         self.model = model
         self.use_occ = use_occ
-        self.verbose = verbose
         if filepath is None:
             self._file = ifcopenshell.file(schema=schema)
             if self.verbose:
