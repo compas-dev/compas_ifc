@@ -165,7 +165,7 @@ class Base(Data):
             _values = []
             for value in values:
                 if isinstance(value, Base):
-                    value = value.to_dict(recursive=recursive, ignore_fields=ignore_fields, include_fields=include_fields)
+                    value = value.to_dict(recursive=recursive, ignore_fields=ignore_fields, include_fields=include_fields, convert_type_definitions=convert_type_definitions)
                 elif convert_type_definitions and isinstance(value, TypeDefinition):
                     value = value.value
                 elif isinstance(value, (list, tuple)):
@@ -184,7 +184,7 @@ class Base(Data):
             value = getattr(self, key)
 
             if recursive and isinstance(value, Base):
-                value = value.to_dict(recursive=recursive, ignore_fields=ignore_fields, include_fields=include_fields)
+                value = value.to_dict(recursive=recursive, ignore_fields=ignore_fields, include_fields=include_fields, convert_type_definitions=convert_type_definitions)
             elif recursive and isinstance(value, (list, tuple)):
                 value = iter_list(value)
             elif convert_type_definitions and isinstance(value, TypeDefinition):
