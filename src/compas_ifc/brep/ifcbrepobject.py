@@ -7,6 +7,11 @@ try:
 
     class IFCBrepObject(BRepObject):
         def __init__(self, shellcolors=None, **kwargs):
+
+            brep = kwargs["item"]
+            brep.simplify()
+            brep.heal()
+
             super().__init__(**kwargs)
             self.shells = [shell.to_tesselation(TOL.lineardeflection)[0] for shell in self.brep.shells]
             self.shellcolors = shellcolors or [self.facecolor.rgba for _ in self.shells]
