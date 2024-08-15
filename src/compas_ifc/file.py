@@ -268,6 +268,9 @@ class IFCFile(object):
         if properties:
             entity.properties = properties
 
+        if entity.is_a("IfcRoot"):
+            entity.GlobalId = ifcopenshell.guid.new()
+
         return entity
 
     def remove(self, entity):
