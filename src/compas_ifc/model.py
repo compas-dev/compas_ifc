@@ -128,6 +128,7 @@ class Model(Data):
         viewer = Viewer()
         print(f"Unit: {self.unit}")
         viewer.unit = self.unit
+        viewer.ui.sidebar.show_objectsetting = False
 
         entity_map = {}
 
