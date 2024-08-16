@@ -7,7 +7,6 @@ try:
 
     class IFCBrepObject(BRepObject):
         def __init__(self, shellcolors=None, **kwargs):
-
             brep = kwargs["item"]
             brep.simplify()
             brep.heal()
