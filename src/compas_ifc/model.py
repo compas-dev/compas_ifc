@@ -37,7 +37,8 @@ class Model(Data):
 
     @property
     def project(self) -> "IfcProject":
-        return self.file.get_entities_by_type("IfcProject")[0]
+        projects = self.file.get_entities_by_type("IfcProject")
+        return projects[0] if projects else None
 
     @property
     def sites(self) -> list["IfcSite"]:
@@ -99,10 +100,13 @@ class Model(Data):
         Plot of spatial hierarchy"""
 
         print("=" * 80)
-        print("File: {}".format(self.file.filepath))
-        print("Size: {} MB".format(self.file.file_size()))
-        print("Project: {}".format(self.project.Name))
-        print("Description: {}".format(self.project.Description))
+        print("Schema: {}".format(self.schema_name))
+        if self.file.filepath:
+            print("File: {}".format(self.file.filepath))
+            print("Size: {} MB".format(self.file.file_size()))
+        if self.project:
+            print("Project: {}".format(self.project.Name))
+            print("Description: {}".format(self.project.Description))
         print("Number of sites: {}".format(len(self.sites)))
         print("Number of buildings: {}".format(len(self.buildings)))
         print("Number of building elements: {}".format(len(self.building_elements)))
