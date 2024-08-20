@@ -5,9 +5,12 @@ from typing import Any
 from typing import Union
 
 import ifcopenshell
+import ifcopenshell.api
+import ifcopenshell.api.context
 import numpy as np
 from compas.geometry import Transformation
 from ifcopenshell.api import run
+from math import isnan
 
 import compas_ifc
 from compas_ifc.entities.base import Base
@@ -143,13 +146,12 @@ class IFCFile(object):
                 else:
                     from .brep import TessellatedBrep
 
-                    matrix = shape.transformation.matrix.data
+                    matrix = shape.transformation.matrix
                     faces = shape.geometry.faces
                     edges = shape.geometry.edges
                     verts = shape.geometry.verts
 
-                    matrix = np.array(matrix).reshape((4, 3))
-                    matrix = np.hstack([matrix, np.array([[0], [0], [0], [1]])])
+                    matrix = np.array(matrix).reshape((4, 4))
                     matrix = matrix.transpose()
                     transformation = Transformation.from_matrix(matrix.tolist())
 
@@ -161,7 +163,10 @@ class IFCFile(object):
                             facecolors.append([0.5, 0.5, 0.5, 1])
                             continue
                         material = shape.geometry.materials[m_id]
-                        color = (*material.diffuse, 1 - material.transparency)
+                        transparency = material.transparency
+                        if isnan(transparency):
+                            transparency = 0.0
+                        color = (material.diffuse.r(),material.diffuse.g(),material.diffuse.b(), 1 - transparency)
                         facecolors.append(color)
                         facecolors.append(color)
                         facecolors.append(color)
@@ -312,7 +317,7 @@ class IFCFile(object):
             self._default_project = self._create_entity("IfcProject", Name="Default Project")
             self.default_units
             self.default_body_context
-            self.default_owner_history
+            # self.default_owner_history
             return self._default_project
 
         return self._default_project
@@ -348,8 +353,7 @@ class IFCFile(object):
                     return self._default_body_context
 
             self._default_body_context = self.from_entity(
-                run(
-                    "context.add_context",
+                ifcopenshell.api.context.add_context(
                     self._file,
                     context_type="Model",
                     context_identifier="Body",
