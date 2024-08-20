@@ -248,7 +248,7 @@ class Base(Data):
         print(spatial_tree.get_hierarchy_string(max_depth=max_depth))
         print("")
 
-    def print_properties(self):
+    def print_properties(self, max_depth=2):
         IfcObject = getattr(importlib.import_module(f"compas_ifc.entities.generated.{self.schema}"), "IfcObject")
 
         if not isinstance(self, IfcObject):
@@ -271,7 +271,7 @@ class Base(Data):
         add_property(self.properties, root)
 
         print("=" * 80 + "\n" + f"Properties of {self}\n" + "=" * 80)
-        tree.print_hierarchy()
+        print(tree.get_hierarchy_string(max_depth=max_depth))
         print("")
 
     def show(self):
