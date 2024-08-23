@@ -170,6 +170,9 @@ class Model(Data):
     def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, properties=None, **kwargs):
         return self.file.create(cls=cls, parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
 
+    def create_default_project(self):
+        return self.file.default_project
+
     def remove(self, entity):
         self.file.remove(entity)
 

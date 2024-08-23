@@ -1,4 +1,5 @@
 import numpy as np
+from compas.datastructures import Mesh
 from compas.geometry import Geometry
 from compas.geometry import transform_points_numpy
 
@@ -21,3 +22,8 @@ class TessellatedBrep(Geometry):
 
     def to_vertices_and_faces(self):
         return self.vertices, self.faces
+
+    def to_mesh(self):
+        mesh = Mesh.from_vertices_and_faces(self.vertices, self.faces)
+        mesh.name = self.name
+        return mesh

@@ -19,6 +19,7 @@ class IfcProduct(IfcProduct):
     def geometry(self):
         if not getattr(self, "_geometry", None):
             self._geometry = self.file.get_preloaded_geometry(self)
+            self._geometry.name = self.Name
             if self.frame and self._geometry:
                 # NOTE: preloaded geometry is pre-transformed because of boolean.
                 # The pre-transformation is not necessarily the same as the frame of entity.

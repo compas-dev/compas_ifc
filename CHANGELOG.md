@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `Model.create_default_project()`.
+* Added `TesselatedBrep.to_mesh()`.
+
 ### Changed
 
 ### Removed
