@@ -1,3 +1,5 @@
+import difflib
+import importlib
 import multiprocessing
 import os
 import time
@@ -27,6 +29,7 @@ class IFCFile(object):
         self._default_units = None
         self._default_owner_history = None
         self._default_project = None
+        self._classes = None
 
         self.filepath = filepath
         self.model = model
@@ -52,6 +55,14 @@ class IFCFile(object):
     @property
     def schema_name(self):
         return self.schema.name()
+
+    @property
+    def classes(self):
+        if not self._classes:
+            module = importlib.import_module(f"compas_ifc.entities.generated.{self.schema_name}")
+            classes = [x for x in dir(module) if x.startswith("Ifc") and x != "IfcRoot"]
+            self._classes = classes
+        return self._classes
 
     def ensure_classes_generated(self):
         try:
@@ -250,6 +261,13 @@ class IFCFile(object):
         else:
             cls_name = cls
 
+        if cls_name not in self.classes:
+            matched_classes = self.search_ifc_classes(cls_name)
+            if not matched_classes:
+                raise ValueError(f"Class {cls_name} not found.")
+            else:
+                cls_name = matched_classes[0]
+
         entity = self._create_entity(cls_name, **kwargs)
 
         if parent:
@@ -272,6 +290,13 @@ class IFCFile(object):
             entity.GlobalId = ifcopenshell.guid.new()
 
         return entity
+
+    def search_ifc_classes(self, name: str, n: int = 5):
+        classes_dict = {c.lower(): c for c in self.classes}
+        classes_lower = list(classes_dict.keys())
+        closest_matches_lower = difflib.get_close_matches(name.lower(), classes_lower, n=n)
+        closest_matches = [classes_dict[match] for match in closest_matches_lower]
+        return closest_matches
 
     def remove(self, entity):
         if isinstance(entity, Base):

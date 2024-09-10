@@ -14,8 +14,8 @@ mesh = Mesh.from_obj(compas.get("tubemesh.obj"))
 
 storey = model.building_storeys[0]
 
-element1 = model.create("IfcWall", geometry=box, frame=Frame([0, 0, 0]), name="Wall", parent=storey)
-element2 = model.create("IfcRoof", geometry=mesh, frame=Frame([0, 0, 5]), name="Roof", parent=storey)
+element1 = model.create_wall(geometry=box, frame=Frame([0, 0, 0]), name="My Wall", parent=storey)
+element2 = model.create_roof(geometry=mesh, frame=Frame([0, 0, 5]), name="My Roof", parent=storey)
 element3 = model.create(geometry=sphere, frame=Frame([0, 5, 0]), name="Sphere", parent=storey, properties={"Custom_Pset": {"Custom_Property": "Custom Value"}})
 
 model.print_spatial_hierarchy(max_depth=5)

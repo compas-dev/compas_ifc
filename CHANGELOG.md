@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `Model.search_ifc_classes()` and `File.search_ifc_classes()` to search for IFC classes.
+* Added `Model.create_wall()`.
+* Added `Model.create_slab()`.
+* Added `Model.create_window()`.
+* Added `Model.create_door()`.
+* Added `Model.create_stair()`.
+* Added `Model.create_railing()`.
+* Added `Model.create_column()`.
+* Added `Model.create_beam()`.
+
 ### Changed
 
 ### Removed

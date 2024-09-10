@@ -89,6 +89,10 @@ class Model(Data):
     def get_entity_by_id(self, id) -> "Base":
         return self.file.get_entity_by_id(id)
 
+    def search_ifc_classes(self, name: str, n: int = 5):
+        """Search for IFC classes by name"""
+        return self.file.search_ifc_classes(name, n)
+
     def print_summary(self):
         """
         Overview of IFC file
@@ -199,7 +203,36 @@ class Model(Data):
         model.update_linear_deflection()
         return model
 
+    # Helper functions to create specific IFC entities
+
+    def create_wall(self, parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        return self.file.create(cls="IfcWall", parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
+
+    def create_slab(self, parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        return self.file.create(cls="IfcSlab", parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
+
+    def create_roof(self, parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        return self.file.create(cls="IfcRoof", parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
+
+    def create_window(self, parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        return self.file.create(cls="IfcWindow", parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
+
+    def create_door(self, parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        return self.file.create(cls="IfcDoor", parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
+
+    def create_column(self, parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        return self.file.create(cls="IfcColumn", parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
+
+    def create_beam(self, parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        return self.file.create(cls="IfcBeam", parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
+
+    def create_railing(self, parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        return self.file.create(cls="IfcRailing", parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
+
+    def create_stair(self, parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        return self.file.create(cls="IfcStair", parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
+
 
 if __name__ == "__main__":
     model = Model("data/wall-with-opening-and-window.ifc")
-    model.summary()
+    model.print_summary()
