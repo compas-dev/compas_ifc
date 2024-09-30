@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Model.create_railing()`.
 * Added `Model.create_column()`.
 * Added `Model.create_beam()`.
+* Added `aabb` axis-aligned bounding box to `TessellatedBrep`.
+* Added `obb` oriented bounding box to `TessellatedBrep`.
 
 ### Changed
 

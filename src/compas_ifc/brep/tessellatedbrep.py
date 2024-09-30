@@ -1,6 +1,7 @@
 import numpy as np
 from compas.datastructures import Mesh
 from compas.geometry import Geometry
+from compas.geometry import bounding_box
 from compas.geometry import transform_points_numpy
 
 
@@ -27,3 +28,16 @@ class TessellatedBrep(Geometry):
         mesh = Mesh.from_vertices_and_faces(self.vertices, self.faces)
         mesh.name = self.name
         return mesh
+
+    @property
+    def aabb(self):
+        from compas.geometry import Box
+
+        return Box.from_bounding_box(bounding_box(self.vertices))
+
+    @property
+    def obb(self):
+        from compas.geometry import Box
+        from compas.geometry import oriented_bounding_box_numpy
+
+        return Box.from_bounding_box(oriented_bounding_box_numpy(self.vertices))
