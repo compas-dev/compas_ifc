@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Added `Model.create_default_project()`.
 * Added `TesselatedBrep.to_mesh()`.
+* Added `location` to `IfcSite` extension.
+* Added `compas_ifc.resources.IfcCompoundPlaneAngleMeasure_to_degrees()`.
 
 ### Changed
 

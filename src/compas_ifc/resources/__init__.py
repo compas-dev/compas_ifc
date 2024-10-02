@@ -91,6 +91,7 @@ from .geometry import IfcLine_to_line  # noqa: F401
 from .geometry import IfcPlane_to_plane  # noqa: F401
 from .geometry import IfcAxis2Placement3D_to_frame  # noqa: F401
 from .geometry import IfcCartesianTransformationOperator3D_to_frame  # noqa: F401
+from .geometry import IfcCompoundPlaneAngleMeasure_to_degrees  # noqa: F401
 
 from .geometricconstraint import IfcGridPlacement_to_transformation  # noqa: F401
 from .geometricconstraint import IfcLocalPlacement_to_transformation  # noqa: F401
