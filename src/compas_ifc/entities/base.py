@@ -34,7 +34,7 @@ class Base(Data):
     file : Ifcfile
     """
 
-    def __new__(cls, entity: entity_instance, file: "IFCFile" = None):
+    def __new__(cls, entity: entity_instance, file: "IFCFile" = None, extensions: dict = None):
         if file is None:
             schema = "IFC4"
         else:
@@ -48,11 +48,24 @@ class Base(Data):
         cls_name = entity.is_a()
         ifc_cls = getattr(classes, cls_name, None)
         if ifc_cls:
-            return super(Base, cls).__new__(ifc_cls)
+            matched_extensions = []
+            if extensions:
+                for name, extension_class in extensions.items():
+                    if entity.is_a(name):
+                        matched_extensions.append(extension_class)
+            if matched_extensions:
+                # Create a new class that inherits from the original IFC class and all matched extensions
+                extension_name = f"Extended{cls_name}"
+                bases = tuple([ifc_cls] + matched_extensions)
+                extended_cls = type(extension_name, bases, {})
+                return super(Base, extended_cls).__new__(extended_cls)
+            else:
+                # If no extensions matched, use the original IFC class
+                return super(Base, ifc_cls).__new__(ifc_cls)
         elif hasattr(entity, "wrappedValue"):
             return TypeDefinition(entity, file)
 
-    def __init__(self, entity: entity_instance = None, file=None):
+    def __init__(self, entity: entity_instance = None, file=None, **kwargs):
         super().__init__()
         self.file = file
         self.entity = entity

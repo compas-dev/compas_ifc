@@ -16,7 +16,8 @@ from compas_ifc.entities.base import Base
 
 
 class IFCFile(object):
-    def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True, verbose=True):
+    def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True, verbose=True, extensions=None):
+        self.extensions = extensions
         self.verbose = verbose
         self.ensure_classes_generated()
         self._entitymap = {}
@@ -96,7 +97,7 @@ class IFCFile(object):
         if _id in self._entitymap and _id != 0:
             return self._entitymap[_id]
         else:
-            entity = Base(entity, self)
+            entity = Base(entity, file=self, extensions=self.extensions)
             if _id != 0:
                 self._entitymap[_id] = entity
             return entity

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `extensions` keyword argument to `Model` to for inserting custom extensions to IFC classes.
+
 ### Changed
 
 ### Removed
