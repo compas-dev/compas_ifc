@@ -71,5 +71,6 @@ Table of Contents
    Introduction <self>
    Architecture <architecture>
    Tutorials <tutorials>
-   api
+   Examples <examples>
+   API <api>
    license
