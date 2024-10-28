@@ -7,6 +7,32 @@ else:
 
 
 class IfcProject(IfcProject):
+    """Extension class for :class:`IfcProject`.
+
+    Attributes
+    ----------
+    sites : list[:class:`IfcSite`]
+        The sites of the project.
+    buildings : list[:class:`IfcBuilding`]
+        The buildings of the project.
+    building_elements : list[:class:`IfcBuildingElement`]
+        The building elements of the project.
+    geographic_elements : list[:class:`IfcGeographicElement`]
+        The geographic elements of the project.
+    contexts : list[:class:`IfcContext`]
+        The contexts of the project.
+    units : list[:class:`IfcUnit`]
+        The units of the project.
+    length_unit : :class:`IfcUnit`
+        The length unit of the project.
+    length_scale : float
+        The length scale of the project.
+    frame : :class:`compas.geometry.Frame`
+        The frame of the project.
+    north : :class:`compas.geometry.Vector`
+        The north vector of the project.
+    """
+
     @property
     def sites(self):
         return self.children_by_type("IfcSite", recursive=True)

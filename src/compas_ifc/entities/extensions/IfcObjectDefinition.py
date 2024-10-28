@@ -9,6 +9,18 @@ else:
 
 
 class IfcObjectDefinition(IfcObjectDefinition):
+    """Extension class for :class:`IfcObjectDefinition`.
+
+    Attributes
+    ----------
+    parent : :class:`IfcObjectDefinition`
+        The parent object definition of the object definition.
+    children : list[:class:`IfcObjectDefinition`]
+        The children object definitions of the object definition.
+    material : :class:`IfcMaterial`
+        The material of the object definition.
+    """
+
     def __repr__(self):
         return '<#{} {} "{}">'.format(self.entity.id(), self.__class__.__name__, self.Name)
 

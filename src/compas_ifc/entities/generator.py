@@ -8,10 +8,22 @@ from compas_ifc.entities import extensions
 
 
 class Generator:
+    """
+    Generator class for generating all IFC classes and type definitions as strongly typed Python classes.
+    They are generated in the `compas_ifc.entities.generated.[schema_name]` folder.
+
+    Attributes
+    ----------
+    schema : :class:`ifcopenshell.ifcopenshell_wrapper.schema`
+        The IfcOpenShell schema to generate classes for.
+
+    """
+
     def __init__(self, schema="IFC4"):
         self.schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
 
     def generate(self):
+        """Generate all classes and type definitions for the given schema."""
         HERE = os.path.dirname(__file__)
         FOLDER = os.path.join(HERE, "generated", self.schema.name())
         if not os.path.exists(FOLDER):
@@ -62,6 +74,34 @@ class Generator:
 
 
 class EntityGenerator:
+    """
+    Generator class for generating a single IFC entityclass.
+
+    Attributes
+    ----------
+    declaration : :class:`ifcopenshell.ifcopenshell_wrapper.declaration`
+        The IfcOpenShell declaration to generate a class for.
+    name : str
+        The name of the class to generate.
+    imports : set
+        The imports required for the class.
+    attribute_imports : set
+        The imports required for the attributes of the class.
+    parent : str
+        The parent class of the class to generate.
+    extension : str
+        The extension class of the class to generate.
+    attributes : list[:class:`AttributeGenerator`]
+        The attributes of the class to generate.
+    inverse_attributes : list[:class:`InverseAttributeGenerator`]
+        The inverse attributes of the class to generate.
+    description : str
+        The description of the class to generate.
+    TEMPLATE : str
+        The template python code for the class to generate.
+
+    """
+
     TEMPLATE = """IMPORTS
 class CLASS_NAME(PARENT_NAME):
     \"\"\"DESCRIPTION\"\"\"
@@ -106,9 +146,9 @@ class CLASS_NAME(PARENT_NAME):
 
         for i, attribute in enumerate(self.declaration.all_attributes()):
             if attribute.name() in attribute_names:
-                self.attributes.append(AtrtributeGenerator(attribute, self, False))
+                self.attributes.append(AttributeGenerator(attribute, self, False))
             elif derived[i]:
-                self.attributes.append(AtrtributeGenerator(attribute, self, True))
+                self.attributes.append(AttributeGenerator(attribute, self, True))
 
         inverse_attributes_from_supertype = []
         if self.declaration.supertype():
@@ -117,7 +157,7 @@ class CLASS_NAME(PARENT_NAME):
 
         for inverse_attribute in self.declaration.all_inverse_attributes():
             if inverse_attribute.name() not in inverse_attributes_from_supertype:
-                self.inverse_attributes.append(InverseAtrtributeGenerator(inverse_attribute, self))
+                self.inverse_attributes.append(InverseAttributeGenerator(inverse_attribute, self))
 
     def get_attribute_imports_string(self):
         if not self.attribute_imports:
@@ -180,7 +220,34 @@ class CLASS_NAME(PARENT_NAME):
         return class_string
 
 
-class AtrtributeGenerator:
+class AttributeGenerator:
+    """
+    Generator class for generating a single IFC attribute.
+
+    Attributes
+    ----------
+    attribute : :class:`ifcopenshell.ifcopenshell_wrapper.attribute`
+        The IfcOpenShell attribute to generate a property for.
+    parent : :class:`EntityGenerator`
+        The parent class of the attribute to generate.
+    is_derived : bool
+        Whether the attribute is derived.
+    name : str
+        The name of the attribute to generate.
+    imports : set
+        The imports required for the attribute.
+    type : str
+        The type of the attribute to generate.
+    description : str
+        The description of the attribute to generate.
+
+    TEMPLATE : str
+        The template python code for the attribute to generate.
+    TEMPLATE_DERIVED : str
+        The template python code for the derived attribute to generate.
+
+    """
+
     TEMPLATE = """
     @property
     def ATTRIBUTE_NAME(self)-> ATTRIBUTE_TYPE:
@@ -333,7 +400,19 @@ class AtrtributeGenerator:
         return attribute_string
 
 
-class InverseAtrtributeGenerator(AtrtributeGenerator):
+class InverseAttributeGenerator(AttributeGenerator):
+    """
+    Generator class for generating a single IFC inverse attribute.
+
+    Attributes
+    ----------
+    See :class:`AttributeGenerator`
+
+    TEMPLATE : str
+        The template python code for the inverse attribute to generate.
+
+    """
+
     TEMPLATE = """
     def ATTRIBUTE_NAME(self)-> list[ATTRIBUTE_TYPE]:
         \"\"\"DESCRIPTION\"\"\"
@@ -364,6 +443,10 @@ class InverseAtrtributeGenerator(AtrtributeGenerator):
 
 
 class TypeDeclarationGenerator:
+    """
+    Generator class for generating a single IFC type declaration.
+    """
+
     TEMPLATE = """class CLASS_NAME(PARENT_NAME):
     \"\"\"Some description.\"\"\"
 """
@@ -404,6 +487,10 @@ class TypeDeclarationGenerator:
 
 
 class EnumGenerator:
+    """
+    Generator class for generating a single IFC enumeration type.
+    """
+
     TEMPLATE = """class CLASS_NAME(str):
     items = ITEMS
 """

@@ -9,6 +9,21 @@ else:
 
 
 class IfcSite(IfcSite):
+    """Extension class for :class:`IfcSite`.
+
+    Attributes
+    ----------
+    buildings : list[:class:`IfcBuilding`]
+        The buildings of the site.
+    building_elements : list[:class:`IfcBuildingElement`]
+        The building elements of the site.
+    geographic_elements : list[:class:`IfcGeographicElement`]
+        The geographic elements of the site.
+    location : tuple[float, float]
+        The location of the site. In degrees (latitude, longitude).
+
+    """
+
     @property
     def buildings(self):
         return self.children_by_type("IfcBuilding", recursive=True)

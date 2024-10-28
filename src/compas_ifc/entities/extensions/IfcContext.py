@@ -11,6 +11,15 @@ else:
 
 
 class IfcContext(IfcContext):
+    """Extension class for :class:`IfcContext`.
+
+    Attributes
+    ----------
+    properties : dict
+        The properties of the context.
+
+    """
+
     _psetsmap = {}
 
     @property

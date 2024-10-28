@@ -11,6 +11,16 @@ else:
 
 
 class IfcObject(IfcObject):
+    """Extension class for :class:`IfcObject`.
+
+    Attributes
+    ----------
+    properties : dict
+        The property sets of the object.
+    quantities : dict
+        The quantity sets of the object.
+    """
+
     _psetsmap = {}
 
     @property

@@ -7,6 +7,14 @@ else:
 
 
 class IfcSpatialElement(IfcSpatialElement):
+    """Extension class for :class:`IfcSpatialElement`.
+
+    Attributes
+    ----------
+    children : list[:class:`IfcSpatialElement`]
+        The children spatial elements of the spatial element.
+    """
+
     @property
     def children(self):
         children = super().children

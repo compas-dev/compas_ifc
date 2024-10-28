@@ -12,6 +12,16 @@ def IfcCartesianPoint_to_point(cartesian_point) -> Point:
     """
     Convert an IFC CartesianPoint [cartesianpoint]_ to a COMPAS point.
 
+    Attributes
+    ----------
+    cartesian_point : :class:`compas_ifc.entities.generated.IFC4.IfcCartesianPoint` or :class:`ifcopenshell.entity_instance`
+        The IFC CartesianPoint.
+    
+    Returns
+    -------
+    :class:`compas.geometry.Point`
+        The COMPAS point.
+
     """
     return Point(*cartesian_point.Coordinates)
 

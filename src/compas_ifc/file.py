@@ -5,7 +5,8 @@ import os
 import time
 from typing import Any
 from typing import Union
-
+from typing import Dict
+from typing import Type
 import ifcopenshell
 import numpy as np
 from compas.geometry import Transformation
@@ -13,10 +14,70 @@ from ifcopenshell.api import run
 
 import compas_ifc
 from compas_ifc.entities.base import Base
+from compas_ifc.brep import TessellatedBrep
 
 
 class IFCFile(object):
-    def __init__(self, model, filepath=None, schema="IFC4", use_occ=False, load_geometries=True, verbose=True, extensions=None):
+    """The IFCFile class is a wrapper around an ifcopenshell file object. It provides low-level access to the IFC data.
+
+    Attributes
+    ----------
+    filepath : str, optional
+        The path to the IFC file.
+    model : :class:`compas_ifc.model.Model`
+        The model object.
+    use_occ : bool
+        Whether to use OCC for geometry processing.
+    load_geometries : bool
+        Whether to load the geometries of the IFC file.
+    verbose : bool
+        Whether to print verbose output.
+    extensions : dict, optional
+        A dictionary of custom extensions to be used with the IFC file.
+    schema : :class:`ifcopenshell.schema.Schema`
+        The IFC schema object.
+    schema_name : str
+        The name of the IFC schema.
+    classes : list[:class:`compas_ifc.entities.base.Base`]
+        A list of all the classes for this schema version.
+    default_project : :class:`compas_ifc.entities.IfcProject.IfcProject`
+        The default project in this file. Will be created if it does not exist.
+    default_units : :class:`compas_ifc.entities.IfcUnit.IfcUnit`
+        The default units in this file. Will be created if it does not exist.
+    default_owner_history : :class:`compas_ifc.entities.IfcOwnerHistory.IfcOwnerHistory`
+        The default owner history in this file. Will be created if it does not exist.
+    default_context : :class:`compas_ifc.entities.IfcContext.IfcContext`
+        The default context in this file. Will be created if it does not exist.
+    default_body_context : :class:`compas_ifc.entities.IfcContext.IfcContext`
+        The default body context in this file. Will be created if it does not exist.
+
+    """
+
+    def __init__(
+        self, model, filepath: str = None, schema: str = "IFC4", use_occ: bool = False, load_geometries: bool = True, verbose: bool = True, extensions: Dict[str, Type] = None
+    ):
+        """
+        Construct the IFCFile object.
+
+        Parameters
+        ----------
+        model : :class:`compas_ifc.model.Model`
+            The model object.
+        filepath : str, optional
+            The path to the IFC file. If not provided, a new IFC file is created.
+        schema : str, optional
+            The IFC schema to use. Default is "IFC4".
+        use_occ : bool, optional
+            Whether to use OCC for geometry processing. Default is False.
+        load_geometries : bool, optional
+            Whether to load the geometries of the IFC file. Default is True.
+        verbose : bool, optional
+            Whether to print verbose output. Default is True.
+        extensions : Dict[str, Type]
+            A dictionary of extensions to use, with the key being the IFC class name and the value being the extension class.
+
+        """
+
         self.extensions = extensions
         self.verbose = verbose
         self.ensure_classes_generated()
@@ -66,6 +127,7 @@ class IFCFile(object):
         return self._classes
 
     def ensure_classes_generated(self):
+        """Check if the IFC classes are generated and generate them if not."""
         try:
             from compas_ifc.entities.generated import IFC2X3  # noqa: F401
             from compas_ifc.entities.generated import IFC4  # noqa: F401
@@ -83,12 +145,27 @@ class IFCFile(object):
                 print("IFC classes generated.\n\n")
 
     def file_size(self):
+        """Get the size of the IFC file in MB."""
         file_stats = os.stat(self.filepath)
         size_in_mb = file_stats.st_size / (1024 * 1024)
         size_in_mb = round(size_in_mb, 2)
         return size_in_mb
 
-    def from_entity(self, entity):
+    def from_entity(self, entity: ifcopenshell.entity_instance) -> Base:
+        """
+        Convert an ifcopenshell entity to a compas_ifc entity. Will return an existing entity if it has already been converted.
+
+        Parameters
+        ----------
+        entity : ifcopenshell.entity_instance
+            The ifcopenshell entity to convert.
+
+        Returns
+        -------
+        :class:`compas_ifc.entities.base.Base`
+            The converted compas_ifc entity.
+
+        """
         if not isinstance(entity, ifcopenshell.entity_instance):
             raise TypeError("Input is not an ifcopenshell.entity_instance")
 
@@ -102,27 +179,106 @@ class IFCFile(object):
                 self._entitymap[_id] = entity
             return entity
 
-    def get_entities_by_type(self, type_name) -> list[Base]:
+    def get_entities_by_type(self, type_name: str) -> list[Base]:
+        """
+        Get all entities of a given type.
+
+        Parameters
+        ----------
+        type_name : str
+            The name of the type to get entities of.
+
+        Returns
+        -------
+        list[:class:`compas_ifc.entities.base.Base`]
+            A list of all entities of the given type.
+
+        """
         entities = self._file.by_type(type_name)
         return [self.from_entity(entity) for entity in entities]
 
-    def get_entities_by_name(self, name) -> list[Base]:
+    def get_entities_by_name(self, name: str) -> list[Base]:
+        """
+        Get all entities with a given name.
+
+        Parameters
+        ----------
+        name : str
+            The name to search for.
+
+        Returns
+        -------
+        list[:class:`compas_ifc.entities.base.Base`]
+            A list of all entities with the given name.
+        """
         return [entity for entity in self.get_entities_by_type("IfcRoot") if entity.Name == name]
 
-    def get_entity_by_global_id(self, global_id) -> Base:
+    def get_entity_by_global_id(self, global_id: str) -> Base:
+        """
+        Get an entity by its global ID.
+
+        Parameters
+        ----------
+        global_id : str
+            The global ID to search for.
+
+        Returns
+        -------
+        :class:`compas_ifc.entities.base.Base`
+            The entity with the given global ID.
+        """
         return self.from_entity(self._file.by_guid(global_id))
 
-    def get_entity_by_id(self, id) -> Base:
+    def get_entity_by_id(self, id: int) -> Base:
+        """
+        Get an entity by its file ID.
+
+        Parameters
+        ----------
+        id : int
+            The ID to search for.
+
+        Returns
+        -------
+        :class:`compas_ifc.entities.base.Base`
+            The entity with the given ID.
+        """
         return self.from_entity(self._file.by_id(id))
 
-    def get_preloaded_geometry(self, entity):
+    def get_preloaded_geometry(self, entity: Base) -> "TessellatedBrep":
+        """
+        Get the preloaded geometry of an entity.
+
+        Parameters
+        ----------
+        entity : :class:`compas_ifc.entities.base.Base`
+            The entity to get the geometry of.
+
+        Returns
+        -------
+        :class:`compas_ifc.brep.TessellatedBrep`
+            The preloaded geometry of the entity. (OCCBrep if use_occ is True)
+        """
         return self._geometrymap.get(entity.entity.id())
 
-    def get_preloaded_style(self, entity):
+    def get_preloaded_style(self, entity: Base) -> dict:
+        """
+        Get the preloaded style of an entity.
+        """
         return self._stylemap.get(entity.entity.id(), {})
 
     def load_geometries(self, include=None, exclude=None):
-        """Load all the geometries of the IFC file using a fast multithreaded iterator."""
+        """
+        Load all the geometries of the IFC file using a fast multithreaded iterator.
+
+        Parameters
+        ----------
+        include : list[str], optional
+            A list of entity types to include.
+        exclude : list[str], optional
+            A list of entity types to exclude.
+
+        """
         if self.verbose:
             print("Loading geometries...")
         import ifcopenshell.geom
@@ -190,10 +346,32 @@ class IFCFile(object):
         if self.verbose:
             print(f"Time to load all {len(self._geometrymap)} geometries {(time.time() - start):.3f}s")
 
-    def save(self, path):
+    def save(self, path: str):
+        """
+        Save the IFC file to a given path.
+        """
         self._file.write(path)
 
     def export(self, path: str, entities: list[Base] = [], as_snippet: bool = False, export_materials: bool = True, export_properties: bool = True, export_styles: bool = True):
+        """
+        Export a subset of the IFC file to a new IFC file.
+
+        Parameters
+        ----------
+        path : str
+            The path to save the exported IFC file to.
+        entities : list[:class:`compas_ifc.entities.base.Base`]
+            The entities to export.
+        as_snippet : bool
+            Whether to export as a snippet, without the full spatial hierarchy. Default is False.
+        export_materials : bool
+            Whether to export materials. Default is True.
+        export_properties : bool
+            Whether to export properties. Default is True.
+        export_styles : bool
+            Whether to export styles. Default is True.
+
+        """
         new_file = IFCFile(None, schema=self.schema_name)
 
         exported = {}
@@ -257,6 +435,30 @@ class IFCFile(object):
         new_file.save(path)
 
     def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, properties=None, **kwargs):
+        """
+        Create an entity in this model.
+
+        Parameters
+        ----------
+        cls : str
+            The class of the entity to create. Defaults to an `IfcBuildingElementProxy`.
+        parent : :class:`compas_ifc.entities.base.Base`
+            The parent entity of the new entity.
+        geometry : :class:`compas.geometry.Geometry` or :class:`compas.datastructures.Datastructure`
+            The geometry of the new entity.
+        frame : :class:`compas.geometry.Frame`
+            The placement frame of the new entity.
+        properties : dict
+            The custom property sets to be added to the new entity.
+        **kwargs
+            Additional keyword arguments to be added to the new entity.
+
+        Returns
+        -------
+        :class:`compas_ifc.entities.base.Base`
+            The newly created entity.
+
+        """
         if isinstance(cls, type):
             cls_name = cls.__name__
         else:
@@ -292,14 +494,39 @@ class IFCFile(object):
 
         return entity
 
-    def search_ifc_classes(self, name: str, n: int = 5):
+    def search_ifc_classes(self, name: str, n: int = 5) -> list[Type["Base"]]:
+        """
+        Search for IFC classes by name
+
+        Parameters
+        ----------
+        name : str
+            The name of the IFC class to search for.
+        n : int
+            The number of results to return. Default is 5.
+
+        Returns
+        -------
+        list[Type[:class:`compas_ifc.entities.base.Base`]]
+            A list of IFC classes that match the search query.
+
+        """
         classes_dict = {c.lower(): c for c in self.classes}
         classes_lower = list(classes_dict.keys())
         closest_matches_lower = difflib.get_close_matches(name.lower(), classes_lower, n=n)
         closest_matches = [classes_dict[match] for match in closest_matches_lower]
         return closest_matches
 
-    def remove(self, entity):
+    def remove(self, entity: Union[Base, list[Base]]):
+        """
+        Remove an entity from this model.
+
+        Parameters
+        ----------
+        entity : :class:`compas_ifc.entities.base.Base` or list[:class:`compas_ifc.entities.base.Base`]
+            The entity or entities to remove.
+
+        """
         if isinstance(entity, Base):
             entity = [entity]
 

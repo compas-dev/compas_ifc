@@ -1,9 +1,8 @@
 *******************************************************************************
-compas_ifc.entities.base
+Model
 *******************************************************************************
-Generated IFC class wrappers.
 
-.. currentmodule:: compas_ifc.entities.base
+.. currentmodule:: compas_ifc
 
 Classes
 =======
@@ -12,4 +11,5 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    Base
+    model.Model
+    file.IFCFile
