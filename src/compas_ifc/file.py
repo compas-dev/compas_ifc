@@ -40,15 +40,15 @@ class IFCFile(object):
         The name of the IFC schema.
     classes : list[:class:`compas_ifc.entities.base.Base`]
         A list of all the classes for this schema version.
-    default_project : :class:`compas_ifc.entities.IfcProject.IfcProject`
+    default_project : :class:`compas_ifc.entities.generated.IFC4.IfcProject`
         The default project in this file. Will be created if it does not exist.
-    default_units : :class:`compas_ifc.entities.IfcUnit.IfcUnit`
+    default_units : :class:`compas_ifc.entities.generated.IFC4.IfcUnitAssignment`
         The default units in this file. Will be created if it does not exist.
-    default_owner_history : :class:`compas_ifc.entities.IfcOwnerHistory.IfcOwnerHistory`
+    default_owner_history : :class:`compas_ifc.entities.generated.IFC4.IfcOwnerHistory`
         The default owner history in this file. Will be created if it does not exist.
-    default_context : :class:`compas_ifc.entities.IfcContext.IfcContext`
+    default_context : :class:`compas_ifc.entities.generated.IFC4.IfcContext`
         The default context in this file. Will be created if it does not exist.
-    default_body_context : :class:`compas_ifc.entities.IfcContext.IfcContext`
+    default_body_context : :class:`compas_ifc.entities.generated.IFC4.IfcContext`
         The default body context in this file. Will be created if it does not exist.
 
     """
@@ -111,15 +111,15 @@ class IFCFile(object):
             self.load_geometries()
 
     @property
-    def schema(self):
+    def schema(self) -> ifcopenshell.ifcopenshell_wrapper.schema_definition:
         return self._schema
 
     @property
-    def schema_name(self):
+    def schema_name(self) -> str:
         return self.schema.name()
 
     @property
-    def classes(self):
+    def classes(self) -> list[Base]:
         if not self._classes:
             module = importlib.import_module(f"compas_ifc.entities.generated.{self.schema_name}")
             classes = [x for x in dir(module) if x.startswith("Ifc") and x != "IfcRoot"]
@@ -144,7 +144,7 @@ class IFCFile(object):
             if self.verbose:
                 print("IFC classes generated.\n\n")
 
-    def file_size(self):
+    def file_size(self) -> float:
         """Get the size of the IFC file in MB."""
         file_stats = os.stat(self.filepath)
         size_in_mb = file_stats.st_size / (1024 * 1024)
@@ -157,7 +157,7 @@ class IFCFile(object):
 
         Parameters
         ----------
-        entity : ifcopenshell.entity_instance
+        entity : :class:`ifcopenshell.entity_instance`
             The ifcopenshell entity to convert.
 
         Returns
@@ -434,7 +434,7 @@ class IFCFile(object):
 
         new_file.save(path)
 
-    def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, properties=None, **kwargs):
+    def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, properties=None, **kwargs) -> Base:
         """
         Create an entity in this model.
 
@@ -537,7 +537,7 @@ class IFCFile(object):
         self._file = ifcopenshell.util.element.unbatch_remove_deep2(self._file)
         print("Removal done.")
 
-    def _create_entity(self, cls_name, **kwargs):
+    def _create_entity(self, cls_name, **kwargs) -> Base:
         camel_case_kwargs = {}
 
         for key, value in kwargs.items():
@@ -557,7 +557,7 @@ class IFCFile(object):
         return self.from_entity(entity)
 
     @property
-    def default_project(self):
+    def default_project(self) -> Base:
         projects = self._file.by_type("IfcProject")
         if projects:
             self._default_project = self.from_entity(projects[0])
@@ -571,7 +571,7 @@ class IFCFile(object):
         return self._default_project
 
     @property
-    def default_units(self):
+    def default_units(self) -> Base:
         if not self._default_units:
             if self.default_project.UnitsInContext:
                 self._default_units = self.default_project.UnitsInContext
@@ -580,7 +580,7 @@ class IFCFile(object):
         return self._default_units
 
     @property
-    def default_context(self):
+    def default_context(self) -> Base:
         if not self._default_context:
             contexts = self.get_entities_by_type("IfcGeometricRepresentationContext")
             for context in contexts:
@@ -592,7 +592,7 @@ class IFCFile(object):
         return self._default_context
 
     @property
-    def default_body_context(self):
+    def default_body_context(self) -> Base:
         if not self._default_body_context:
             contexts = self.get_entities_by_type("IfcGeometricRepresentationSubContext")
             for context in contexts:
@@ -614,7 +614,7 @@ class IFCFile(object):
         return self._default_body_context
 
     @property
-    def default_owner_history(self):
+    def default_owner_history(self) -> Base:
         # We will create a new owner history since we are updating the file
         if not self._default_owner_history:
             person = self._create_entity("IfcPerson")

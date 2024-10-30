@@ -20,3 +20,24 @@ Functions
     IfcPlane_to_plane
     IfcAxis2Placement3D_to_frame
     IfcCartesianTransformationOperator3D_to_frame
+    IfcCompoundPlaneAngleMeasure_to_degrees
+    IfcGridPlacement_to_transformation
+    IfcLocalPlacement_to_transformation
+    IfcLocalPlacement_to_frame
+    IfcAdvancedBrep_to_brep
+    IfcAdvancedBrepWithVoids_to_brep
+    IfcBlock_to_box
+    IfcBooleanClippingResult_to_brep
+    IfcBoundingBox_to_box
+    IfcIndexedPolyCurve_to_lines
+    IfcExtrudedAreaSolid_to_brep
+    IfcFacetedBrep_to_brep
+    IfcFacetedBrepWithVoids_to_brep
+    IfcIndexedPolygonalFaceSet_to_brep
+    IfcPolygonalBoundedHalfSpace_to_brep
+    IfcPolygonalFaceSet_to_brep
+    IfcTessellatedFaceSet_to_brep
+    IfcTriangulatedFaceSet_to_brep
+    IfcShape_to_brep
+    IfcShape_to_tessellatedbrep
+    frame_to_ifc_axis2_placement_3d

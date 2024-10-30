@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcBuildingStorey
     from compas_ifc.entities.generated.IFC4 import IfcProject
     from compas_ifc.entities.generated.IFC4 import IfcSite
+    import ifcopenshell.ifcopenshell_wrapper
 
 
 class Model(Data):
@@ -74,11 +75,11 @@ class Model(Data):
             self.update_linear_deflection()
 
     @property
-    def schema(self):
+    def schema(self) -> "ifcopenshell.ifcopenshell_wrapper.schema_definition":
         return self.file.schema
 
     @property
-    def schema_name(self):
+    def schema_name(self) -> str:
         return self.file.schema_name
 
     @property
@@ -108,7 +109,7 @@ class Model(Data):
         return self.file.get_entities_by_type("IfcBuildingElement")
 
     @property
-    def unit(self):
+    def unit(self) -> str:
         length_unit = self.project.length_unit
         if length_unit.Name == "METRE" and length_unit.Prefix == "MILLI":
             return "mm"
@@ -118,7 +119,7 @@ class Model(Data):
             return "m"
 
     @unit.setter
-    def unit(self, value):
+    def unit(self, value: str):
         if value == "mm":
             self.project.length_unit.Prefix = "MILLI"
         elif value == "cm":
