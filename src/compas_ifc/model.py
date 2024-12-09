@@ -1,25 +1,27 @@
 from typing import TYPE_CHECKING
-from typing import Generator
 from typing import Dict
+from typing import Generator
 from typing import Type
 from typing import Union
+
 from compas.data import Data
-from compas.geometry import Transformation
+from compas.datastructures import Datastructure
 from compas.geometry import Frame
 from compas.geometry import Geometry
-from compas.datastructures import Datastructure
+from compas.geometry import Transformation
 from compas.tolerance import TOL
 
 from compas_ifc.file import IFCFile
 
 if TYPE_CHECKING:
+    import ifcopenshell.ifcopenshell_wrapper
+
     from compas_ifc.entities.base import Base
     from compas_ifc.entities.generated.IFC4 import IfcBuilding
     from compas_ifc.entities.generated.IFC4 import IfcBuildingElement
     from compas_ifc.entities.generated.IFC4 import IfcBuildingStorey
     from compas_ifc.entities.generated.IFC4 import IfcProject
     from compas_ifc.entities.generated.IFC4 import IfcSite
-    import ifcopenshell.ifcopenshell_wrapper
 
 
 class Model(Data):

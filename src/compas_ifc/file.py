@@ -4,17 +4,18 @@ import multiprocessing
 import os
 import time
 from typing import Any
-from typing import Union
 from typing import Dict
 from typing import Type
+from typing import Union
+
 import ifcopenshell
 import numpy as np
 from compas.geometry import Transformation
 from ifcopenshell.api import run
 
 import compas_ifc
-from compas_ifc.entities.base import Base
 from compas_ifc.brep import TessellatedBrep
+from compas_ifc.entities.base import Base
 
 
 class IFCFile(object):

@@ -70,6 +70,7 @@ Table of Contents
 
    Introduction <self>
    Architecture <architecture>
+   Installation <installation>
    Tutorials <tutorials>
    Examples <examples>
    API <api>

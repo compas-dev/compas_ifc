@@ -1,152 +1,129 @@
 ********************************************************************************
-Basics - Hello World
+Hello World - Model Basics
 ********************************************************************************
 
 .. rst-class:: lead
 This is a hello-world tutorial for the COMPAS IFC package. It shows how to load an IFC file and and inspect its contents.
 
-Installation
+Load an IFC model
 ================================
 
-
-A minimal version of COMPAS IFC can be installed directly with pip.
-
-.. code-block:: bash
-
-    pip install compas_ifc
-
-If you want to visualize the IFC model, install COMPAS Viewer as well.
-
-.. code-block:: bash
-
-    pip install compas_viewer
-
-If you need to interact with IFC geometry using OCC Brep or CGAL for boolean operations, install COMPAS OCC and COMPAS CGAL througn conda-forge.
-
-.. code-block:: bash
-
-    conda install compas_occ compas_occ -c conda-forge
-
-
-Load IFC model
-================================
+An IFC model can be simply loaded given its file path:
 
 ::
 
     >>> from compas_ifc.model import Model
-    >>> model = Model("data/wall-with-opening-and-window.ifc")
-    Opened file: d:\Github\compas_ifc\scripts\..\data\wall-with-opening-and-window.ifc
-    >>> print(model.schema)
-    <schema IFC4>
+    >>> model = Model("data/Duplex_A_20110907.ifc")
+    IFC file loaded: data/Duplex_A_20110907.ifc
+    Loading geometries...
+    Time to load all 286 geometries 0.932s
 
-Query entities
+Visualize the model
 ================================
 
-With ``model.get_all_entities()`` function, you can get a list of all entities in the model.
-
-::
-
-    >>> all_entities = model.get_all_entities()
-    >>> print("Total number of entities: ", len(all_entities))
-    Total number of entities:  133
-    >>> for entity in all_entities[:5]:
-    >>>     print(entity)
-    <Entity:IfcAxis2Placement3D>
-    <Entity:IfcCartesianPoint>
-    <Entity:IfcCartesianPoint>
-    <Entity:IfcCartesianPoint>
-    <Entity:IfcCartesianPoint>
-
-Use ``model.get_entities_by_type()`` function to get a list of entities of a specific type (including their inherent ones).
-
-::
-
-    >>> building_elements = model.get_entities_by_type("IfcBuildingElement")
-    >>> print("Total number of building elements: ", len(building_elements))
-    Total number of building elements:  2
-    >>> for entity in building_elements:
-    >>>     print(entity)
-    <Window:IfcWindow Name: Window for Test Example, GlobalId: 0tA4DSHd50le6Ov9Yu0I9X>
-    <Wall:IfcWallStandardCase Name: Wall for Test Example, GlobalId: 3ZYW59sxj8lei475l7EhLU>
-
-You can also use ``model.get_entities_by_name()`` function search elements with a specific name.
-
-::
-
-    >>> name = "Wall for Test Example"
-    >>> walls = model.get_entities_by_name(name)
-    >>> print("Found {} entities with the name: {}".format(len(walls), name))
-    Found 1 entities with the name: Wall for Test Example
-    >>> print(walls)
-    [<Wall:IfcWall Name: Wall for Test Example, GlobalId: 3ZYW59sxj8lei475l7EhLU>]
-
-Entity attributes
-================================
-
-You can access the attributes of an entity using the ``attributes`` property.
-
-::
-
-    >>> wall = walls[0]
-    >>> print(wall.attributes)
-    {'GlobalId': '3ZYW59sxj8lei475l7EhLU', 'OwnerHistory': <Entity:IfcOwnerHistory>, 'Name': 'Wall for Test Example', 'Description': 'Description of Wall', 'ObjectType': None, 'ObjectPlacement': <Entity:IfcLocalPlacement>, 'Representation': <Entity:IfcProductDefinitionShape>, 'Tag': None, 'PredefinedType': None}
-
-You can also inspect the spatial hierarchy of the model. For example, you can get the parent of an entity using the ``parent`` property, or get the children of an entity using the ``children`` property.
-
-::
-    
-    >>> print("parent:", wall.parent)
-    parent: <BuildingStorey:IfcBuildingStorey Name: Default Building Storey, GlobalId: 2GNgSHJ5j9BRUjqT$7tE8w>
-    >>> print("children", wall.children)
-    children: []
-
-For geomtric information, you can use the ``geometry`` property of an entity, if you have ``compas_occ`` installed, the geometry will be in form of ``Brep``.
-
-::
-    
-    >>> geometry = wall.geometry
-    >>> print(geometry)
-    <compas_occ.brep.brep.BRep object at 0x000001F7480C97F0>
-    >>> print(geometry.is_solid)
-    True
-    >>> print(geometry.volume)
-    1.8
-
-
-
-
-Visualisation
-================================
-
-If you have ``compas_viewer`` installed, you can visualize the model using the ``model.show()`` function.
+With ``Model.show()`` function, the model can be visualised with the built-in viewer.
 
 ::
 
     >>> model.show()
 
-.. image:: _images/visualisation.jpg
-    :width: 100%
+.. image:: ../_images/model_view.jpg
+
+.. note::
+   ``compas_viewer`` needs to be installed to use this function.
 
 
-More Examples
-=============
+Model functions
+================================
 
-Below are more examples of how to use the COMPAS IFC package.
-(Please note these are still under construction)
+The ``Model`` class provides a set of APIs to interact with the IFC model. For example:
+
+::
+
+    >>> model.print_summary()
+    ================================================================================
+    Schema: IFC2X3
+    File: data/Duplex_A_20110907.ifc
+    Size: 2.31 MB
+    Project: 0001
+    Description: None
+    Number of sites: 1
+    Number of buildings: 1
+    Number of building elements: 157
+    ================================================================================
 
 
-.. toctree::
-   :maxdepth: 1
-   :titlesonly:
-   :glob:
+An IFC file is essentially a collection of entities, organized in a spatial hierarchy.
+``Model.print_spatial_hierarchy()`` function will print the spatial hierarchy of the model in a tree view.
+An optional ``max_depth`` parameter can be used to limit the depth of the hierarchy.
 
-   tutorials/Basics.1_overview.rst
-   tutorials/Basics.2_query_entities.rst
-   tutorials/Basics.3_spatial_hierarchy.rst
-   tutorials/Basics.4_element_info.rst
-   tutorials/Basics.5_visualization.rst
-   tutorials/Basics.6_edit_export.rst
-   tutorials/Basics.7_create_new.rst
-   tutorials/Advanced.1_units.rst
-   tutorials/Advanced.2_sessions.rst
-   tutorials/Advanced.3_custom_extensions.rst
+::
+
+    >>> model.print_spatial_hierarchy(max_depth=3)
+    ================================================================================
+    Spatial hierarchy of <#34 IfcProject "0001">
+    ================================================================================
+    └── <#34 IfcProject "0001">
+        └── <#38274 IfcSite "Default">
+            └── <#36 IfcBuilding "None">
+                ├── <#43 IfcBuildingStorey "Level 2">
+                ├── <#39 IfcBuildingStorey "Level 1">
+                ├── <#51 IfcBuildingStorey "Roof">
+                └── <#47 IfcBuildingStorey "T/FDN">
+
+``Model.save()`` function will save the model to a new IFC file.
+
+::
+
+    >>> model.save("data/Duplex_A_20110907_COPY.ifc")
+    IFC file saved: data/Duplex_A_20110907_COPY.ifc
+
+Find entities
+================================
+
+``Model`` class provides many different ways to find specific entities, through their IFC type, entity name, IFC file ID and entity Global ID.
+
+::
+
+    >>> model.get_entities_by_type("IfcRoof")
+    [<#22475 IfcRoof "Basic Roof:Live Roof over Wood Joist Flat Roof:184483">]
+
+    >>> model.get_entities_by_name("Basic Roof:Live Roof over Wood Joist Flat Roof:184483")
+    [<#22475 IfcRoof "Basic Roof:Live Roof over Wood Joist Flat Roof:184483">]
+
+    >>> model.get_entity_by_id(22475)
+    <#22475 IfcRoof "Basic Roof:Live Roof over Wood Joist Flat Roof:184483">
+
+    >>> model.get_entity_by_global_id("0jf0rYHfX3RAB3bSIRjmxl")
+    <#22475 IfcRoof "Basic Roof:Live Roof over Wood Joist Flat Roof:184483">
+
+Shortcuts
+================================
+
+Besides above functions, ``Model`` class also provides a set of shortcuts for quick access to the most commonly used entities.
+
+::
+
+    >>> model.project
+    <#34 IfcProject "0001">
+
+    >>> model.sites
+    [<#38274 IfcSite "Default">]
+
+    >>> model.buildings
+    [<#36 IfcBuilding "None">]
+
+    >>> model.building_storeys
+    [<#39 IfcBuildingStorey "Level 1">, <#43 IfcBuildingStorey "Level 2">, <#47 IfcBuildingStorey "T/FDN">, <#51 IfcBuildingStorey "Roof">]
+
+    >>> model.building_elements
+    [<#4131 IfcWallStandardCase "Basic Wall:Interior - Partition (92mm Stud):138584">, <#4287 IfcWallStandardCase "Basic Wall:Party Wall - CMU Residential Unit Dimising Wall:139234">,...]
+
+
+Next Steps
+================================
+
+In the next tutorial, we will explore the Entity APIs to inspect and manipulate individual IFC entities.
+
+:doc:`basics.entity_apis`
+
