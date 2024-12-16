@@ -1,10 +1,10 @@
 ********************************************************************************
-Intermediate - Multi-storey building
+Basics - Create Model
 ********************************************************************************
 
 .. rst-class:: lead 
 
-This tutorial shows how to paramtrically create a multi-storey building from scratch using COMPAS geometry types, as well adding custom properties to each relevant IFC entity.
+This tutorial shows how to create an IFC model from scratch.
 
 Model Template
 ==============
@@ -52,12 +52,21 @@ The created entities can be easily updated:
                 ├── <#23 IfcBuildingStorey "GroundFloor">
                 └── <#25 IfcBuildingStorey "FirstFloor">
 
-Creating Entities
+Create Entities
 =================
 
-``Model.create()`` can be used to create entities in the model.
+COMPAS IFC provides a series of functions to create common building elements in IFC.
 
 ::
 
-    >>> model.create(IfcWall, Name="My Custom slab", parent=model.building_storeys[0])
+    >>> from compas.geometry import Box
+    >>> box = Box(xsize=0.2, ysize=5, zsize=3)
+    >>> box.translate(0, 0, 1.5) # Move the box up so it is above the zero plane
+    >>> model.create_wall(name="My Wall", parent=model.building_storeys[0], geometry=box)
+    <#27 IfcWall "My Wall">
 
+We can now visualize the model with:
+
+::
+
+    >>> model.show()
