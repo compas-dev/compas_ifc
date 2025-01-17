@@ -282,7 +282,7 @@ class Base(Data):
         tree = Tree()
         root = EntityNode(name=f"{self}")
         tree.add(root)
-        add_property(self.properties, root)
+        add_property(self.property_sets, root)
 
         print("=" * 80 + "\n" + f"Properties of {self}\n" + "=" * 80)
         print(tree.get_hierarchy_string(max_depth=max_depth))
@@ -321,18 +321,18 @@ class Base(Data):
 
         if isinstance(schema, str):
             validator = Draft202012Validator(json_load(schema))  # type: ignore
-            validator.validate(self.properties)
+            validator.validate(self.property_sets)
 
             if verbose:
-                print(f"Schema validation passed on {self}.properties")
+                print(f"Schema validation passed on {self}.property_sets")
 
         elif isinstance(schema, dict):
             for pset_name, path in schema.items():
                 validator = Draft202012Validator(json_load(path))
-                validator.validate(self.properties[pset_name])
+                validator.validate(self.property_sets[pset_name])
 
                 if verbose:
-                    print(f"Schema validation passed on {self}.properties[{pset_name}]")
+                    print(f"Schema validation passed on {self}.property_sets[{pset_name}]")
 
         else:
             raise TypeError("Invalid schema type, expected str or dict")

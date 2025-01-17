@@ -236,7 +236,7 @@ class IFCFile(object):
                 setattr(new_entity, key, attr)
 
             if export_properties and hasattr(entity, "properties"):
-                new_entity.properties = entity.properties
+                new_entity.property_sets = entity.property_sets
 
             if export_materials and hasattr(entity, "HasAssociations"):
                 # TODO: create material settor on class extension.
@@ -287,7 +287,7 @@ class IFCFile(object):
             entity.frame = frame
 
         if properties:
-            entity.properties = properties
+            entity.property_sets = properties
 
         if entity.is_a("IfcRoot"):
             entity.GlobalId = ifcopenshell.guid.new()

@@ -46,7 +46,7 @@ class IfcObject(IfcObject):
         )
 
     @property
-    def quantities(self):
+    def quantity_sets(self):
         qtos = get_psets(self.entity, qtos_only=True)
         for qto in qtos.values():
             del qto["id"]

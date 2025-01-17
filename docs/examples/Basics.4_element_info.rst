@@ -45,7 +45,7 @@ This example shows how to get information of a building element, such as a windo
     print("\nProperties")
     print("=" * 53 + "\n")
 
-    pprint(window.properties)
+    pprint(window.property_sets)
 
 
 Example Output:

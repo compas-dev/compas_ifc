@@ -21,4 +21,4 @@ pprint(window.to_dict())
 print("\nProperties")
 print("=" * 53 + "\n")
 
-pprint(window.properties)
+pprint(window.property_sets)
