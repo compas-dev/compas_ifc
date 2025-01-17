@@ -235,7 +235,7 @@ class IFCFile(object):
 
                 setattr(new_entity, key, attr)
 
-            if export_properties and hasattr(entity, "properties"):
+            if export_properties and hasattr(entity, "property_sets"):
                 new_entity.property_sets = entity.property_sets
 
             if export_materials and hasattr(entity, "HasAssociations"):

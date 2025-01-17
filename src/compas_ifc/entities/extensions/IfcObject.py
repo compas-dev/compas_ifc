@@ -38,12 +38,12 @@ class IfcObject(IfcObject):
                 self.psetsmap[id(pset)] = ifc_property_set
                 # TODO: remove unused psets
 
-        self.file.create(
-            "IfcRelDefinesByProperties",
-            OwnerHistory=self.file.default_owner_history,
-            RelatingPropertyDefinition=ifc_property_set,
-            RelatedObjects=[self],
-        )
+            self.file.create(
+                "IfcRelDefinesByProperties",
+                OwnerHistory=self.file.default_owner_history,
+                RelatingPropertyDefinition=ifc_property_set,
+                RelatedObjects=[self],
+            )
 
     @property
     def quantity_sets(self):
