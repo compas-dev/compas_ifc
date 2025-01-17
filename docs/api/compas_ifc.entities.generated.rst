@@ -1,11 +1,16 @@
 *******************************************************************************
-compas_ifc.entities.generated
+Generated
 *******************************************************************************
-Generated IFC class wrappers.
+This module contains all the auto generated IFC class wrappers.
 
-Classes
-=======
+IFC4
+====
 
-.. automodule:: compas_ifc.entities.generated
-    :members:
+.. .. automodule:: compas_ifc.entities.generated.IFC4
+..     :members:
 
+IFC2x3
+======
+
+.. .. automodule:: compas_ifc.entities.generated.IFC2x3
+..     :members:

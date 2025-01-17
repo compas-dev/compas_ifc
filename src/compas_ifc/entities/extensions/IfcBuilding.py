@@ -10,6 +10,19 @@ else:
 
 
 class IfcBuilding(IfcBuilding):
+    """Extension class for :class:`IfcBuilding`.
+
+    Attributes
+    ----------
+    building_elements : list[:class:`IfcBuildingElement`]
+        The building elements of the building.
+    geographic_elements : list[:class:`IfcGeographicElement`]
+        The geographic elements of the building.
+    storeys : list[:class:`IfcBuildingStorey`]
+        The storeys of the building.
+
+    """
+
     @property
     def building_elements(self) -> list["IfcBuildingElement"]:
         return self.children_by_type("IfcBuildingElement", recursive=True)

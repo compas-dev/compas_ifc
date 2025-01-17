@@ -13,7 +13,29 @@ if TYPE_CHECKING:
 
 
 class TypeDefinition:
+    """
+    Root class for all IFC type definitions.
+
+    Attributes
+    ----------
+    entity : entity_instance
+        The IFC entity instance.
+    file : Ifcfile
+        The IFC file containing this instance of the type definition.
+    value : Any
+        The wrapped value of this type definition.
+    """
+
     def __init__(self, entity: entity_instance = None, file=None):
+        """Constructor for the TypeDefinition class.
+
+        Parameters
+        ----------
+        entity : entity_instance
+            The IFC entity instance.
+        file : Ifcfile
+            The IFC file containing this instance of the type definition.
+        """
         self.file = file
         self.entity = entity
 
@@ -26,13 +48,15 @@ class TypeDefinition:
 
 
 class Base(Data):
-    """Base class for all IFC entities.
+    """
+    Root class for all IFC classes.
 
     Attributes
     ----------
     entity : entity_instance
         The IFC entity instance.
     file : Ifcfile
+        The IFC file containing this instance of the class.
     """
 
     def __new__(cls, entity: entity_instance, file: "IFCFile" = None, extensions: dict = None):

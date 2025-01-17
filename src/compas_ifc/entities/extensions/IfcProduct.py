@@ -11,6 +11,18 @@ else:
 
 
 class IfcProduct(IfcProduct):
+    """Extension class for :class:`IfcProduct`.
+
+    Attributes
+    ----------
+    style : :class:`IfcStyle`
+        The style of the product.
+    geometry : :class:`compas_ifc.brep.TessellatedBrep`
+        The geometry of the product. (OCCBrep is using COMPAS OCC)
+    frame : :class:`compas.geometry.Frame`
+        The frame of the product.
+    """
+
     @property
     def style(self):
         return self.file.get_preloaded_style(self)

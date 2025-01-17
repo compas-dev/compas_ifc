@@ -78,6 +78,7 @@ plot_formats = ["png"]
 intersphinx_mapping = {
     "python": ("https://docs.python.org/", None),
     "compas": ("https://compas.dev/compas/latest/", None),
+    "ifcopenshell": ("https://docs.ifcopenshell.org/autoapi/ifcopenshell/", None),
 }
 
 # linkcode
