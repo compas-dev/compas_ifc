@@ -53,7 +53,7 @@ This example shows how to load an IFC file and print a summary of the model.
     print("\nProperties")
     print("=" * 53 + "\n")
 
-    pprint(project.properties)
+    pprint(project.property_sets)
 
     print("\nRepresentation Contexts")
     print("=" * 53 + "\n")

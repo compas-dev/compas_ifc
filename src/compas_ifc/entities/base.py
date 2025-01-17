@@ -1,5 +1,6 @@
 import importlib
 from typing import TYPE_CHECKING
+from typing import Union
 
 from compas.data import Data
 from compas.datastructures import Tree
@@ -281,7 +282,7 @@ class Base(Data):
         tree = Tree()
         root = EntityNode(name=f"{self}")
         tree.add(root)
-        add_property(self.properties, root)
+        add_property(self.property_sets, root)
 
         print("=" * 80 + "\n" + f"Properties of {self}\n" + "=" * 80)
         print(tree.get_hierarchy_string(max_depth=max_depth))
@@ -289,6 +290,54 @@ class Base(Data):
 
     def show(self):
         self.model.show(self)
+
+    def validate(self, schema):
+        raise NotImplementedError
+
+    def validate_geometry(self, schema):
+        raise NotImplementedError
+
+    def validate_relationships(self, schema):
+        raise NotImplementedError
+
+    def validate_properties(self, schema: Union[str, dict], verbose: bool = True) -> bool:
+        """Validate the properties of the entity against a schema.
+
+        Parameters
+        ----------
+        schema : Union[str, dict]
+            The schema to validate against. Either a path to a JSON file or a dictionary for schemas for each property set.
+        verbose : bool, optional
+            Whether to print the validation results.
+
+        Returns
+        -------
+        bool
+            True if the validation passes, False otherwise.
+        """
+
+        from jsonschema import Draft202012Validator
+        from compas import json_load
+
+        if isinstance(schema, str):
+            validator = Draft202012Validator(json_load(schema))  # type: ignore
+            validator.validate(self.property_sets)
+
+            if verbose:
+                print(f"Schema validation passed on {self}.property_sets")
+
+        elif isinstance(schema, dict):
+            for pset_name, path in schema.items():
+                validator = Draft202012Validator(json_load(path))
+                validator.validate(self.property_sets[pset_name])
+
+                if verbose:
+                    print(f"Schema validation passed on {self}.property_sets[{pset_name}]")
+
+        else:
+            raise TypeError("Invalid schema type, expected str or dict")
+
+        return True
 
 
 class EntityNode(TreeNode):

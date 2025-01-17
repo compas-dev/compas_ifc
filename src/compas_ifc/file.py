@@ -37,6 +37,8 @@ class IFCFile(object):
         self.use_occ = use_occ
         if filepath is None:
             self._file = ifcopenshell.file(schema=schema)
+            self._file.wrapped_data.header.file_name.author = ["Unknown Author"]
+            self._file.wrapped_data.header.file_name.organization = ["Unknown Organization"]
             if self.verbose:
                 print("IFC file created in schema: {}".format(schema))
         else:
@@ -233,8 +235,8 @@ class IFCFile(object):
 
                 setattr(new_entity, key, attr)
 
-            if export_properties and hasattr(entity, "properties"):
-                new_entity.properties = entity.properties
+            if export_properties and hasattr(entity, "property_sets"):
+                new_entity.property_sets = entity.property_sets
 
             if export_materials and hasattr(entity, "HasAssociations"):
                 # TODO: create material settor on class extension.
@@ -273,9 +275,9 @@ class IFCFile(object):
 
         if parent:
             if hasattr(entity, "ContainedInStructure"):
-                self._create_entity("IfcRelContainedInSpatialStructure", RelatingStructure=parent, RelatedElements=[entity])
+                self._create_entity("IfcRelContainedInSpatialStructure", GlobalId=ifcopenshell.guid.new(), RelatingStructure=parent, RelatedElements=[entity])
             else:
-                self._create_entity("IfcRelAggregates", RelatingObject=parent, RelatedObjects=[entity])
+                self._create_entity("IfcRelAggregates", GlobalId=ifcopenshell.guid.new(), RelatingObject=parent, RelatedObjects=[entity])
 
         if geometry:
             # TODO: Deal with instancing
@@ -285,7 +287,7 @@ class IFCFile(object):
             entity.frame = frame
 
         if properties:
-            entity.properties = properties
+            entity.property_sets = properties
 
         if entity.is_a("IfcRoot"):
             entity.GlobalId = ifcopenshell.guid.new()
@@ -329,13 +331,29 @@ class IFCFile(object):
         entity = self._file.create_entity(cls_name, **camel_case_kwargs)
         return self.from_entity(entity)
 
+    def create_value(self, value):
+        """
+        Create corresponding IfcValue from a Python value.
+        """
+
+        PRIMARY_MEASURE_TYPES = {
+            str: "IfcLabel",
+            float: "IfcReal",
+            bool: "IfcBoolean",
+            int: "IfcInteger",
+        }
+
+        primary_measure_type = PRIMARY_MEASURE_TYPES[type(value)]
+        ifc_value = self._file.create_entity(primary_measure_type, value)
+        return ifc_value
+
     @property
     def default_project(self):
         projects = self._file.by_type("IfcProject")
         if projects:
             self._default_project = self.from_entity(projects[0])
         else:
-            self._default_project = self._create_entity("IfcProject", Name="Default Project")
+            self._default_project = self._create_entity("IfcProject", GlobalId=ifcopenshell.guid.new(), Name="Default Project")
             self.default_units
             self.default_body_context
             self.default_owner_history
@@ -349,7 +367,13 @@ class IFCFile(object):
             if self.default_project.UnitsInContext:
                 self._default_units = self.default_project.UnitsInContext
             else:
-                self._default_units = self.from_entity(run("unit.assign_unit", self._file))
+                length_unit = self.create("IfcUnit", UnitType="LENGTHUNIT", Prefix="MILLI", Name="METRE")
+                area_unit = self.create("IfcUnit", UnitType="AREAUNIT", Prefix="MILLI", Name="SQUARE_METRE")
+                volume_unit = self.create("IfcUnit", UnitType="VOLUMEUNIT", Prefix="MILLI", Name="CUBIC_METRE")
+                plane_angle_unit = self.create("IfcUnit", UnitType="PLANEANGLEUNIT", Name="RADIAN")
+                unit_assignment = self.create("IfcUnitAssignment", Units=[length_unit, area_unit, volume_unit, plane_angle_unit])
+                self.default_project.UnitsInContext = unit_assignment
+                self._default_units = unit_assignment
         return self._default_units
 
     @property
@@ -390,7 +414,7 @@ class IFCFile(object):
     def default_owner_history(self):
         # We will create a new owner history since we are updating the file
         if not self._default_owner_history:
-            person = self._create_entity("IfcPerson")
+            person = self._create_entity("IfcPerson", FamilyName="Unknown Author")
             organization = self._create_entity("IfcOrganization", Name="compas.dev")
             person_and_org = self._create_entity("IfcPersonAndOrganization", ThePerson=person, TheOrganization=organization)
             application = self._create_entity(
@@ -405,7 +429,6 @@ class IFCFile(object):
                 "IfcOwnerHistory",
                 OwningUser=person_and_org,
                 OwningApplication=application,
-                ChangeAction="ADDED",
                 CreationDate=int(time.time()),
             )
 

@@ -165,7 +165,7 @@ class Model(Data):
 
         def update_treeform(form, node):
             entity = node.attributes["entity"]
-            treeform.update_from_dict({"Attributes": entity.attributes, "Properties": getattr(entity, "properties", {})})
+            treeform.update_from_dict({"Attributes": entity.attributes, "PSets": getattr(entity, "property_sets", {})})
 
         viewer.ui.sidebar.sceneform.callback = update_treeform
 
@@ -173,6 +173,9 @@ class Model(Data):
 
     def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, properties=None, **kwargs):
         return self.file.create(cls=cls, parent=parent, geometry=geometry, frame=frame, properties=properties, **kwargs)
+
+    def create_value(self, value):
+        return self.file.create_value(value)
 
     def create_default_project(self):
         return self.file.default_project

@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 
-from compas_ifc.resources import IfcLocalPlacement_to_frame
-from compas_ifc.resources.representation import write_body_representation
-from compas_ifc.resources.shapes import frame_to_ifc_axis2_placement_3d
+from compas_ifc.conversions.frame import IfcLocalPlacement_to_frame
+from compas_ifc.conversions.frame import assign_entity_frame
+from compas_ifc.conversions.representation import assign_body_representation
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcProduct
@@ -32,10 +32,8 @@ class IfcProduct(IfcProduct):
     @geometry.setter
     def geometry(self, geometry):
         self._geometry = geometry
-        # Update the representation in the IFC file
+        assign_body_representation(self, geometry)
         # TODO: delete existing representation
-        # TODO: make this function more transparent
-        write_body_representation(self.file._file, geometry, self.entity, self.file.default_body_context.entity)
 
     @property
     def frame(self):
@@ -51,9 +49,5 @@ class IfcProduct(IfcProduct):
     @frame.setter
     def frame(self, frame):
         self._frame = frame
-        # Update the placement in the IFC file
         # TODO: consider parent frame
-        # TODO: make this function more transparent
-        loacal_placement = frame_to_ifc_axis2_placement_3d(self.file._file, frame)
-        placement = self.file._create_entity("IfcLocalPlacement", RelativePlacement=loacal_placement)
-        self.ObjectPlacement = placement
+        assign_entity_frame(self, frame)

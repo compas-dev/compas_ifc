@@ -26,7 +26,7 @@ pprint(site.to_dict())
 print("\nProperties")
 print("=" * 53 + "\n")
 
-pprint(site.properties)
+pprint(site.property_sets)
 
 print("\nBuildings")
 print("=" * 53 + "\n")
