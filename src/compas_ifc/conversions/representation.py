@@ -1,32 +1,30 @@
 """
-This module contains functions for converting representations between COMPAS and IFC.
+This module contains functions for converting geometry representations between COMPAS and IFC.
 """
 
-from typing import TYPE_CHECKING
 from typing import Union
 from compas.geometry import Shape
 from compas.geometry import Box
 from compas.geometry import Sphere
 from compas.geometry import Cylinder
 from compas.geometry import Cone
-from compas.geometry import Torus
+from compas.geometry import Brep
 from compas.datastructures import Mesh
 from compas_ifc.entities.extensions import IfcProduct
 from compas_ifc.conversions.shapes import box_to_IfcBlock
 from compas_ifc.conversions.shapes import sphere_to_IfcSphere
-from compas_ifc.conversions.mesh import mesh_to_IfcPolygonalFaceSet
+from compas_ifc.conversions.shapes import cone_to_IfcRightCircularCone
+from compas_ifc.conversions.shapes import cylinder_to_IfcRightCircularCylinder
 from compas_ifc.conversions.mesh import mesh_to_IfcFaceBasedSurfaceModel
-from compas_ifc.conversions.pset import from_dict_to_pset
-from compas_ifc.entities.base import Base
 from compas_ifc.model import Model
-import compas
-import json
 
 
-def assign_body_representation(model: Model, entity: IfcProduct, representation: Union[Shape, Mesh]):
+def assign_body_representation(entity: IfcProduct, representation: Union[Shape, Mesh, Brep]):
     """
     Assign a representation to an entity.
     """
+
+    model: Model = entity.model
 
     # Convert COMPAS geometries to IFC corresponding representation
     if isinstance(representation, Shape):
@@ -34,6 +32,10 @@ def assign_body_representation(model: Model, entity: IfcProduct, representation:
             ifc_csg_primitive3d = box_to_IfcBlock(model, representation)
         elif isinstance(representation, Sphere):
             ifc_csg_primitive3d = sphere_to_IfcSphere(model, representation)
+        elif isinstance(representation, Cone):
+            ifc_csg_primitive3d = cone_to_IfcRightCircularCone(model, representation)
+        elif isinstance(representation, Cylinder):
+            ifc_csg_primitive3d = cylinder_to_IfcRightCircularCylinder(model, representation)
         else:
             raise NotImplementedError(f"Conversion of {type(representation)} to IFC not implemented.")
 
@@ -46,6 +48,15 @@ def assign_body_representation(model: Model, entity: IfcProduct, representation:
         ifc_representation = mesh_to_IfcFaceBasedSurfaceModel(model, representation)
         representation_type = "SurfaceModel"
         items = [ifc_representation]
+
+    elif isinstance(representation, Brep):
+        mesh = representation.to_tesselation()
+        ifc_representation = mesh_to_IfcFaceBasedSurfaceModel(model, mesh)
+        representation_type = "SurfaceModel"
+        items = [ifc_representation]
+
+    else:
+        raise NotImplementedError(f"Conversion of {type(representation)} to IFC not implemented.")
 
     # QUESTION: When using OCCBrep from Extrusion, can we still keep the extrusion data?
 
@@ -67,12 +78,12 @@ def assign_body_representation(model: Model, entity: IfcProduct, representation:
     # TODO: should not overwrite all property sets here
     # TODO: alternative 1: restructure the metadata, remove duplicated info like vertices
     # TODO: alternative 2: save data as compact json string
-    entity.property_sets = {
-        "Pset_COMPAS": {
-            "representation_id": ifc_product_definition_shape.id(),
-            "compas_data": json.loads(representation.to_jsonstring()),
-        }
-    }
+    # entity.property_sets = {
+    #     "Pset_COMPAS": {
+    #         "representation_id": ifc_product_definition_shape.id(),
+    #         "compas_data": json.loads(representation.to_jsonstring()),
+    #     }
+    # }
 
 
 def read_representation(model: Model, entity: IfcProduct):
@@ -82,21 +93,16 @@ def read_representation(model: Model, entity: IfcProduct):
 if __name__ == "__main__":
 
     from compas.geometry import Frame
+    import compas
 
-    model = Model.template(schema="IFC4", unit="m")
+    model = Model.template(schema="IFC2X3", unit="m")
 
-    product = model.create(parent=model.building_storeys[0], name="test", frame=Frame.worldXY())
+    # geometry = Box.from_width_height_depth(1, 1, 1)
+    geometry = Mesh.from_ply(compas.get("bunny.ply"))
+    # geometry = Mesh.from_meshgrid(5, 2, 5, 2)
 
-    representation = Box.from_width_height_depth(1, 1, 1)
-    # representation = Mesh.from_ply(compas.get("bunny.ply"))
-    # representation = Mesh.from_meshgrid(5, 2, 5, 2)
+    product = model.create(geometry=geometry, parent=model.building_storeys[0], name="test", frame=Frame.worldXY())
 
-    assign_body_representation(model, product, representation)
+    model.show()
 
     model.save("temp/representations/test.ifc")
-
-    print(product.property_sets)
-
-    # model = Model("temp/representations/test.ifc")
-
-    # model.show()
