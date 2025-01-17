@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from compas_ifc.resources import IfcCompoundPlaneAngleMeasure_to_degrees
+from compas_ifc.conversions.unit import IfcCompoundPlaneAngleMeasure_to_degrees
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcSite

@@ -7,6 +7,8 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas_ifc.model import Model
 from compas_ifc.entities.base import Base
+from compas_ifc.conversions.primitives import IfcCartesianPoint_to_point
+from compas_ifc.conversions.primitives import IfcDirection_to_vector
 
 
 def create_IfcAxis2Placement3D(model: Model, point: Point = None, dir1: Vector = None, dir2: Vector = None) -> Base:
@@ -88,3 +90,44 @@ def IfcLocalPlacement_to_frame(placement: Base) -> Frame:
 
 def IfcGridPlacement_to_transformation(placement: Base) -> Transformation:
     pass
+
+def IfcAxis2Placement2D_to_frame(placement: Base) -> Frame:
+    """
+    Convert an IFC Axis2Placement2D [axis2placement2d]_ to a COMPAS frame.
+
+    An Axis2Placement2D is a 2D placement based on a frame defined by a point and 2 vectors.
+
+    """
+    # use the coordinate system of the representation context to replace missing axes
+    # use defaults if also those not available
+    point = IfcCartesianPoint_to_point(placement.Location)
+    zaxis = Vector.Zaxis()
+    if placement.RefDirection:
+        xaxis = IfcDirection_to_vector(placement.RefDirection)
+    else:
+        xaxis = Vector.Xaxis()
+    yaxis = zaxis.cross(xaxis)
+    return Frame(point, xaxis, yaxis)
+
+
+def IfcAxis2Placement3D_to_frame(placement: Base) -> Frame:
+    """
+    Convert an IFC Axis2Placement3D [axis2placement3d]_ to a COMPAS frame.
+
+    An Axis2Placement3D is a 3D placement based on a frame defined by a point and 2 vectors.
+
+    """
+    # use the coordinate system of the representation context to replace missing axes
+    # use defaults if also those not available
+    point = IfcCartesianPoint_to_point(placement.Location)
+    if placement.Axis:
+        zaxis = IfcDirection_to_vector(placement.Axis)
+    else:
+        zaxis = Vector.Zaxis()
+    if placement.RefDirection:
+        xaxis = IfcDirection_to_vector(placement.RefDirection)
+    else:
+        xaxis = Vector.Xaxis()
+    yaxis = zaxis.cross(xaxis)
+    xaxis = yaxis.cross(zaxis)
+    return Frame(point, xaxis, yaxis)

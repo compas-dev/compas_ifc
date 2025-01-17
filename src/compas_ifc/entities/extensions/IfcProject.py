@@ -27,7 +27,7 @@ class IfcProject(IfcProject):
     def contexts(self):
         from compas.geometry import Vector
 
-        from compas_ifc.resources import IfcAxis2Placement3D_to_frame
+        from compas_ifc.conversions.frame import IfcAxis2Placement3D_to_frame
 
         contexts = []
 
