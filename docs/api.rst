@@ -14,7 +14,6 @@ This is the API reference for the Compas IFC package.
 
     api/compas_ifc.model
     api/compas_ifc.entities
-    api/compas_ifc.resources
     api/compas_ifc.entities.generated
 
 

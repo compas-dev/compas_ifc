@@ -13,6 +13,6 @@ In this section you will find tutorials on how to use the COMPAS IFC package.
 
    tutorials/basics.hello_world
    tutorials/basics.entity_apis
-   tutorials/basics.create_model
-   tutorials/intermediate.multi_story_building
-   tutorials/advanced.custom_extensions
+   .. tutorials/basics.create_model
+   .. tutorials/intermediate.multi_story_building
+   .. tutorials/advanced.custom_extensions
