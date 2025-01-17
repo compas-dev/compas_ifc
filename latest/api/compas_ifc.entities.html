@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 
 
@@ -7,9 +6,9 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="../_static/compas.ico" type="image/x-icon">
-    <title>compas_ifc.entities &#8212; COMPAS IFC</title>
+    <title>Entities &#8212; COMPAS IFC</title>
   
   
   
@@ -29,28 +28,29 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/compas.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/tabs.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.5ea377869091fd0449014c60fc090103.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/compas.css?v=617b33e2" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/tabs.css?v=4c969af8" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <script src="../_static/sphinx_highlight.js"></script>
-    <script src="../_static/clipboard.min.js"></script>
-    <script src="../_static/copybutton.js"></script>
-    <script src="../_static/tabs.js"></script>
+    <script src="../_static/documentation_options.js?v=bb99e320"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/tabs.js?v=3ee01567"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../_static/togglebutton.js"></script>
-    <script src="../_static/design-tabs.js"></script>
+    <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api/compas_ifc.entities';</script>
     <script>
@@ -59,8 +59,8 @@
         </script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Entity" href="generated/compas_ifc.entities.Entity.html" />
-    <link rel="prev" title="IFCWriter.write_relation" href="generated/compas_ifc.writer.IFCWriter.write_relation.html" />
+    <link rel="next" title="Base" href="generated/compas_ifc.entities.base.Base.html" />
+    <link rel="prev" title="IFCFile.search_ifc_classes" href="generated/compas_ifc.file.IFCFile.search_ifc_classes.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -158,6 +158,13 @@
                 
 
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../architecture.html">
+                        Architecture
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="../installation.html">
                         Installation
                       </a>
@@ -165,8 +172,8 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorial.html">
-                        Tutorial
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Tutorials
                       </a>
                     </li>
                 
@@ -177,19 +184,19 @@
                       </a>
                     </li>
                 
-
-                    <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="../api.html">
-                        API Reference
-                      </a>
-                    </li>
-                
             <div class="nav-item dropdown">
                 <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     More
                 </button>
                 <div class="dropdown-menu">
                     
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API
+                      </a>
+                    </li>
+                
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../license.html">
                         License
@@ -339,6 +346,13 @@ document.write(`
                 
 
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../architecture.html">
+                        Architecture
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="../installation.html">
                         Installation
                       </a>
@@ -346,8 +360,8 @@ document.write(`
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorial.html">
-                        Tutorial
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Tutorials
                       </a>
                     </li>
                 
@@ -358,19 +372,19 @@ document.write(`
                       </a>
                     </li>
                 
-
-                    <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="../api.html">
-                        API Reference
-                      </a>
-                    </li>
-                
             <div class="nav-item dropdown">
                 <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     More
                 </button>
                 <div class="dropdown-menu">
                     
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API
+                      </a>
+                    </li>
+                
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../license.html">
                         License
@@ -464,26 +478,30 @@ document.write(`
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Tutorial</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../examples/0.1_overview.html">0.1 Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/1.1_query_entities.html">1.1 Query Entities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/1.2_traverse_hierarchy.html">1.2 Traverse Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/2.1_project_info.html">2.1 Project Info</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/2.2_site_info.html">2.2 Site Info</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/2.7_window_info.html">2.3 Window Info</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/3.1_model_view.html">3.1 Model View</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/3.2_element_view.html">3.2 Element View</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/4.1_edit_export.html">4.1 Edit Export</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/4.2_create_new.html">4.1 Create New</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials.html">Tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/basics.hello_world.html">Hello World - Model Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/basics.entity_apis.html">Basics - Entity APIs</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../api.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="compas_ifc.model.html">compas_ifc.model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_ifc.reader.html">compas_ifc.reader</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_ifc.writer.html">compas_ifc.writer</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">compas_ifc.entities</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.1_overview.html">Basics.1 Project Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.2_query_entities.html">Basics.2 Query Entities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.3_spatial_hierarchy.html">Basics.3 Spatial Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.4_element_info.html">Basics.4 Element info</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.5_visualization.html">Basics.5 Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.6_edit_export.html">Basics.6 Edit and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.7_create_new.html">Basics.7 Create New IFC Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/Advanced.1_units.html">Advanced.1 Units</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/Advanced.2_sessions.html">Advanced.1 Sessions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/Advanced.3_custom_extensions.html">Advanced.3 Custom Class Extensions</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../api.html">API</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="compas_ifc.model.html">Model</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Entities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_ifc.entities.generated.html">Generated</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
@@ -533,7 +551,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API Reference</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">compas_ifc.entities</li>
+    <li class="breadcrumb-item active" aria-current="page">Entities</li>
   </ul>
 </nav>
 </div>
@@ -550,74 +568,80 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="compas-ifc-entities">
-<h1>compas_ifc.entities</h1>
-<section id="classes">
-<h2>Classes</h2>
+  <section id="entities">
+<h1>Entities</h1>
+<p>Generated IFC class wrappers.</p>
+<section id="base-class">
+<h2>Base Class</h2>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Entity.html" title="compas_ifc.entities.Entity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Entity</span></code></a></p></td>
-<td><p>Class representing a general IFC entity.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.base.Base.html" title="compas_ifc.entities.base.Base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Base</span></code></a></p></td>
+<td><p>Root class for all IFC classes.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Root.html" title="compas_ifc.entities.Root"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Root</span></code></a></p></td>
-<td><p>Base class for all IFC entities that are derived from IfcRoot.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.base.TypeDefinition.html" title="compas_ifc.entities.base.TypeDefinition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.TypeDefinition</span></code></a></p></td>
+<td><p>Root class for all IFC type definitions.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.ObjectDefinition.html" title="compas_ifc.entities.ObjectDefinition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ObjectDefinition</span></code></a></p></td>
-<td><p>Base class for all object definitions.</p></td>
+</tbody>
+</table>
+</section>
+<section id="extensions">
+<h2>Extensions</h2>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcBuilding.html" title="compas_ifc.entities.extensions.IfcBuilding"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcBuilding</span></code></a></p></td>
+<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcBuilding</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Element.html" title="compas_ifc.entities.Element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Element</span></code></a></p></td>
-<td><p>Class representing an IFC element.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcContext.html" title="compas_ifc.entities.extensions.IfcContext"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcContext</span></code></a></p></td>
+<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcContext</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.SpatialElement.html" title="compas_ifc.entities.SpatialElement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpatialElement</span></code></a></p></td>
-<td><p>Class representing an IFC spatial element.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcElement.html" title="compas_ifc.entities.extensions.IfcElement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcElement</span></code></a></p></td>
+<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcElement</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Beam.html" title="compas_ifc.entities.Beam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Beam</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcObject.html" title="compas_ifc.entities.extensions.IfcObject"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcObject</span></code></a></p></td>
+<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcObject</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Column.html" title="compas_ifc.entities.Column"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Column</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcObjectDefinition.html" title="compas_ifc.entities.extensions.IfcObjectDefinition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcObjectDefinition</span></code></a></p></td>
+<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcObjectDefinition</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Door.html" title="compas_ifc.entities.Door"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Door</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcProduct.html" title="compas_ifc.entities.extensions.IfcProduct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcProduct</span></code></a></p></td>
+<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcProduct</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Roof.html" title="compas_ifc.entities.Roof"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Roof</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcProject.html" title="compas_ifc.entities.extensions.IfcProject"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcProject</span></code></a></p></td>
+<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcProject</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Railing.html" title="compas_ifc.entities.Railing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Railing</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcSite.html" title="compas_ifc.entities.extensions.IfcSite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcSite</span></code></a></p></td>
+<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcSite</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Slab.html" title="compas_ifc.entities.Slab"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Slab</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcSpatialElement.html" title="compas_ifc.entities.extensions.IfcSpatialElement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcSpatialElement</span></code></a></p></td>
+<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcSpatialElement</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Stair.html" title="compas_ifc.entities.Stair"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Stair</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcSpatialStructureElement.html" title="compas_ifc.entities.extensions.IfcSpatialStructureElement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcSpatialStructureElement</span></code></a></p></td>
+<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcSpatialStructureElement</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Wall.html" title="compas_ifc.entities.Wall"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Wall</span></code></a></p></td>
-<td><p></p></td>
+</tbody>
+</table>
+</section>
+<section id="generators">
+<h2>Generators</h2>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.Generator.html" title="compas_ifc.entities.generator.Generator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.Generator</span></code></a></p></td>
+<td><p>Generator class for generating all IFC classes and type definitions as strongly typed Python classes.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Window.html" title="compas_ifc.entities.Window"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Window</span></code></a></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.EntityGenerator.html" title="compas_ifc.entities.generator.EntityGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.EntityGenerator</span></code></a></p></td>
+<td><p>Generator class for generating a single IFC entityclass.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Space.html" title="compas_ifc.entities.Space"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Space</span></code></a></p></td>
-<td><p>Class representing an IFC space.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.AttributeGenerator.html" title="compas_ifc.entities.generator.AttributeGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.AttributeGenerator</span></code></a></p></td>
+<td><p>Generator class for generating a single IFC attribute.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.BuildingStorey.html" title="compas_ifc.entities.BuildingStorey"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BuildingStorey</span></code></a></p></td>
-<td><p>Class representing an IFC building storey.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.InverseAttributeGenerator.html" title="compas_ifc.entities.generator.InverseAttributeGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.InverseAttributeGenerator</span></code></a></p></td>
+<td><p>Generator class for generating a single IFC inverse attribute.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Building.html" title="compas_ifc.entities.Building"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Building</span></code></a></p></td>
-<td><p>Class representing an IFC building.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.TypeDeclarationGenerator.html" title="compas_ifc.entities.generator.TypeDeclarationGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.TypeDeclarationGenerator</span></code></a></p></td>
+<td><p>Generator class for generating a single IFC type declaration.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Site.html" title="compas_ifc.entities.Site"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Site</span></code></a></p></td>
-<td><p>Class representing an IFC site.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.Project.html" title="compas_ifc.entities.Project"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Project</span></code></a></p></td>
-<td><p>Class representing IFC projects.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.BuildingElementProxy.html" title="compas_ifc.entities.BuildingElementProxy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BuildingElementProxy</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.GeographicElement.html" title="compas_ifc.entities.GeographicElement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeographicElement</span></code></a></p></td>
-<td><p>Class representing an IFC Geographic Element.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.EnumGenerator.html" title="compas_ifc.entities.generator.EnumGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.EnumGenerator</span></code></a></p></td>
+<td><p>Generator class for generating a single IFC enumeration type.</p></td>
 </tr>
 </tbody>
 </table>
@@ -645,7 +669,9 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#base-class">Base Class</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extensions">Extensions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generators">Generators</a></li>
 </ul>
   </nav></div>
 
@@ -681,7 +707,7 @@ document.write(`
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.2.1.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
     <br/>
   </p>
 </div>
