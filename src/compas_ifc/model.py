@@ -25,7 +25,8 @@ if TYPE_CHECKING:
 
 
 class Model(Data):
-    """The Model class is the COMPAS IFC's main entry point. It is a intuitive abstraction on top of an IFC file, providing a set of easy-to-use methods for interacting with the IFC data.
+    """The Model class is the COMPAS IFC's main entry point.
+    It is a intuitive abstraction on top of an IFC file, providing a set of easy-to-use methods for interacting with the IFC data.
 
     Attributes
     ----------
@@ -283,7 +284,7 @@ class Model(Data):
             name = f"[{entity.__class__.__name__}]{entity.Name}"
             transformation = Transformation.from_frame(entity.frame) if entity.frame else None
             if getattr(entity, "geometry", None) and not entity.is_a("IfcSpace"):
-                obj = viewer.scene.add(entity.geometry, name=name, parent=parent, **entity.style)
+                obj = viewer.scene.add(entity.geometry, name=name, parent=parent, hide_coplanaredges=True, **entity.style)
                 obj.transformation = transformation
             else:
                 obj = viewer.scene.add([], name=name, parent=parent)

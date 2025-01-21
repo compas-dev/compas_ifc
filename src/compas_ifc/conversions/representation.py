@@ -3,19 +3,21 @@ This module contains functions for converting geometry representations between C
 """
 
 from typing import Union
-from compas.geometry import Shape
-from compas.geometry import Box
-from compas.geometry import Sphere
-from compas.geometry import Cylinder
-from compas.geometry import Cone
-from compas.geometry import Brep
+
 from compas.datastructures import Mesh
-from compas_ifc.entities.extensions import IfcProduct
+from compas.geometry import Box
+from compas.geometry import Brep
+from compas.geometry import Cone
+from compas.geometry import Cylinder
+from compas.geometry import Shape
+from compas.geometry import Sphere
+
+from compas_ifc.conversions.mesh import mesh_to_IfcFaceBasedSurfaceModel
 from compas_ifc.conversions.shapes import box_to_IfcBlock
-from compas_ifc.conversions.shapes import sphere_to_IfcSphere
 from compas_ifc.conversions.shapes import cone_to_IfcRightCircularCone
 from compas_ifc.conversions.shapes import cylinder_to_IfcRightCircularCylinder
-from compas_ifc.conversions.mesh import mesh_to_IfcFaceBasedSurfaceModel
+from compas_ifc.conversions.shapes import sphere_to_IfcSphere
+from compas_ifc.entities.extensions import IfcProduct
 from compas_ifc.model import Model
 
 
@@ -91,9 +93,8 @@ def read_representation(model: Model, entity: IfcProduct):
 
 
 if __name__ == "__main__":
-
-    from compas.geometry import Frame
     import compas
+    from compas.geometry import Frame
 
     model = Model.template(schema="IFC2X3", unit="m")
 

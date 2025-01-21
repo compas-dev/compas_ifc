@@ -5,10 +5,11 @@ from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas_ifc.model import Model
-from compas_ifc.entities.base import Base
+
 from compas_ifc.conversions.primitives import IfcCartesianPoint_to_point
 from compas_ifc.conversions.primitives import IfcDirection_to_vector
+from compas_ifc.entities.base import Base
+from compas_ifc.model import Model
 
 
 def create_IfcAxis2Placement3D(model: Model, point: Point = None, dir1: Vector = None, dir2: Vector = None) -> Base:
@@ -90,6 +91,7 @@ def IfcLocalPlacement_to_frame(placement: Base) -> Frame:
 
 def IfcGridPlacement_to_transformation(placement: Base) -> Transformation:
     pass
+
 
 def IfcAxis2Placement2D_to_frame(placement: Base) -> Frame:
     """

@@ -1,7 +1,8 @@
-from compas.geometry import Point
-from compas.geometry import Vector
 from compas.geometry import Line
 from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Vector
+
 from compas_ifc.entities.base import Base
 
 

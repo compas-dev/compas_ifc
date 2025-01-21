@@ -1,3 +1,5 @@
+from ifcopenshell.util.element import get_psets
+
 from compas_ifc.entities.base import Base
 from compas_ifc.model import Model
 
@@ -36,7 +38,25 @@ def from_dict_to_ifc_properties(model: Model, properties: dict) -> list[Base]:
 
 
 def from_dict_to_pset(model: Model, properties: dict, name: str = None) -> Base:
-
     ifc_properties = from_dict_to_ifc_properties(model, properties)
     pset = model.create("IfcPropertySet", Name=name, HasProperties=ifc_properties)
     return pset
+
+
+def from_psets_to_dict(element: Base) -> dict:
+    psets = get_psets(element.entity, psets_only=True)
+
+    def _convert_property(property):
+        if isinstance(property, dict):
+            if property.get("UsageName", None) == "[]":
+                return [_convert_property(value) for value in property["properties"].values()]
+            elif property.get("UsageName", None) == "{}":
+                return {key: _convert_property(value) for key, value in property["properties"].items()}
+            else:
+                if "id" in property:
+                    del property["id"]
+                return {key: _convert_property(value) for key, value in property.items()}
+        else:
+            return property
+
+    return _convert_property(psets)

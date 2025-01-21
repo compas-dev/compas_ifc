@@ -340,8 +340,8 @@ class Base(Data):
             True if the validation passes, False otherwise.
         """
 
-        from jsonschema import Draft202012Validator
         from compas import json_load
+        from jsonschema import Draft202012Validator
 
         if isinstance(schema, str):
             validator = Draft202012Validator(json_load(schema))  # type: ignore

@@ -1,7 +1,7 @@
-import ifcopenshell
 from compas.datastructures import Mesh
-from compas_ifc.model import Model
+
 from compas_ifc.entities.base import Base
+from compas_ifc.model import Model
 
 
 def mesh_to_IfcPolygonalFaceSet(model: Model, mesh: Mesh) -> Base:

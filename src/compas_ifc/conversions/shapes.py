@@ -1,11 +1,12 @@
 import ifcopenshell
-from compas_ifc.model import Model
 from compas.geometry import Box
 from compas.geometry import Cone
 from compas.geometry import Cylinder
 from compas.geometry import Sphere
-from compas_ifc.entities.base import Base
+
 from compas_ifc.conversions.frame import create_IfcAxis2Placement3D
+from compas_ifc.entities.base import Base
+from compas_ifc.model import Model
 
 
 def create_IfcShapeRepresentation(file: ifcopenshell.file, item: ifcopenshell.entity_instance, context: ifcopenshell.entity_instance) -> ifcopenshell.entity_instance:

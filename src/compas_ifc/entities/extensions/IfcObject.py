@@ -1,10 +1,9 @@
 from typing import TYPE_CHECKING
 
-import ifcopenshell.guid
-from ifcopenshell.api import run
 from ifcopenshell.util.element import get_psets
-from compas_ifc.entities.base import Base
+
 from compas_ifc.conversions.pset import from_dict_to_pset
+from compas_ifc.conversions.pset import from_psets_to_dict
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcObject
@@ -33,10 +32,7 @@ class IfcObject(IfcObject):
 
     @property
     def property_sets(self):
-        psets = get_psets(self.entity, psets_only=True)
-        for pset in psets.values():
-            del pset["id"]
-        return psets
+        return from_psets_to_dict(self)
 
     @property_sets.setter
     def property_sets(self, psets):
