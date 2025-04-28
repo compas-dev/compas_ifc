@@ -2,126 +2,85 @@ from compas_model.models import Model
 from compas_model.elements import Element
 
 
-
 class BuildingModel(Model):
     # This class will maintain and update a IFC file underneath.
 
-    def __init__(self, **kwargs):
+    def __init__(self, filepath=None, **kwargs):
+
+        from compas_ifc.file import IFCFile
 
         # The model will start an empty IFC file if not provided.
         super().__init__(**kwargs)
-        self._ifc_project = None # The underlying IFC project (we don't treat it as element here)
-        # How about site? Maybe also integrate it here.
+        self.file = IFCFile(None, filepath=filepath)
+        self.load_hierarchy()
 
-    @classmethod
-    def from_ifc(self, ifc_file):
-        pass
+    def load_hierarchy(self):
 
-    @classmethod
-    def from_template(self, building_count=1, storey_count=1):
-        # Do we support multiple sites?
-        pass
+        self.project = self.file.get_entities_by_type("IfcProject")[0]
 
-    @classmethod
-    def from_blockmodel(self, blockmodel, mapping=None):
-        # Create a building model from a blockmodel.
-        # mapping is a dictionary that maps the blockmodel elements to IFC elements.
-        # TODO: think about the role of different models.
-        pass
+        def load_recursively(entity, parent=None):
+            for child in entity.children:
+                name = f"{child.Name}[{child.is_a()}]"
+                element = BuildingElement(ifc_entity=child, name=name, model=self)
+                self.add_element(element, parent=parent)
+                load_recursively(child, element)
 
-    # To ...
+        load_recursively(self.project)
 
-    def add(self, **kwargs):
-        super().add(**kwargs)
-        # also update the IFC file
-        pass
+    def show(self):
+        from compas_viewer import Viewer
+        from compas_viewer.components import Treeform
 
-    def remove(self, **kwargs):
-        super().remove(**kwargs)
-        # also update the IFC file
-        pass
+        viewer = Viewer()
+        viewer.ui.sidebar.show_objectsetting = False
+
+        viewer.scene.add(self)
+
+        treeform = Treeform()
+        viewer.ui.sidebar.widget.addWidget(treeform)
+
+        def update_treeform(form, obj):
+            treeform.update_from_dict({"Attributes": obj.element.ifc_attributes, "PSets": obj.element.ifc_psets})
+
+        viewer.ui.sidebar.sceneform.callback = update_treeform
+
+        viewer.show()
 
 
 class BuildingElement(Element):
-    def __init__(self, **kwargs):
+    def __init__(self, ifc_entity=None, model=None, **kwargs):
         super().__init__(**kwargs)
 
-        self._ifc_entity = None # Read-only, underlying IFC entity.
-        self._ifc_class = None # Read-only, IFC class name, maybe redundant.
-        # There are 30 IfcBuiling(/t)Elements, but they only add one or two more attributes and all of them OPTIONAL.
-        # The value of adding these classes are questionable. 
-        # The definition of these classes can be sometimes conflited between fields, for example Beams in architecrual and structrual context. 
-        # At least in IFC cases, these classification are perhaps better expressed as "Labels" instead of branched-out classes.
+        self.model = model
+        self.ifc_entity = ifc_entity  # Read-only, underlying IFC entity.
 
-
-
-        self.ifc_attributes = {} # View object, mimics dict but will update the underlying IFC entity when changed, it also validates againts the IFC schema.
-        self.ifc_property_sets = {} # View object, the parametric definition will be added here too.
-        # Should we abstract away these two, and have them managed together by a single JSON schema?
-        # The artificial division between attributes and property sets is also a reason of "rogue customizetion". It also confuse with Python's interperation of these two words.
-        # The combined name being?
-
-        # Common attributes of all building elements.
-        self._name = None
-        self._description = None
-
-        self.geometry = None
-        # Option1: "Baked geometry", Brep (Tessellated or Full).
-        # Option2a: "Parametric geometry", this class inherrits from another like `Beam`, this might branching out to too many classes.
-        # Option2b: "Parametric geometry", this refers to a class like `Beam` as attribute, this makes the class structure convoluted.
-
-        # The question becomes: 
-        # 1.should the concept of "geometry" be detached from "Element"? which is the case of IFC.
-        # 2.Data flow-wise, the data should always flow from Model to IFC, we will not likely modify geometry if IFC elements, but what happens when we read it back?
-        # 3.How do we convert baked geometry back to a parametric definition? (we save the parametric definition in PSet)
-        # 4.If we want to make update, do we convert the whole model back to a parametric (Block) model, or should we update the BuildingModel in-place?
-
-        # Prefered: single class with consistant APIs that handles mapping to/from IFC classes.
-
-        self.material = None # There needs to be some mapping mechanism between the material class and Qtos in IFC.
-
-        # How about storeys? Maybe as a calculated property of the building elements?
-
+        # self.material = None # There needs to be some mapping mechanism between the material class and Qtos in IFC.
 
         # links to parents
-        self.storey = None
-        self.building = None
-        self.model = None
+        # self.storey = None
+        # self.building = None
 
+    @property
+    def ifc_attributes(self):
+        return self.ifc_entity.attributes
 
-    @classmethod
-    def from_ifc(cls, ifc_entity):
-        # From a raw IFC entity fill-in all the attributes and setup the links etc.
-        pass
+    @property
+    def ifc_psets(self):
+        return self.ifc_entity.property_sets
 
-    @classmethod
-    def from_blockelement(cls, blockelement, mapping=None):
-        # Create a building element from a blockelement.
-        # mapping is a dictionary that maps the blockelement elements to IFC elements.
-        pass
+    @property
+    def ifc_type(self):
+        return self.ifc_entity.is_a()
 
-    def add(self, **kwargs):
-        super().add(**kwargs)
-        # also update the IFC file
-        pass
-
-    def remove(self, **kwargs):
-        super().remove(**kwargs)
-        # also update the IFC file
-        pass
+    @property
+    def geometry(self):
+        return self.ifc_entity.geometry
 
     @property
     def transformation(self):
-        # Get the transformation matrix of the element
-        pass
-
-    @transformation.setter
-    def transformation(self, transformation):
-        # Set the transformation matrix of the element, will also update the placement of the underlying IFC entity.
-        pass
+        # TODO: this is not 100% correct
+        return self.ifc_entity.frame.to_transformation()
 
 
-
-# Use pydantic class for auto-generated IFC classes?? How does it deal with pointers in seriliasition?
 
 # TODO: Transparent way to work with grid and storeys etc.

@@ -287,7 +287,7 @@ class Model(Data):
                 obj = viewer.scene.add(entity.geometry, name=name, parent=parent, hide_coplanaredges=True, **entity.style)
                 obj.transformation = transformation
             else:
-                obj = viewer.scene.add([], name=name, parent=parent)
+                obj = viewer.scene.add_group(name=name, parent=parent)
 
             obj.attributes["entity"] = entity
 
