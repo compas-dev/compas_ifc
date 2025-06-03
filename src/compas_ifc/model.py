@@ -287,7 +287,7 @@ class Model(Data):
                 obj = viewer.scene.add(entity.geometry, name=name, parent=parent, hide_coplanaredges=True, **entity.style)
                 obj.transformation = transformation
             else:
-                obj = viewer.scene.add([], name=name, parent=parent)
+                obj = viewer.scene.add_group(name=name, parent=parent)
 
             obj.attributes["entity"] = entity
 
@@ -369,7 +369,7 @@ class Model(Data):
             TOL.lineardeflection = 1e-3
 
     @classmethod
-    def template(cls, schema: str = "IFC4", building_count: int = 1, storey_count: int = 1, unit: str = "mm") -> "Model":
+    def template(cls, schema: str = "IFC4", building_count: int = 1, storey_count: int = 1, unit: str = "mm", use_occ: bool = False) -> "Model":
         """Create a template model with a default project, site, building, and storey.
 
         Parameters
@@ -388,7 +388,7 @@ class Model(Data):
         :class:`compas_ifc.model.Model`
             The newly created model.
         """
-        model = cls(schema=schema)
+        model = cls(schema=schema, use_occ=use_occ)
         project = model.file.default_project
         site = model.create("IfcSite", parent=project, Name="Default Site")
         for i in range(building_count):

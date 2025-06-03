@@ -1,9 +1,11 @@
+from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 
 from compas_ifc.entities.base import Base
+from compas_ifc.model import Model
 
 
 def IfcCartesianPoint_to_point(cartesian_point: Base) -> Point:
@@ -50,3 +52,36 @@ def IfcPlane_to_plane(plane: Base) -> Plane:
     point = IfcCartesianPoint_to_point(plane.Position.Location)
     normal = IfcDirection_to_vector(plane.Position.P[3])
     return Plane(point, normal)
+
+
+def point_to_IfcCartesianPoint(model: Model, point: Point) -> Base:
+    """
+    Convert a COMPAS point to an IFC CartesianPoint.
+    """
+    return model.create("IfcCartesianPoint", Coordinates=(float(point.x), float(point.y), float(point.z)))
+
+
+def vector_to_IfcDirection(model: Model, vector: Vector) -> Base:
+    """
+    Convert a COMPAS vector to an IFC Direction.
+    """
+    return model.create("IfcDirection", DirectionRatios=(float(vector.x), float(vector.y), float(vector.z)))
+
+
+def frame_to_IfcAxis2Placement3D(model: Model, frame: Frame) -> Base:
+    """
+    Convert a COMPAS frame to an IFC Axis2Placement3D.
+    """
+    return model.create(
+        "IfcAxis2Placement3D",
+        Location=point_to_IfcCartesianPoint(model, frame.point),
+        Axis=vector_to_IfcDirection(model, frame.zaxis),
+        RefDirection=vector_to_IfcDirection(model, frame.xaxis),
+    )
+
+
+def frame_to_IfcPlane(model: Model, frame: Frame) -> Base:
+    """
+    Convert a COMPAS frame to an IFC Plane.
+    """
+    return model.create("IfcPlane", Position=frame_to_IfcAxis2Placement3D(model, frame))

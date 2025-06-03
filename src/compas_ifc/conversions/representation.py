@@ -12,6 +12,7 @@ from compas.geometry import Cylinder
 from compas.geometry import Shape
 from compas.geometry import Sphere
 
+from compas_ifc.conversions.brep import brep_to_IfcAdvancedBrep
 from compas_ifc.conversions.mesh import mesh_to_IfcFaceBasedSurfaceModel
 from compas_ifc.conversions.shapes import box_to_IfcBlock
 from compas_ifc.conversions.shapes import cone_to_IfcRightCircularCone
@@ -20,6 +21,8 @@ from compas_ifc.conversions.shapes import sphere_to_IfcSphere
 from compas_ifc.entities.extensions import IfcProduct
 from compas_ifc.model import Model
 
+REPRESENTATION_CACHE = {}
+
 
 def assign_body_representation(entity: IfcProduct, representation: Union[Shape, Mesh, Brep]):
     """
@@ -27,6 +30,10 @@ def assign_body_representation(entity: IfcProduct, representation: Union[Shape, 
     """
 
     model: Model = entity.model
+
+    if id(representation) in REPRESENTATION_CACHE:
+        entity.Representation = REPRESENTATION_CACHE[id(representation)]
+        return
 
     # Convert COMPAS geometries to IFC corresponding representation
     if isinstance(representation, Shape):
@@ -52,10 +59,20 @@ def assign_body_representation(entity: IfcProduct, representation: Union[Shape, 
         items = [ifc_representation]
 
     elif isinstance(representation, Brep):
-        mesh = representation.to_tesselation()
-        ifc_representation = mesh_to_IfcFaceBasedSurfaceModel(model, mesh)
-        representation_type = "SurfaceModel"
-        items = [ifc_representation]
+        if model.file.use_occ:
+            try:
+                items = brep_to_IfcAdvancedBrep(model, representation)
+                representation_type = "SolidModel"
+            except Exception as e:
+                print(f"WARNING BREP conversion failed: {e}")
+                items = []
+                representation_type = "SurfaceModel"
+
+        else:
+            mesh, _ = representation.to_tesselation()
+            ifc_representation = mesh_to_IfcFaceBasedSurfaceModel(model, mesh)
+            representation_type = "SurfaceModel"
+            items = [ifc_representation]
 
     else:
         raise NotImplementedError(f"Conversion of {type(representation)} to IFC not implemented.")
@@ -76,6 +93,7 @@ def assign_body_representation(entity: IfcProduct, representation: Union[Shape, 
     )
 
     entity.Representation = ifc_product_definition_shape
+    REPRESENTATION_CACHE[id(representation)] = ifc_product_definition_shape
 
     # TODO: should not overwrite all property sets here
     # TODO: alternative 1: restructure the metadata, remove duplicated info like vertices

@@ -75,12 +75,12 @@ def cylinder_to_IfcRightCircularCylinder(model: Model, cylinder: Cylinder) -> if
     )
 
 
-def occ_cylinder_to_ifc_cylindrical_surface(file, occ_cylinder):
+def occ_cylinder_to_ifc_cylindrical_surface(model: Model, occ_cylinder):
     location = occ_cylinder.Location().Coord()
     xdir = occ_cylinder.XAxis().Direction().Coord()
     zdir = occ_cylinder.Axis().Direction().Coord()
-    IfcAxis2Placement3D = create_IfcAxis2Placement3D(file, location, zdir, xdir)
-    return file.create_entity("IfcCylindricalSurface", IfcAxis2Placement3D, occ_cylinder.Radius())
+    IfcAxis2Placement3D = create_IfcAxis2Placement3D(model, location, zdir, xdir)
+    return model.create("IfcCylindricalSurface", Position=IfcAxis2Placement3D, Radius=occ_cylinder.Radius())
 
 
 if __name__ == "__main__":
