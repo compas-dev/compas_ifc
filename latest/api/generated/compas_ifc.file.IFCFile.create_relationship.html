@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
     <link rel="icon" href="../../_static/compas.ico" type="image/x-icon">
-    <title>IFCFile &#8212; COMPAS IFC</title>
+    <title>IFCFile.create_relationship &#8212; COMPAS IFC</title>
   
   
   
@@ -52,15 +52,15 @@
     <script src="../../_static/togglebutton.js"></script>
     <script src="../../_static/design-tabs.js"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api/generated/compas_ifc.file.IFCFile';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/generated/compas_ifc.file.IFCFile.create_relationship';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/compas-dev/compas_ifc/gh-pages/versions.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'latest';
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="IFCFile.__init__" href="compas_ifc.file.IFCFile.__init__.html" />
-    <link rel="prev" title="Model.validate_data" href="compas_ifc.model.Model.validate_data.html" />
+    <link rel="next" title="IFCFile.create_value" href="compas_ifc.file.IFCFile.create_value.html" />
+    <link rel="prev" title="IFCFile.create" href="compas_ifc.file.IFCFile.create.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -540,6 +540,8 @@ document.write(`
 
 
 
+
+
 <nav aria-label="Breadcrumbs">
   <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
     
@@ -552,9 +554,12 @@ document.write(`
     <li class="breadcrumb-item"><a href="../../api.html" class="nav-link">API Reference</a></li>
     
     
-    <li class="breadcrumb-item"><a href="../compas_ifc.model.html" class="nav-link">Model</a></li>
+    <li class="breadcrumb-item"><i class="fa-solid fa-ellipsis"></i></li>
     
-    <li class="breadcrumb-item active" aria-current="page">IFCFile</li>
+    
+    <li class="breadcrumb-item"><a href="compas_ifc.file.IFCFile.html" class="nav-link">IFCFile</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">IFCFile.create_relationship</li>
   </ul>
 </nav>
 </div>
@@ -571,106 +576,28 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="ifcfile">
-<h1>IFCFile</h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="compas_ifc.file.IFCFile">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_ifc.file.</span></span><span class="sig-name descname"><span class="pre">IFCFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'IFC4'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_occ</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_geometries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extensions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>The IFCFile class is a wrapper around an ifcopenshell file object. It provides low-level access to the IFC data.</p>
+  <section id="ifcfile-create-relationship">
+<h1>IFCFile.create_relationship</h1>
+<dl class="py method">
+<dt class="sig sig-object py" id="compas_ifc.file.IFCFile.create_relationship">
+<span class="sig-prename descclassname"><span class="pre">IFCFile.</span></span><span class="sig-name descname"><span class="pre">create_relationship</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Create the correct relationship between two entities based on their types.</p>
 <dl class="field-list">
-<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>filepath</strong><span class="classifier">str, optional</span></dt><dd><p>The path to the IFC file.</p>
+<dt><strong>parent</strong><span class="classifier"><a class="reference internal" href="compas_ifc.entities.base.Base.html#compas_ifc.entities.base.Base" title="compas_ifc.entities.base.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_ifc.entities.base.Base</span></code></a></span></dt><dd><p>The parent entity.</p>
 </dd>
-<dt><strong>model</strong><span class="classifier"><a class="reference internal" href="compas_ifc.model.Model.html#compas_ifc.model.Model" title="compas_ifc.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_ifc.model.Model</span></code></a></span></dt><dd><p>The model object.</p>
+<dt><strong>child</strong><span class="classifier"><a class="reference internal" href="compas_ifc.entities.base.Base.html#compas_ifc.entities.base.Base" title="compas_ifc.entities.base.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_ifc.entities.base.Base</span></code></a></span></dt><dd><p>The child entity.</p>
 </dd>
-<dt><strong>use_occ</strong><span class="classifier">bool</span></dt><dd><p>Whether to use OCC for geometry processing.</p>
+</dl>
 </dd>
-<dt><a class="reference internal" href="compas_ifc.file.IFCFile.load_geometries.html#compas_ifc.file.IFCFile.load_geometries" title="compas_ifc.file.IFCFile.load_geometries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_geometries</span></code></a><span class="classifier">bool</span></dt><dd><p>Load all the geometries of the IFC file using a fast multithreaded iterator.</p>
-</dd>
-<dt><strong>verbose</strong><span class="classifier">bool</span></dt><dd><p>Whether to print verbose output.</p>
-</dd>
-<dt><strong>extensions</strong><span class="classifier">dict, optional</span></dt><dd><p>A dictionary of custom extensions to be used with the IFC file.</p>
-</dd>
-<dt><strong>schema</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">ifcopenshell.schema.Schema</span></code></span></dt><dd><p>The IFC schema object.</p>
-</dd>
-<dt><strong>schema_name</strong><span class="classifier">str</span></dt><dd><p>The name of the IFC schema.</p>
-</dd>
-<dt><strong>classes</strong><span class="classifier">list[<a class="reference internal" href="compas_ifc.entities.base.Base.html#compas_ifc.entities.base.Base" title="compas_ifc.entities.base.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_ifc.entities.base.Base</span></code></a>]</span></dt><dd><p>A list of all the classes for this schema version.</p>
-</dd>
-<dt><strong>default_project</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_ifc.entities.generated.IFC4.IfcProject</span></code></span></dt><dd><p>The default project in this file. Will be created if it does not exist.</p>
-</dd>
-<dt><strong>default_units</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_ifc.entities.generated.IFC4.IfcUnitAssignment</span></code></span></dt><dd><p>The default units in this file. Will be created if it does not exist.</p>
-</dd>
-<dt><strong>default_owner_history</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_ifc.entities.generated.IFC4.IfcOwnerHistory</span></code></span></dt><dd><p>The default owner history in this file. Will be created if it does not exist.</p>
-</dd>
-<dt><strong>default_context</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_ifc.entities.generated.IFC4.IfcContext</span></code></span></dt><dd><p>The default context in this file. Will be created if it does not exist.</p>
-</dd>
-<dt><strong>default_body_context</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_ifc.entities.generated.IFC4.IfcContext</span></code></span></dt><dd><p>The default body context in this file. Will be created if it does not exist.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><a class="reference internal" href="compas_ifc.entities.base.Base.html#compas_ifc.entities.base.Base" title="compas_ifc.entities.base.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_ifc.entities.base.Base</span></code></a></dt><dd><p>The created relationship.</p>
 </dd>
 </dl>
 </dd>
 </dl>
-<p class="rubric">Methods</p>
-<table class="autosummary longtable table autosummary">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.__init__.html#compas_ifc.file.IFCFile.__init__" title="compas_ifc.file.IFCFile.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a></p></td>
-<td><p>Construct the IFCFile object.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.create.html#compas_ifc.file.IFCFile.create" title="compas_ifc.file.IFCFile.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a></p></td>
-<td><p>Create an entity in this model.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.create_relationship.html#compas_ifc.file.IFCFile.create_relationship" title="compas_ifc.file.IFCFile.create_relationship"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_relationship</span></code></a></p></td>
-<td><p>Create the correct relationship between two entities based on their types.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.create_value.html#compas_ifc.file.IFCFile.create_value" title="compas_ifc.file.IFCFile.create_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_value</span></code></a></p></td>
-<td><p>Create corresponding IfcValue from a Python value.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.ensure_classes_generated.html" title="compas_ifc.file.IFCFile.ensure_classes_generated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ensure_classes_generated</span></code></a></p></td>
-<td><p>Check if the IFC classes are generated and generate them if not.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.export.html#compas_ifc.file.IFCFile.export" title="compas_ifc.file.IFCFile.export"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export</span></code></a></p></td>
-<td><p>Export a subset of the IFC file to a new IFC file.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.file_size.html#compas_ifc.file.IFCFile.file_size" title="compas_ifc.file.IFCFile.file_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">file_size</span></code></a></p></td>
-<td><p>Get the size of the IFC file in MB.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.from_entity.html#compas_ifc.file.IFCFile.from_entity" title="compas_ifc.file.IFCFile.from_entity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_entity</span></code></a></p></td>
-<td><p>Convert an ifcopenshell entity to a compas_ifc entity.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.get_entities_by_name.html#compas_ifc.file.IFCFile.get_entities_by_name" title="compas_ifc.file.IFCFile.get_entities_by_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entities_by_name</span></code></a></p></td>
-<td><p>Get all entities with a given name.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.get_entities_by_type.html#compas_ifc.file.IFCFile.get_entities_by_type" title="compas_ifc.file.IFCFile.get_entities_by_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entities_by_type</span></code></a></p></td>
-<td><p>Get all entities of a given type.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.get_entity_by_global_id.html#compas_ifc.file.IFCFile.get_entity_by_global_id" title="compas_ifc.file.IFCFile.get_entity_by_global_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entity_by_global_id</span></code></a></p></td>
-<td><p>Get an entity by its global ID.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.get_entity_by_id.html#compas_ifc.file.IFCFile.get_entity_by_id" title="compas_ifc.file.IFCFile.get_entity_by_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_entity_by_id</span></code></a></p></td>
-<td><p>Get an entity by its file ID.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.get_preloaded_geometry.html#compas_ifc.file.IFCFile.get_preloaded_geometry" title="compas_ifc.file.IFCFile.get_preloaded_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_preloaded_geometry</span></code></a></p></td>
-<td><p>Get the preloaded geometry of an entity.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.get_preloaded_style.html#compas_ifc.file.IFCFile.get_preloaded_style" title="compas_ifc.file.IFCFile.get_preloaded_style"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_preloaded_style</span></code></a></p></td>
-<td><p>Get the preloaded style of an entity.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.load_geometries.html#compas_ifc.file.IFCFile.load_geometries" title="compas_ifc.file.IFCFile.load_geometries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_geometries</span></code></a></p></td>
-<td><p>Load all the geometries of the IFC file using a fast multithreaded iterator.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.remove.html#compas_ifc.file.IFCFile.remove" title="compas_ifc.file.IFCFile.remove"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove</span></code></a></p></td>
-<td><p>Remove an entity from this model.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.save.html#compas_ifc.file.IFCFile.save" title="compas_ifc.file.IFCFile.save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code></a></p></td>
-<td><p>Save the IFC file to a given path.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.file.IFCFile.search_ifc_classes.html#compas_ifc.file.IFCFile.search_ifc_classes" title="compas_ifc.file.IFCFile.search_ifc_classes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">search_ifc_classes</span></code></a></p></td>
-<td><p>Search for IFC classes by name</p></td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 </section>
@@ -696,7 +623,7 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compas_ifc.file.IFCFile"><code class="docutils literal notranslate"><span class="pre">IFCFile</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compas_ifc.file.IFCFile.create_relationship"><code class="docutils literal notranslate"><span class="pre">IFCFile.create_relationship()</span></code></a></li>
 </ul>
   </nav></div>
 
