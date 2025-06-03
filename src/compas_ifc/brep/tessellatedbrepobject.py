@@ -36,7 +36,7 @@ class TessellatedBrepObject(ViewerSceneObject):
     def _read_lines_data(self):
         positions = self.tessellatedbrep.vertices.tolist()
         elements = self.tessellatedbrep.edges.tolist()
-        colors = [Color(0.1, 0.1, 0.1)] * len(elements)
+        colors = [Color(0.1, 0.1, 0.1)] * len(positions)
         return positions, colors, elements
 
     def _read_frontfaces_data(self):
