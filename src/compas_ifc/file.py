@@ -477,10 +477,7 @@ class IFCFile(object):
         entity = self._create_entity(cls_name, **kwargs)
 
         if parent:
-            if hasattr(entity, "ContainedInStructure"):
-                self._create_entity("IfcRelContainedInSpatialStructure", GlobalId=ifcopenshell.guid.new(), RelatingStructure=parent, RelatedElements=[entity])
-            else:
-                self._create_entity("IfcRelAggregates", GlobalId=ifcopenshell.guid.new(), RelatingObject=parent, RelatedObjects=[entity])
+            self.create_relationship(parent, entity)
 
         if geometry:
             # TODO: Deal with instancing
@@ -496,6 +493,47 @@ class IFCFile(object):
             entity.GlobalId = ifcopenshell.guid.new()
 
         return entity
+
+    def create_relationship(self, parent: Base, child: Base) -> Base:
+        """
+        Create the correct relationship between two entities based on their types.
+
+        Parameters
+        ----------
+        parent : :class:`compas_ifc.entities.base.Base`
+            The parent entity.
+        child : :class:`compas_ifc.entities.base.Base`
+            The child entity.
+
+        Returns
+        -------
+        :class:`compas_ifc.entities.base.Base`
+            The created relationship.
+
+        """
+
+        guid = ifcopenshell.guid.new()
+        if parent.is_a("IfcSpatialStructureElement"):
+            if child.is_a("IfcSpatialStructureElement"):
+                return self._create_entity("IfcRelAggregates", GlobalId=guid, RelatingObject=parent, RelatedObjects=[child])
+            return self._create_entity("IfcRelContainedInSpatialStructure", GlobalId=guid, RelatingStructure=parent, RelatedElements=[child])
+        
+        if parent.is_a("IfcElementAssembly") or child.is_a("IfcBuildingElementPart"):
+            return self._create_entity("IfcRelAggregates", GlobalId=guid, RelatingObject=parent, RelatedObjects=[child])
+        
+        if parent.is_a("IfcPort"):
+            if not child.is_a("IfcPort"):
+                return self._create_entity("IfcRelConnectsPortToElement", GlobalId=guid, RelatingPort=parent, RelatedElement=child)
+            return self._create_entity("IfcRelConnectsPorts", GlobalId=guid, RelatingPort=parent, RelatedPort=child)
+        
+        if parent.is_a("IfcElement") and child.is_a("IfcElement"):
+            return self._create_entity("IfcRelConnectsElements", GlobalId=guid, RelatingElement=parent, RelatedElement=child)
+        
+        if parent.is_a("IfcGroup"):
+            return self._create_entity("IfcRelAssignsToGroup", GlobalId=guid, RelatingGroup=parent, RelatedObjects=[child])
+        
+        # Default case
+        return self._create_entity("IfcRelAggregates", GlobalId=guid, RelatingObject=parent, RelatedObjects=[child])
 
     def search_ifc_classes(self, name: str, n: int = 5) -> list[Type["Base"]]:
         """
