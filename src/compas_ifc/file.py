@@ -437,7 +437,7 @@ class IFCFile(object):
 
         new_file.save(path)
 
-    def create(self, cls="IfcBuildingElementProxy", parent=None, geometry=None, frame=None, properties=None, **kwargs) -> Base:
+    def create(self, cls=None, parent=None, geometry=None, frame=None, properties=None, **kwargs) -> Base:
         """
         Create an entity in this model.
 
@@ -466,6 +466,9 @@ class IFCFile(object):
             cls_name = cls.__name__
         else:
             cls_name = cls
+
+        if cls_name is None:
+            cls_name = "IfcBuildingElementProxy"
 
         if cls_name not in self.classes:
             matched_classes = self.search_ifc_classes(cls_name)
