@@ -33,6 +33,8 @@ try:
 
             for shell, color in zip(self.shells, self.shellcolors):
                 shell_positions, shell_elements = shell.to_vertices_and_faces()
+                if len(shell_elements) == 0:
+                    continue
                 shell_elements = np.array(shell_elements) + len(positions)
                 positions += shell_positions
                 elements = np.vstack((elements, shell_elements))
@@ -49,6 +51,8 @@ try:
 
             for shell, color in zip(self.shells, self.shellcolors):
                 shell_positions, shell_elements = shell.to_vertices_and_faces()
+                if len(shell_elements) == 0:
+                    continue
                 for element in shell_elements:
                     element.reverse()
                 shell_elements = np.array(shell_elements) + len(positions)
