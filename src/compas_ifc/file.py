@@ -520,21 +520,21 @@ class IFCFile(object):
             if child.is_a("IfcSpatialStructureElement"):
                 return self._create_entity("IfcRelAggregates", GlobalId=guid, RelatingObject=parent, RelatedObjects=[child])
             return self._create_entity("IfcRelContainedInSpatialStructure", GlobalId=guid, RelatingStructure=parent, RelatedElements=[child])
-        
+
         if parent.is_a("IfcElementAssembly") or child.is_a("IfcBuildingElementPart"):
             return self._create_entity("IfcRelAggregates", GlobalId=guid, RelatingObject=parent, RelatedObjects=[child])
-        
+
         if parent.is_a("IfcPort"):
             if not child.is_a("IfcPort"):
                 return self._create_entity("IfcRelConnectsPortToElement", GlobalId=guid, RelatingPort=parent, RelatedElement=child)
             return self._create_entity("IfcRelConnectsPorts", GlobalId=guid, RelatingPort=parent, RelatedPort=child)
-        
+
         if parent.is_a("IfcElement") and child.is_a("IfcElement"):
             return self._create_entity("IfcRelConnectsElements", GlobalId=guid, RelatingElement=parent, RelatedElement=child)
-        
+
         if parent.is_a("IfcGroup"):
             return self._create_entity("IfcRelAssignsToGroup", GlobalId=guid, RelatingGroup=parent, RelatedObjects=[child])
-        
+
         # Default case
         return self._create_entity("IfcRelAggregates", GlobalId=guid, RelatingObject=parent, RelatedObjects=[child])
 
