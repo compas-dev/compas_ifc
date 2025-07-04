@@ -314,15 +314,9 @@ class IFCFile(object):
                 else:
                     from .brep import TessellatedBrep
 
-                    matrix = shape.transformation.matrix.data
                     faces = shape.geometry.faces
                     edges = shape.geometry.edges
                     verts = shape.geometry.verts
-
-                    matrix = np.array(matrix).reshape((4, 3))
-                    matrix = np.hstack([matrix, np.array([[0], [0], [0], [1]])])
-                    matrix = matrix.transpose()
-                    transformation = Transformation.from_matrix(matrix.tolist())
 
                     facecolors = []
                     for m_id in shape.geometry.material_ids:
@@ -332,14 +326,13 @@ class IFCFile(object):
                             facecolors.append([0.5, 0.5, 0.5, 1])
                             continue
                         material = shape.geometry.materials[m_id]
-                        color = (*material.diffuse, 1 - material.transparency)
+                        color = (*material.diffuse.components, 1 - material.transparency)
                         facecolors.append(color)
                         facecolors.append(color)
                         facecolors.append(color)
 
                     brep = TessellatedBrep(vertices=verts, edges=edges, faces=faces)
 
-                    brep.transform(transformation)
                     self._geometrymap[shape.id] = brep
                     self._stylemap[shape.id] = {"facecolors": facecolors}
 
