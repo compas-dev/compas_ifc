@@ -282,10 +282,9 @@ class Model(Data):
         def parse_entity(entity, parent=None):
             obj = None
             name = f"[{entity.__class__.__name__}]{entity.Name}"
-            transformation = Transformation.from_frame(entity.frame) if entity.frame else None
             if getattr(entity, "geometry", None) and not entity.is_a("IfcSpace"):
                 obj = viewer.scene.add(entity.geometry, name=name, parent=parent, hide_coplanaredges=True, **entity.style)
-                obj.transformation = transformation
+                obj.frame = entity.frame
             else:
                 obj = viewer.scene.add_group(name=name, parent=parent)
 

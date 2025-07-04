@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING
 
-from compas_ifc.conversions.frame import IfcLocalPlacement_to_frame
+from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
 from compas_ifc.conversions.frame import assign_entity_frame
 from compas_ifc.conversions.representation import assign_body_representation
+from compas.geometry import Frame
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcProduct
@@ -33,12 +34,12 @@ class IfcProduct(IfcProduct):
             self._geometry = self.file.get_preloaded_geometry(self)
             if self._geometry:
                 self._geometry.name = self.Name
-            if self.frame and self._geometry:
-                # NOTE: preloaded geometry is pre-transformed because of boolean.
-                # The pre-transformation is not necessarily the same as the frame of entity.
-                # Therefore, we need to re-transform the geometry back to its original location.
-                T = self.frame.to_transformation()
-                self._geometry.transform(T.inverse())
+                if self.file.use_occ:
+                    # NOTE: When using OCC, the geometry is pre-transformed to the frame of the entity.
+                    # We need to re-transform the geometry back to its original location.
+                    # This is not necessary when using TessellatedBrep.
+                    T = self.frame.to_transformation()
+                    self._geometry.transform(T.inverse())
         return self._geometry
 
     @geometry.setter
@@ -51,11 +52,10 @@ class IfcProduct(IfcProduct):
     def frame(self):
         if not getattr(self, "_frame", None):
             if self.ObjectPlacement:
-                self._frame = IfcLocalPlacement_to_frame(self.ObjectPlacement)
+                transformation = IfcLocalPlacement_to_transformation(self.ObjectPlacement)
+                self._frame = Frame.from_transformation(transformation)
             else:
                 self._frame = None
-
-        # print(self._frame)
         return self._frame
 
     @frame.setter
