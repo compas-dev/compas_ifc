@@ -580,12 +580,15 @@ document.write(`
 <h1>Model.show</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_ifc.model.Model.show">
-<span class="sig-prename descclassname"><span class="pre">Model.</span></span><span class="sig-name descname"><span class="pre">show</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-prename descclassname"><span class="pre">Model.</span></span><span class="sig-name descname"><span class="pre">show</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linear_deflection</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Show the IFC file in a viewer, either the entire project or a single entity.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
 <dt><strong>entity</strong><span class="classifier"><a class="reference internal" href="compas_ifc.entities.base.Base.html#compas_ifc.entities.base.Base" title="compas_ifc.entities.base.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_ifc.entities.base.Base</span></code></a></span></dt><dd><p>The entity to show. If None, the entire project will be shown.</p>
+</dd>
+<dt><strong>linear_deflection</strong><span class="classifier">float</span></dt><dd><p>The linear deflection to use for the tesselation of BREP geometries.
+Should be adjusted based on the size of the model.</p>
 </dd>
 </dl>
 </dd>
