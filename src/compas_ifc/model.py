@@ -9,7 +9,6 @@ from compas.datastructures import Datastructure
 from compas.geometry import Frame
 from compas.geometry import Geometry
 from compas.geometry import Transformation
-from compas.tolerance import TOL
 
 from compas_ifc.file import IFCFile
 
@@ -74,8 +73,6 @@ class Model(Data):
 
         """
         self.file = IFCFile(self, filepath=filepath, schema=schema, use_occ=use_occ, load_geometries=load_geometries, verbose=verbose, extensions=extensions)
-        if filepath:
-            self.update_linear_deflection()
 
     @property
     def schema(self) -> "ifcopenshell.ifcopenshell_wrapper.schema_definition":
@@ -257,13 +254,16 @@ class Model(Data):
         """
         self.file.export(path, entities=entities, as_snippet=as_snippet, export_materials=export_materials, export_properties=export_properties, export_styles=export_styles)
 
-    def show(self, entity: "Base" = None):
+    def show(self, entity: "Base" = None, linear_deflection: float = 100):
         """Show the IFC file in a viewer, either the entire project or a single entity.
 
         Parameters
         ----------
         entity : :class:`compas_ifc.entities.base.Base`
             The entity to show. If None, the entire project will be shown.
+        linear_deflection : float
+            The linear deflection to use for the tesselation of BREP geometries.
+            Should be adjusted based on the size of the model.
         """
         try:
             from compas_viewer import Viewer
@@ -274,6 +274,7 @@ class Model(Data):
 
         viewer = Viewer()
         print(f"Unit: {self.unit}")
+        print(f"Using Linear Deflection: {linear_deflection}")
         viewer.unit = self.unit
         viewer.ui.sidebar.show_objectsetting = False
 
@@ -284,7 +285,7 @@ class Model(Data):
             name = f"[{entity.__class__.__name__}]{entity.Name}"
             transformation = Transformation.from_frame(entity.frame) if entity.frame else None
             if getattr(entity, "geometry", None) and not entity.is_a("IfcSpace"):
-                obj = viewer.scene.add(entity.geometry, name=name, parent=parent, hide_coplanaredges=True, **entity.style)
+                obj = viewer.scene.add(entity.geometry, name=name, parent=parent, hide_coplanaredges=True, **entity.style, linear_deflection=linear_deflection)
                 obj.transformation = transformation
             else:
                 obj = viewer.scene.add_group(name=name, parent=parent)
@@ -357,16 +358,6 @@ class Model(Data):
 
         """
         self.file.remove(entity)
-
-    def update_linear_deflection(self):
-        """Update the linear deflection tolerance settings in COMPAS based on the unit of the model."""
-        # TODO: deal with conversion based units like "FOOT"
-        if self.unit == "mm":
-            TOL.lineardeflection = 1
-        elif self.unit == "cm":
-            TOL.lineardeflection = 1e-1
-        elif self.unit == "m":
-            TOL.lineardeflection = 1e-3
 
     @classmethod
     def template(cls, schema: str = "IFC4", building_count: int = 1, storey_count: int = 1, unit: str = "mm", use_occ: bool = False) -> "Model":

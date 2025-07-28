@@ -1,18 +1,17 @@
 try:
     import numpy as np
     from compas.colors import Color
-    from compas.tolerance import TOL
     from compas_occ.brep import OCCBrep
     from compas_viewer.scene.brepobject import BRepObject
 
     class IFCBrepObject(BRepObject):
-        def __init__(self, shellcolors=None, **kwargs):
+        def __init__(self, shellcolors=None, linear_deflection=100, **kwargs):
             brep = kwargs["item"]
             brep.simplify()
             brep.heal()
 
             super().__init__(**kwargs)
-            self.shells = [shell.to_tesselation(TOL.lineardeflection)[0] for shell in self.brep.shells]
+            self.shells = [shell.to_tesselation(linear_deflection)[0] for shell in self.brep.shells]
             self.shellcolors = shellcolors or [self.facecolor.rgba for _ in self.shells]
             self._bounding_box_center = None
 

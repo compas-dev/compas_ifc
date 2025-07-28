@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `linear_deflection` parameter to `Model.show()`, defaulting to 100 for faster BRep tesselation.
+
 ### Changed
 
 ### Removed
 
+* Removed `Model.update_linear_deflection()`
 
 ## [1.6.0] 2025-06-04
 
