@@ -301,13 +301,13 @@ class Model(Data):
         parse_entity(entity or self.project)
 
         treeform = Treeform()
-        viewer.ui.sidebar.widget.addWidget(treeform)
+        viewer.ui.sidebar.add(treeform)
 
         def update_treeform(form, node):
             entity = node.attributes["entity"]
             treeform.update_from_dict({"Attributes": entity.attributes, "PSets": getattr(entity, "property_sets", {})})
 
-        viewer.ui.sidebar.sceneform.callback = update_treeform
+        viewer.ui.sidebar.sceneform.action = update_treeform
 
         viewer.show()
 
