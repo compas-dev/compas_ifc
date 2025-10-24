@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `volume` property to `TessellatedBrep` class for calculating volume of closed meshes using COMPAS geometry functions
+* Added `surface_area` property to `TessellatedBrep` class for calculating surface area by summing face areas
+
 ### Changed
 
 ### Removed
