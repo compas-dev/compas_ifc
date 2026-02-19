@@ -2,7 +2,7 @@ from .tessellatedbrep import TessellatedBrep
 
 try:
     from .tessellatedbrepobject import TessellatedBrepObject
-except ImportError:
+except Exception:
     pass
 
 from compas.plugins import plugin

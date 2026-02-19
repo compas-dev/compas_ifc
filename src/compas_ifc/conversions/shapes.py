@@ -83,6 +83,22 @@ def occ_cylinder_to_ifc_cylindrical_surface(model: Model, occ_cylinder):
     return model.create("IfcCylindricalSurface", Position=IfcAxis2Placement3D, Radius=occ_cylinder.Radius())
 
 
+def occ_sphere_to_ifc_spherical_surface(model: Model, occ_sphere):
+    location = occ_sphere.Location().Coord()
+    xdir = occ_sphere.XAxis().Direction().Coord()
+    zdir = occ_sphere.Position().Axis().Direction().Coord()
+    IfcAxis2Placement3D = create_IfcAxis2Placement3D(model, location, zdir, xdir)
+    return model.create("IfcSphericalSurface", Position=IfcAxis2Placement3D, Radius=occ_sphere.Radius())
+
+
+def occ_torus_to_ifc_toroidal_surface(model: Model, occ_torus):
+    location = occ_torus.Location().Coord()
+    xdir = occ_torus.XAxis().Direction().Coord()
+    zdir = occ_torus.Axis().Direction().Coord()
+    IfcAxis2Placement3D = create_IfcAxis2Placement3D(model, location, zdir, xdir)
+    return model.create("IfcToroidalSurface", Position=IfcAxis2Placement3D, MajorRadius=occ_torus.MajorRadius(), MinorRadius=occ_torus.MinorRadius())
+
+
 if __name__ == "__main__":
     model = Model()
     print(create_IfcAxis2Placement3D(model))

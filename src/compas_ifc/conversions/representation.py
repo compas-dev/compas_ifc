@@ -60,14 +60,8 @@ def assign_body_representation(entity: IfcProduct, representation: Union[Shape, 
 
     elif isinstance(representation, Brep):
         if model.file.use_occ:
-            try:
-                items = brep_to_IfcAdvancedBrep(model, representation)
-                representation_type = "SolidModel"
-            except Exception as e:
-                print(f"WARNING BREP conversion failed: {e}")
-                items = []
-                representation_type = "SurfaceModel"
-
+            items = brep_to_IfcAdvancedBrep(model, representation)
+            representation_type = "SolidModel"
         else:
             mesh, _ = representation.to_tesselation()
             ifc_representation = mesh_to_IfcFaceBasedSurfaceModel(model, mesh)

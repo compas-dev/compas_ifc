@@ -135,6 +135,7 @@ class IFCFile(object):
         try:
             from compas_ifc.entities.generated import IFC2X3  # noqa: F401
             from compas_ifc.entities.generated import IFC4  # noqa: F401
+            from compas_ifc.entities.generated import IFC4X3  # noqa: F401
         except ImportError:
             if self.verbose:
                 print("IFC classes not found. Generating classes...")
@@ -144,6 +145,9 @@ class IFCFile(object):
             generator.generate()
 
             generator = Generator(schema="IFC4")
+            generator.generate()
+
+            generator = Generator(schema="IFC4X3")
             generator.generate()
             if self.verbose:
                 print("IFC classes generated.\n\n")

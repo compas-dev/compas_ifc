@@ -519,3 +519,6 @@ if __name__ == "__main__":
 
     generator = Generator(schema="IFC4")
     generator.generate()
+
+    generator = Generator(schema="IFC4X3")
+    generator.generate()
