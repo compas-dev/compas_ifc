@@ -35,11 +35,11 @@ def calculate_knots_and_multiplicities(knot_sequence):
 
 def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
     brep.fix()
-    brep.sew()
-    # Only promote shells to solids if there are no solids yet.
-    # Calling make_solid() on a shape that already has proper solid topology
-    # (e.g. a boolean-cut body with inner shells) can destroy that topology.
+    # Only sew and promote to solid when there are no solids yet.
+    # BRepBuilderAPI_Sewing merges all faces into a single shell, destroying
+    # inner/outer shell topology of boolean-cut bodies with voids.
     if not brep.solids:
+        brep.sew()
         brep.make_solid()
 
     # Cache dicts to deduplicate IFC entities across all edges/faces.
@@ -259,41 +259,46 @@ def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
 
         build = lambda shell: _build_shell_faces(shell, model, get_ifc_bspline_edge, get_ifc_line_edge, get_ifc_circle_edge, get_ifc_ellipse_edge, degenerate_edges)
 
-        if len(shells) == 1:
-            outer_ifc_shell = model.create("IfcClosedShell", CfsFaces=build(shells[0]))
-            ifc_brep = model.create("IfcAdvancedBrep", Outer=outer_ifc_shell)
-        else:
-            # Multiple shells: outer shell has outward-facing normals (is_outer),
-            # remaining shells are inner voids.
-            outer_shell = None
-            void_shells = []
-            for shell in shells:
-                if hasattr(shell, "is_outer") and shell.is_outer:
-                    outer_shell = shell
-                else:
-                    void_shells.append(shell)
-            if outer_shell is None:
-                outer_shell, void_shells = shells[0], shells[1:]
-
-            outer_ifc_shell = model.create("IfcClosedShell", CfsFaces=build(outer_shell))
-            void_ifc_shells = [model.create("IfcClosedShell", CfsFaces=build(s)) for s in void_shells]
-            ifc_brep = model.create("IfcAdvancedBrepWithVoids", Outer=outer_ifc_shell, Voids=void_ifc_shells)
+        # Merge all shells (outer + inner voids) into one IfcClosedShell.
+        # IfcAdvancedBrepWithVoids is correct per spec but poorly supported
+        # by viewers, so we flatten everything into a single IfcAdvancedBrep.
+        all_faces = []
+        for shell in shells:
+            all_faces.extend(build(shell))
+        ifc_shell = model.create("IfcClosedShell", CfsFaces=all_faces)
+        ifc_brep = model.create("IfcAdvancedBrep", Outer=ifc_shell)
 
         ifc_breps.append(ifc_brep)
 
     if not ifc_breps:
         # compas_occ may lose solid topology (e.g. for boolean-cut bodies
         # or compounds).  Fall back to treating each shell as a separate solid.
+        # BRepBuilderAPI_Sewing can also leave inner-void faces as orphans
+        # (not inside any shell).  Detect these and merge them into the shell.
         shells = list(brep.shells)
         if not shells:
             raise ValueError("No solids or shells found in Brep — cannot create IfcAdvancedBrep")
 
         build = lambda shell: _build_shell_faces(shell, model, get_ifc_bspline_edge, get_ifc_line_edge, get_ifc_circle_edge, get_ifc_ellipse_edge, degenerate_edges)
 
-        for shell in shells:
-            outer_ifc_shell = model.create("IfcClosedShell", CfsFaces=build(shell))
-            ifc_brep = model.create("IfcAdvancedBrep", Outer=outer_ifc_shell)
+        # Detect orphan faces: faces in the compound but not in any shell.
+        orphan_faces = _find_orphan_faces(brep)
+
+        if orphan_faces and len(shells) == 1:
+            # Single outer shell + orphan void faces → merge into one IfcAdvancedBrep.
+            all_faces = build(shells[0])
+            all_faces.extend(_build_orphan_faces(
+                orphan_faces, model, get_ifc_bspline_edge, get_ifc_line_edge,
+                get_ifc_circle_edge, get_ifc_ellipse_edge, degenerate_edges,
+            ))
+            ifc_shell = model.create("IfcClosedShell", CfsFaces=all_faces)
+            ifc_brep = model.create("IfcAdvancedBrep", Outer=ifc_shell)
             ifc_breps.append(ifc_brep)
+        else:
+            for shell in shells:
+                outer_ifc_shell = model.create("IfcClosedShell", CfsFaces=build(shell))
+                ifc_brep = model.create("IfcAdvancedBrep", Outer=outer_ifc_shell)
+                ifc_breps.append(ifc_brep)
 
     return ifc_breps
 
@@ -455,3 +460,48 @@ def _face_to_ifc_nurbs_surface(face, model):
         WeightsData=ifc_weights,
     )
     return model.file.from_entity(entity)
+
+
+def _find_orphan_faces(brep):
+    """Return a list of OCC faces present in the brep compound but not in any shell.
+
+    After BRepBuilderAPI_Sewing, inner-void faces of a boolean-cut solid may be
+    left as loose faces in the compound rather than being included in a shell.
+    """
+    from OCC.Core.TopExp import TopExp_Explorer
+    from OCC.Core.TopAbs import TopAbs_FACE, TopAbs_SHELL
+    from OCC.Core.TopoDS import topods
+
+    shell_face_hashes = set()
+    for shell in brep.shells:
+        exp = TopExp_Explorer(shell.occ_shape, TopAbs_FACE)
+        while exp.More():
+            shell_face_hashes.add(exp.Current().__hash__())
+            exp.Next()
+
+    orphans = []
+    exp = TopExp_Explorer(brep.occ_shape, TopAbs_FACE)
+    while exp.More():
+        face = exp.Current()
+        if face.__hash__() not in shell_face_hashes:
+            orphans.append(topods.Face(face))
+        exp.Next()
+    return orphans
+
+
+def _build_orphan_faces(orphan_faces, model, get_bspline, get_line, get_circle, get_ellipse, degenerate_edges):
+    """Convert orphan OCC faces (not in any shell) to IfcAdvancedFace entities."""
+    from compas_occ.brep import OCCBrep
+    from OCC.Core.BRep import BRep_Builder
+    from OCC.Core.TopoDS import TopoDS_Shell
+
+    builder = BRep_Builder()
+    shell = TopoDS_Shell()
+    builder.MakeShell(shell)
+    for face in orphan_faces:
+        builder.Add(shell, face)
+
+    shell_brep = OCCBrep.from_native(shell)
+    return _build_shell_faces(
+        shell_brep, model, get_bspline, get_line, get_circle, get_ellipse, degenerate_edges,
+    )

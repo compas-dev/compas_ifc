@@ -48,6 +48,13 @@ Known pitfalls with OCC geometry generation:
   - Surfaces of revolution and linear extrusion also fall through to NURBS,
     since IFC4 AdvancedFace only supports Plane, Cylindrical, Spherical,
     Toroidal, and BSpline surfaces.
+  - compas_occ's from_step() calls heal() -> sew() (BRepBuilderAPI_Sewing),
+    which destroys inner/outer shell topology of boolean-cut solids. A solid
+    with 2 shells (outer box + inner void sphere) becomes a single flat shell
+    with the void face as an orphan. The converter detects and recovers these.
+  - IfcAdvancedBrepWithVoids is correct per IFC spec but fails to render in
+    most viewers. All void faces are merged into a single IfcClosedShell as
+    a plain IfcAdvancedBrep instead.
 
 Run with:
     python scripts/8.1_brep_generate.py

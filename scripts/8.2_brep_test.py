@@ -18,6 +18,20 @@ Known viewer limitations (not converter bugs):
   - Spheres and tori with seam edges may render with visible seams in
     viewers that don't handle periodic surfaces well.
 
+Known converter compromises:
+  - IfcAdvancedBrepWithVoids is poorly supported by viewers (tested in
+    multiple viewers — the entire solid fails to render). As a workaround,
+    solids with inner voids (e.g. hollow_box) are flattened into a single
+    IfcAdvancedBrep with all faces (outer + void) merged into one
+    IfcClosedShell. This renders correctly but loses the semantic
+    distinction between outer shell and void shells.
+    TODO: revisit once viewer support for IfcAdvancedBrepWithVoids improves.
+  - compas_occ's OCCBrep.from_step() calls heal() -> sew() which uses
+    BRepBuilderAPI_Sewing. This destroys inner/outer shell topology of
+    boolean-cut solids (merges 2 shells into 1, leaving void faces as
+    orphans outside any shell). The converter detects these orphan faces
+    and merges them back into the single IfcClosedShell.
+
 Run with:
     python scripts/8.2_brep_test.py
 """
@@ -309,8 +323,9 @@ print("# TOPOLOGY CASES")
 print("#" * 60)
 
 results["hollow_box"] = run_test(
-    name="Hollow box: IfcAdvancedBrep (boolean cut result)",
+    name="Hollow box: IfcAdvancedBrep with inner void (boolean cut result)",
     step_file="hollow_box.stp",
+    expected_surface_types=["IfcPlane", "IfcSphericalSurface"],
 )
 
 results["box_with_hole"] = run_test(
