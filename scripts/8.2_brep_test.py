@@ -11,6 +11,13 @@ Tests each generated STEP file by:
 Automatically discovers all .stp files in temp/brep_conversion_tests/
 and runs registered tests against them.
 
+Known viewer limitations (not converter bugs):
+  - box_with_hole: some viewers show tessellation misalignment at the
+    cylinder-plane boundary. The IFC structure is correct (shared edges,
+    proper inner bounds). This is a viewer tessellation issue.
+  - Spheres and tori with seam edges may render with visible seams in
+    viewers that don't handle periodic surfaces well.
+
 Run with:
     python scripts/8.2_brep_test.py
 """

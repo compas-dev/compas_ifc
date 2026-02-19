@@ -10,6 +10,7 @@ from compas.tolerance import TOL
 from compas_ifc.entities.base import Base
 from compas_ifc.model import Model
 
+from .frame import create_IfcAxis2Placement3D
 from .primitives import frame_to_IfcAxis2Placement3D
 from .primitives import frame_to_IfcPlane
 from .primitives import point_to_IfcCartesianPoint
@@ -81,7 +82,9 @@ def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
 
     def get_ifc_circle_edge(edge):
         c = edge.curve
-        key = "{:.6f},{:.6f},{:.6f}-{:.6f}".format(*c.frame.point, c.radius)
+        sv = TOL.geometric_key(edge.first_vertex.point)
+        ev = TOL.geometric_key(edge.last_vertex.point)
+        key = "{:.6f},{:.6f},{:.6f}-{:.6f}-{}-{}".format(*c.frame.point, c.radius, sv, ev)
         return circles.get(key), key
 
     def get_ifc_ellipse_edge(edge):
@@ -94,7 +97,9 @@ def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
         loc = ellipse.Location().Coord()
         a = ellipse.MajorRadius()
         b = ellipse.MinorRadius()
-        key = "{:.6f},{:.6f},{:.6f}-{:.6f}-{:.6f}".format(*loc, a, b)
+        sv = TOL.geometric_key(edge.first_vertex.point)
+        ev = TOL.geometric_key(edge.last_vertex.point)
+        key = "{:.6f},{:.6f},{:.6f}-{:.6f}-{:.6f}-{}-{}".format(*loc, a, b, sv, ev)
         return ellipses.get(key), key
 
     # ------------------------------------------------------------------ #
@@ -116,7 +121,8 @@ def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
                 continue
 
             start_vertex = get_ifc_vertex(edge.first_vertex.point)
-            end_vertex = start_vertex if edge.curve.is_closed else get_ifc_vertex(edge.last_vertex.point)
+            is_closed = TOL.geometric_key(edge.first_vertex.point) == TOL.geometric_key(edge.last_vertex.point)
+            end_vertex = start_vertex if is_closed else get_ifc_vertex(edge.last_vertex.point)
 
             curve = edge.curve
             control_points = [get_ifc_point(point) for point in curve.points]
@@ -186,7 +192,8 @@ def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
 
             c = edge.curve
             start_vertex = get_ifc_vertex(edge.first_vertex.point)
-            end_vertex = start_vertex if c.is_closed else get_ifc_vertex(edge.last_vertex.point)
+            is_closed = TOL.geometric_key(edge.first_vertex.point) == TOL.geometric_key(edge.last_vertex.point)
+            end_vertex = start_vertex if is_closed else get_ifc_vertex(edge.last_vertex.point)
 
             IfcCircle = model.create(
                 "IfcCircle",
@@ -217,7 +224,7 @@ def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
                 loc = ellipse.Location().Coord()
                 xdir = ellipse.XAxis().Direction().Coord()
                 zdir = ellipse.Axis().Direction().Coord()
-                placement = frame_to_IfcAxis2Placement3D(model, Frame(loc, xdir, zdir))
+                placement = create_IfcAxis2Placement3D(model, loc, zdir, xdir)
 
                 start_vertex = get_ifc_vertex(edge.first_vertex.point)
                 is_closed = TOL.geometric_key(edge.first_vertex.point) == TOL.geometric_key(edge.last_vertex.point)
@@ -275,22 +282,18 @@ def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
         ifc_breps.append(ifc_brep)
 
     if not ifc_breps:
-        # compas_occ may lose solid topology (e.g. for boolean-cut bodies).
-        # Fall back to treating all shells as one solid.
+        # compas_occ may lose solid topology (e.g. for boolean-cut bodies
+        # or compounds).  Fall back to treating each shell as a separate solid.
         shells = list(brep.shells)
         if not shells:
             raise ValueError("No solids or shells found in Brep — cannot create IfcAdvancedBrep")
 
         build = lambda shell: _build_shell_faces(shell, model, get_ifc_bspline_edge, get_ifc_line_edge, get_ifc_circle_edge, get_ifc_ellipse_edge, degenerate_edges)
 
-        if len(shells) == 1:
-            outer_ifc_shell = model.create("IfcClosedShell", CfsFaces=build(shells[0]))
+        for shell in shells:
+            outer_ifc_shell = model.create("IfcClosedShell", CfsFaces=build(shell))
             ifc_brep = model.create("IfcAdvancedBrep", Outer=outer_ifc_shell)
-        else:
-            outer_ifc_shell = model.create("IfcClosedShell", CfsFaces=build(shells[0]))
-            void_ifc_shells = [model.create("IfcClosedShell", CfsFaces=build(s)) for s in shells[1:]]
-            ifc_brep = model.create("IfcAdvancedBrepWithVoids", Outer=outer_ifc_shell, Voids=void_ifc_shells)
-        ifc_breps.append(ifc_brep)
+            ifc_breps.append(ifc_brep)
 
     return ifc_breps
 

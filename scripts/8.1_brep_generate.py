@@ -34,6 +34,21 @@ Edge cases:
 
 Output directory: temp/brep_conversion_tests/
 
+Known pitfalls with OCC geometry generation:
+  - gp_Trsf does not support non-uniform scaling. Using BRepBuilderAPI_Transform
+    with SetValues(sx, sy, sz) silently collapses a scaled sphere back to a
+    sphere with an averaged radius. Use BRepBuilderAPI_GTransform + gp_GTrsf
+    for true non-uniform scaling (e.g. ellipsoid).
+  - BRepPrimAPI_MakeSphere(R, angle) sweeps azimuthally (around Z), producing
+    a quarter-sphere with vertical seam planes. For a hemisphere with a flat
+    cap, use MakeSphere(R, angle1, angle2) with latitude bounds instead.
+  - Cones (IfcConicalSurface) do not exist in IFC4 or IFC4X3. Conical faces
+    are converted to NURBS (IfcRationalBSplineSurfaceWithKnots) automatically
+    by the converter.
+  - Surfaces of revolution and linear extrusion also fall through to NURBS,
+    since IFC4 AdvancedFace only supports Plane, Cylindrical, Spherical,
+    Toroidal, and BSpline surfaces.
+
 Run with:
     python scripts/8.1_brep_generate.py
 """
@@ -44,6 +59,7 @@ import math
 
 from OCC.Core.BRep import BRep_Builder
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_GTransform
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace, BRepBuilderAPI_Transform
 from OCC.Core.BRepFilletAPI import BRepFilletAPI_MakeFillet, BRepFilletAPI_MakeChamfer
@@ -64,7 +80,7 @@ from OCC.Core.TopExp import TopExp_Explorer
 from OCC.Core.TopAbs import TopAbs_EDGE
 from OCC.Core.TopoDS import TopoDS_Compound
 from OCC.Core.gp import (
-    gp_Ax1, gp_Ax2, gp_Dir, gp_Pnt, gp_Trsf, gp_Vec, gp_OX, gp_OZ,
+    gp_Ax1, gp_Ax2, gp_Dir, gp_GTrsf, gp_Pnt, gp_Trsf, gp_Vec, gp_OX, gp_OZ,
 )
 
 
@@ -154,7 +170,10 @@ sphere = BRepPrimAPI_MakeSphere(1.5).Shape()
 save_step(sphere, "sphere")
 
 # 1e. Hemisphere (partial sphere — plane cap + spherical surface)
-hemisphere = BRepPrimAPI_MakeSphere(1.5, math.pi / 2).Shape()
+# MakeSphere(R, angle1, angle2) uses latitude bounds, giving a proper
+# 2-face hemisphere (dome + flat cap). MakeSphere(R, angle) uses azimuthal
+# sweep and creates a quarter-sphere with extra seam planes.
+hemisphere = BRepPrimAPI_MakeSphere(1.5, 0, math.pi / 2).Shape()
 save_step(hemisphere, "hemisphere")
 
 # 1f. Toroidal surface (full torus — periodic in both U and V)
@@ -183,16 +202,17 @@ save_step(wedge, "wedge")
 
 print("\n--- Edge types ---")
 
-# 2a. Ellipse edges (ellipsoid — sphere stretched in Z)
-# OCC doesn't have MakeEllipsoid directly; scale a sphere non-uniformly
+# 2a. Ellipse edges (ellipsoid — sphere stretched non-uniformly)
+# OCC doesn't have MakeEllipsoid directly; scale a sphere non-uniformly.
+# Must use BRepBuilderAPI_GTransform (general transform) instead of
+# BRepBuilderAPI_Transform, because gp_Trsf doesn't support non-uniform
+# scaling and collapses the ellipsoid back to a sphere.
 sphere_for_ellipsoid = BRepPrimAPI_MakeSphere(1.0).Shape()
-trsf = gp_Trsf()
-trsf.SetValues(
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 0.7, 0.0, 0.0,
-    0.0, 0.0, 1.5, 0.0,
-)
-ellipsoid = BRepBuilderAPI_Transform(sphere_for_ellipsoid, trsf, True).Shape()
+gtrsf = gp_GTrsf()
+gtrsf.SetValue(1, 1, 1.0)
+gtrsf.SetValue(2, 2, 0.7)
+gtrsf.SetValue(3, 3, 1.5)
+ellipsoid = BRepBuilderAPI_GTransform(sphere_for_ellipsoid, gtrsf, True).Shape()
 save_step(ellipsoid, "ellipsoid")
 
 # 2b. BSpline curve edges (NURBS pillow solid)
