@@ -99,8 +99,9 @@ class IFCFile(object):
         self.use_occ = use_occ
         if filepath is None:
             self._file = ifcopenshell.file(schema=schema)
-            self._file.wrapped_data.header.file_name.author = ["Unknown Author"]
-            self._file.wrapped_data.header.file_name.organization = ["Unknown Organization"]
+            file_name = self._file.wrapped_data.header().file_name_py()
+            file_name.author = ["Unknown Author"]
+            file_name.organization = ["Unknown Organization"]
             if self.verbose:
                 print("IFC file created in schema: {}".format(schema))
         else:

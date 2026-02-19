@@ -388,7 +388,6 @@ class Model(Data):
                 model.create("IfcBuildingStorey", parent=building, Name=f"Default Storey {j+1}")
 
         model.unit = unit
-        model.update_linear_deflection()
         return model
 
     # Helper functions to create specific IFC entities
