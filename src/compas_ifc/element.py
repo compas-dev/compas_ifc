@@ -1,0 +1,296 @@
+from typing import Optional
+from typing import Union
+
+from compas.datastructures import Mesh
+from compas.geometry import Box
+from compas.geometry import Brep
+from compas.geometry import Point
+from compas.geometry import Transformation
+from compas_model.elements import Element
+
+from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
+
+
+class GenericElement(Element):
+    """A unified element representing any building component in an IFC model.
+
+    This class extends ``compas_model.Element`` to bridge IFC entity data
+    with the compas_model infrastructure. It provides a clean, minimal API
+    for accessing element properties while keeping a reference to the
+    underlying IFC entity for advanced access.
+
+    All IFC product subclasses (IfcWall, IfcSlab, IfcBeam, etc.) as well as
+    spatial containers (IfcSite, IfcBuilding, IfcBuildingStorey) are represented
+    uniformly as ``GenericElement`` instances with different ``ifc_type`` values.
+
+    Parameters
+    ----------
+    ifc_type : str, optional
+        The IFC class name (e.g. "IfcWall", "IfcSlab", "IfcBuildingStorey").
+    geometry : Brep | Mesh, optional
+        The geometry of the element.
+    transformation : Transformation, optional
+        The local transformation relative to the parent element.
+    name : str, optional
+        The name of the element.
+
+    User-facing attributes
+    ----------------------
+    ifc_type : str
+        The IFC class name of the element.
+    global_id : str
+        The IFC GlobalId of the element.
+    geometry : TessellatedBrep | Brep | Mesh
+        The geometry of the element (lazy-loaded from IFC).
+    properties : dict
+        Unified dict merging IFC schema attributes and property sets.
+    style : dict
+        Visual style attributes (color, transparency).
+    is_spatial : bool
+        Whether this element is a spatial container.
+    ifc_entity : Base
+        Escape hatch to the underlying raw IFC entity (read-only).
+
+    """
+
+    @property
+    def __data__(self) -> dict:
+        data = super().__data__
+        data["ifc_type"] = self.ifc_type
+        data["global_id"] = self._global_id
+        data["properties"] = self._properties
+        return data
+
+    def __init__(
+        self,
+        ifc_type: str = "IfcGenericElementProxy",
+        geometry: Optional[Union[Brep, Mesh]] = None,
+        transformation: Optional[Transformation] = None,
+        name: Optional[str] = None,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            geometry=geometry,
+            transformation=transformation,
+            name=name,
+            **kwargs,
+        )
+        self.ifc_type = ifc_type
+        self._ifc_entity = None
+        self._global_id = None
+        self._properties = None
+        self._style = None
+
+    def __repr__(self) -> str:
+        return f"<GenericElement {self.ifc_type} '{self.name}'>"
+
+    def __str__(self) -> str:
+        return f"<GenericElement {self.ifc_type} '{self.name}'>"
+
+    # ==========================================================================
+    # User-facing API
+    # ==========================================================================
+
+    @property
+    def ifc_entity(self):
+        """The underlying raw IFC entity (read-only escape hatch).
+
+        Returns ``None`` for elements created programmatically without an IFC source.
+        """
+        return self._ifc_entity
+
+    @property
+    def global_id(self) -> Optional[str]:
+        """The IFC GlobalId of the element."""
+        if self._global_id is None and self._ifc_entity is not None:
+            self._global_id = self._ifc_entity.GlobalId
+        return self._global_id
+
+    @global_id.setter
+    def global_id(self, value: str) -> None:
+        self._global_id = value
+
+    @property
+    def properties(self) -> dict:
+        """Unified properties of the element.
+
+        Merges IFC schema attributes (Name, Description, ObjectType, etc.)
+        and property sets (Pset_WallCommon, etc.) into a single flat dict.
+        Lazy-loaded from the IFC entity on first access.
+
+        The top-level keys include both individual IFC attributes and
+        property set names. Property set values are nested dicts.
+        """
+        if self._properties is None:
+            if self._ifc_entity is not None:
+                self._properties = self._load_properties()
+            else:
+                self._properties = {}
+        return self._properties
+
+    @properties.setter
+    def properties(self, value: dict) -> None:
+        self._properties = value
+
+    @property
+    def style(self) -> dict:
+        """Visual style attributes (color, transparency) from the IFC entity."""
+        if self._style is None:
+            if self._ifc_entity is not None:
+                self._style = self._ifc_entity.style
+            else:
+                self._style = {}
+        return self._style
+
+    @style.setter
+    def style(self, value: dict) -> None:
+        self._style = value
+
+    @property
+    def is_spatial(self) -> bool:
+        """Whether this element is a spatial container (site, building, storey, space)."""
+        spatial_types = {"IfcSite", "IfcBuilding", "IfcBuildingStorey", "IfcSpace", "IfcFacility", "IfcFacilityPart"}
+        return self.ifc_type in spatial_types
+
+    @property
+    def geometry(self):
+        """The geometry of the element.
+
+        Lazy-loaded from the underlying IFC entity on first access.
+        Returns a TessellatedBrep, Brep, or Mesh depending on how the
+        geometry was loaded.
+        """
+        if self._geometry is None and self._ifc_entity is not None:
+            geom = self._ifc_entity.geometry
+            if geom is not None:
+                self._geometry = geom
+        return self._geometry
+
+    @geometry.setter
+    def geometry(self, geometry) -> None:
+        self._geometry = geometry
+
+    # ==========================================================================
+    # Internal helpers
+    # ==========================================================================
+
+    def _load_properties(self) -> dict:
+        """Merge IFC schema attributes and property sets into a unified dict."""
+        props = {}
+
+        # IFC schema attributes (Name, Description, ObjectType, Tag, etc.)
+        entity = self._ifc_entity
+        for attr_name in ("Description", "ObjectType", "Tag", "PredefinedType"):
+            val = getattr(entity, attr_name, None)
+            if val is not None:
+                props[attr_name] = val
+
+        # Property sets (Pset_WallCommon, PSet_Revit_*, etc.)
+        psets = entity.property_sets
+        if psets:
+            props.update(psets)
+
+        return props
+
+    # ==========================================================================
+    # compas_model.Element abstract method implementations
+    # ==========================================================================
+
+    def compute_elementgeometry(self, include_features: bool = False):
+        return self.geometry
+
+    def compute_aabb(self, inflate: float = 1.0) -> Optional[Box]:
+        geom = self.elementgeometry
+        if geom is None:
+            return None
+        if hasattr(geom, "aabb"):
+            return geom.aabb
+        if isinstance(geom, Mesh):
+            from compas.geometry import bounding_box
+
+            pts = geom.vertices_attributes("xyz")
+            bb = bounding_box(pts)
+            return Box.from_bounding_box(bb)
+        return None
+
+    def compute_obb(self, inflate: float = 1.0) -> Optional[Box]:
+        geom = self.elementgeometry
+        if geom is None:
+            return None
+        if hasattr(geom, "obb"):
+            return geom.obb
+        return self.compute_aabb(inflate)
+
+    def compute_collision_mesh(self, inflate: float = 1.0) -> Optional[Mesh]:
+        geom = self.elementgeometry
+        if geom is None:
+            return None
+        if isinstance(geom, Mesh):
+            return geom
+        if hasattr(geom, "to_tesselation") or hasattr(geom, "to_mesh"):
+            try:
+                return geom.to_tesselation()
+            except Exception:
+                pass
+            try:
+                return geom.to_mesh()
+            except Exception:
+                pass
+        return None
+
+    def compute_point(self) -> Optional[Point]:
+        geom = self.elementgeometry
+        if geom is None:
+            return None
+        if hasattr(geom, "centroid"):
+            c = geom.centroid
+            if isinstance(c, Point):
+                return c
+            return Point(*c)
+        return None
+
+    def compute_surface_mesh(self, meshsize_min=None, meshsize_max=None) -> Optional[Mesh]:
+        return self.compute_collision_mesh()
+
+    def compute_volumetric_mesh(self, meshsize_min=None, meshsize_max=None):
+        return None
+
+    # ==========================================================================
+    # Construction
+    # ==========================================================================
+
+    @classmethod
+    def from_ifc_entity(cls, ifc_entity, file=None) -> "GenericElement":
+        """Create a GenericElement from a raw IFC entity.
+
+        This computes the **global** transformation from the IFC placement chain.
+        The caller is responsible for converting it to a local (relative-to-parent)
+        transformation when adding to the model tree.
+
+        Parameters
+        ----------
+        ifc_entity : :class:`compas_ifc.entities.base.Base`
+            The wrapped IFC entity.
+        file : :class:`compas_ifc.file.IFCFile`, optional
+            The IFC file (for geometry pre-loading).
+
+        Returns
+        -------
+        GenericElement
+
+        """
+        element = cls(
+            ifc_type=ifc_entity.is_a(),
+            name=getattr(ifc_entity, "Name", None) or "",
+        )
+        element._ifc_entity = ifc_entity
+        element._global_id = getattr(ifc_entity, "GlobalId", None)
+
+        # Compute global transformation from IFC placement chain
+        if hasattr(ifc_entity, "ObjectPlacement") and ifc_entity.ObjectPlacement:
+            global_transform = IfcLocalPlacement_to_transformation(ifc_entity.ObjectPlacement)
+            element._global_transform = global_transform
+        else:
+            element._global_transform = Transformation()
+
+        return element

@@ -20,6 +20,22 @@ class TessellatedBrep(Geometry):
         self.edges = np.array(edges).reshape(-1, 2)
         self.faces = np.array(faces).reshape(-1, 3)
 
+    @property
+    def __data__(self):
+        return {
+            "vertices": self.vertices.tolist(),
+            "edges": self.edges.tolist(),
+            "faces": self.faces.tolist(),
+        }
+
+    @classmethod
+    def __from_data__(cls, data):
+        return cls(
+            vertices=data["vertices"],
+            edges=data["edges"],
+            faces=data["faces"],
+        )
+
     def transform(self, transformation):
         self.vertices = transform_points_numpy(self.vertices, transformation)
 
