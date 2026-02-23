@@ -604,6 +604,111 @@ class BuildingInformationModel(Model):
         """
         self.save(path)
 
+    def extract(
+        self,
+        elements,
+        path: str = None,
+        load_geometries: bool = True,
+        export_materials: bool = True,
+        export_properties: bool = True,
+        export_styles: bool = True,
+        export_types: bool = True,
+    ) -> "BuildingInformationModel":
+        """Extract elements into a new standalone BuildingInformationModel.
+
+        Collects the given elements and all their descendants, exports them to
+        a new IFC file preserving all linked information (geometry, placements,
+        properties, materials, styles, type definitions), then loads the result
+        as a new model.
+
+        Ancestor spatial containers (IfcProject → IfcSite → IfcBuilding →
+        IfcBuildingStorey) are included automatically so the extracted file is
+        a valid, self-contained IFC file.
+
+        Parameters
+        ----------
+        elements : GenericElement or list[GenericElement]
+            Element(s) to extract. All descendants are included automatically.
+        path : str, optional
+            If given, the extracted IFC file is saved to this path.
+            If None, a temporary file is used and cleaned up after loading.
+        load_geometries : bool, optional
+            Whether to pre-load geometries in the extracted model. Default True.
+        export_materials : bool, optional
+            Whether to export material associations. Default True.
+        export_properties : bool, optional
+            Whether to export property sets. Default True.
+        export_styles : bool, optional
+            Whether to export visual styles. Default True.
+        export_types : bool, optional
+            Whether to export type definitions (IfcRelDefinesByType). Default True.
+
+        Returns
+        -------
+        BuildingInformationModel
+            A new standalone model containing only the extracted elements.
+
+        """
+        import os
+        import tempfile
+
+        # Normalize input
+        if isinstance(elements, GenericElement):
+            elements = [elements]
+
+        # Collect all IFC entities: given elements + all their descendants
+        ifc_entities = []
+        seen = set()
+
+        def _collect(element):
+            eid = id(element)
+            if eid in seen:
+                return
+            seen.add(eid)
+            if element._ifc_entity is not None:
+                ifc_entities.append(element._ifc_entity)
+            for child in element.children:
+                _collect(child)
+
+        for element in elements:
+            _collect(element)
+
+        if not ifc_entities:
+            raise ValueError("No IFC entities found in the given elements.")
+
+        # Export to file (IFCFile.export handles spatial ancestors, deduplication,
+        # and all linked info: properties, materials, styles, types)
+        use_temp = path is None
+        if use_temp:
+            fd, temp_path = tempfile.mkstemp(suffix=".ifc")
+            os.close(fd)
+            export_path = temp_path
+        else:
+            export_path = path
+
+        self._file.export(
+            export_path,
+            entities=ifc_entities,
+            export_materials=export_materials,
+            export_properties=export_properties,
+            export_styles=export_styles,
+            export_types=export_types,
+        )
+
+        # Load extracted IFC into a new model
+        new_model = BuildingInformationModel(
+            filepath=export_path,
+            schema=self.schema_name,
+            load_geometries=load_geometries,
+        )
+
+        # If user specified a path, file is already there.
+        # If temp file, clean up.
+        if use_temp:
+            os.remove(temp_path)
+
+        return new_model
+
     # ==========================================================================
     # Display
     # ==========================================================================

@@ -353,7 +353,7 @@ class IFCFile(object):
         """
         self._file.write(path)
 
-    def export(self, path: str, entities: list[Base] = [], as_snippet: bool = False, export_materials: bool = True, export_properties: bool = True, export_styles: bool = True):
+    def export(self, path: str, entities: list[Base] = [], as_snippet: bool = False, export_materials: bool = True, export_properties: bool = True, export_styles: bool = True, export_types: bool = True):
         """
         Export a subset of the IFC file to a new IFC file.
 
@@ -371,6 +371,8 @@ class IFCFile(object):
             Whether to export properties. Default is True.
         export_styles : bool
             Whether to export styles. Default is True.
+        export_types : bool
+            Whether to export type definitions (IfcRelDefinesByType). Default is True.
 
         """
         new_file = IFCFile(None, schema=self.schema_name)
@@ -427,6 +429,11 @@ class IFCFile(object):
                 for style_item in entity.StyledByItem():
                     styles = [export_entity(s, file) for s in style_item.Styles]
                     file._create_entity("IfcStyledItem", Styles=styles, Item=new_entity)
+
+            if export_types and hasattr(entity, "IsTypedBy"):
+                for rel in entity.IsTypedBy():
+                    new_type = export_entity(rel.RelatingType, file)
+                    file._create_entity("IfcRelDefinesByType", RelatingType=new_type, RelatedObjects=[new_entity])
 
             return new_entity
 
