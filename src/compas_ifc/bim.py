@@ -971,6 +971,11 @@ class BuildingInformationModel(Model):
         """All space boundary edges (from ``IfcRelSpaceBoundary``)."""
         return self.get_interactions_by_category("space_boundary")
 
+    @property
+    def interferences(self) -> list:
+        """All interference/collision edges (from ``IfcRelInterferesElements`` or computed)."""
+        return self.get_interactions_by_category("interference")
+
     def edge_elements(self, edge) -> tuple:
         """Return the two GenericElements connected by a graph edge.
 
@@ -1169,6 +1174,133 @@ class BuildingInformationModel(Model):
                 new_connections += 1
 
         return new_connections
+
+    # ==========================================================================
+    # Automatic collision (interference) detection
+    # ==========================================================================
+
+    def compute_collisions(
+        self,
+        tolerance: float = 1e-6,
+        element_types: list = None,
+    ):
+        """Detect volumetric collisions (interferences) between building elements.
+
+        Uses the same two-stage broadphase as :meth:`compute_connections`:
+
+        1. BVH spatial search with inflated AABBs to find rough neighbours.
+        2. Tight world-space AABB overlap test to discard false positives.
+
+        Then performs ray-casting collision detection on remaining pairs.
+        Discovered collisions are stored as ``"interference"`` relationship
+        records on the interaction graph.
+
+        Parameters
+        ----------
+        tolerance : float, optional
+            Numerical tolerance for the ray-triangle intersection test.
+            Default ``1e-6``.
+        element_types : list[str], optional
+            IFC type names to include (e.g. ``["IfcWall", "IfcColumn"]``).
+            If ``None``, all non-spatial elements with geometry are considered.
+
+        Returns
+        -------
+        int
+            Number of new interference edges created.
+
+        """
+        from compas.geometry import Box
+        from compas.geometry import bounding_box
+        from compas_model.models.bvh import ElementBVH
+
+        from compas_ifc.brep.tessellatedbrep import TessellatedBrep
+
+        # ---- collect candidates ------------------------------------------------
+        candidates = []
+        for e in self.elements():
+            if e.is_spatial or e.geometry is None or e.treenode is None:
+                continue
+            if element_types is not None and e.ifc_type not in element_types:
+                continue
+            candidates.append(e)
+
+        if not candidates:
+            return 0
+
+        # ---- broadphase 1: BVH -------------------------------------------------
+        bvh = ElementBVH.from_elements(candidates)
+
+        # ---- pre-compute world AABBs for tight filter ---------------------------
+        world_aabbs = {}
+        for e in candidates:
+            mg = e.modelgeometry
+            if isinstance(mg, TessellatedBrep):
+                world_aabbs[id(e)] = Box.from_bounding_box(bounding_box(list(mg.vertices)))
+            elif hasattr(mg, "aabb"):
+                world_aabbs[id(e)] = mg.aabb
+            else:
+                world_aabbs[id(e)] = None
+
+        def _aabb_overlap(box_a, box_b, tol=0.01):
+            """Return True if two AABBs overlap within tolerance."""
+            if box_a is None or box_b is None:
+                return False
+            a_pts = box_a.points
+            b_pts = box_b.points
+            for i in range(3):
+                a_lo = min(p[i] for p in a_pts)
+                a_hi = max(p[i] for p in a_pts)
+                b_lo = min(p[i] for p in b_pts)
+                b_hi = max(p[i] for p in b_pts)
+                if a_lo > b_hi + tol or b_lo > a_hi + tol:
+                    return False
+            return True
+
+        # ---- narrowphase -------------------------------------------------------
+        new_collisions = 0
+        seen_pairs = set()
+
+        for element in candidates:
+            neighbours = bvh.nearest_neighbors(element)
+            for neighbour in neighbours:
+                pair = frozenset((id(element), id(neighbour)))
+                if pair in seen_pairs:
+                    continue
+                seen_pairs.add(pair)
+
+                # broadphase 2: tight AABB overlap
+                if not _aabb_overlap(world_aabbs[id(element)], world_aabbs[id(neighbour)], tol=tolerance):
+                    continue
+
+                # narrowphase: ray-casting collision detection
+                penetrating = element.compute_collisions(neighbour, tolerance=tolerance)
+                if not penetrating:
+                    continue
+
+                # store on graph
+                node_a = element.graphnode
+                node_b = neighbour.graphnode
+                record = {"category": "interference", "source": "computed"}
+
+                if self.graph.has_edge((node_a, node_b)):
+                    edge = (node_a, node_b)
+                    rels = self.graph.edge_attribute(edge, "relationships") or []
+                    rels.append(record)
+                    self.graph.edge_attribute(edge, "relationships", rels)
+                    self.graph.edge_attribute(edge, "penetrating_points", penetrating)
+                elif self.graph.has_edge((node_b, node_a)):
+                    edge = (node_b, node_a)
+                    rels = self.graph.edge_attribute(edge, "relationships") or []
+                    rels.append(record)
+                    self.graph.edge_attribute(edge, "relationships", rels)
+                    self.graph.edge_attribute(edge, "penetrating_points", penetrating)
+                else:
+                    self.graph.add_edge(node_a, node_b, relationships=[record], penetrating_points=penetrating)
+
+                new_collisions += 1
+
+        return new_collisions
 
     # ==========================================================================
     # IFC Export

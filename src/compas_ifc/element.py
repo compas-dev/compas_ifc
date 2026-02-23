@@ -331,6 +331,49 @@ class GenericElement(Element):
 
         return []
 
+    def compute_collisions(
+        self,
+        other: "GenericElement",
+        tolerance: float = 1e-6,
+    ) -> list:
+        """Detect volumetric collision between this element and another.
+
+        Uses ray-casting to find vertices of one mesh that lie inside the
+        other.  Handles ``TessellatedBrep`` geometry by converting to
+        ``Mesh`` first.
+
+        Parameters
+        ----------
+        other : GenericElement
+            The other element.
+        tolerance : float, optional
+            Numerical tolerance for the ray-triangle intersection test.
+
+        Returns
+        -------
+        list[Point]
+            Penetrating vertices (empty if no collision).
+
+        """
+        from compas_ifc.algorithms.collisions import fast_mesh_mesh_collision
+        from compas_ifc.brep.tessellatedbrep import TessellatedBrep
+
+        a = self.modelgeometry
+        b = other.modelgeometry
+        if a is None or b is None:
+            return []
+
+        # Convert TessellatedBrep to Mesh for collision detection
+        if isinstance(a, TessellatedBrep):
+            a = a.to_mesh()
+        if isinstance(b, TessellatedBrep):
+            b = b.to_mesh()
+
+        if isinstance(a, Mesh) and isinstance(b, Mesh):
+            return fast_mesh_mesh_collision(a, b, tolerance=tolerance)
+
+        return []
+
     # ==========================================================================
     # Construction
     # ==========================================================================
