@@ -456,6 +456,9 @@ class BuildingInformationModel(Model):
         del self._rectified_count
         del self._rectify_verbose
 
+        # Populate interaction graph with non-spatial relationships
+        self._load_relationships_into_graph()
+
     def _load_children(self, ifc_entity, parent_element, parent_global_transform, rectify_placements=True):
         """Recursively load IFC children into the model tree.
 
@@ -584,6 +587,194 @@ class BuildingInformationModel(Model):
         except Exception:
             eid = "?"
         return f"IfcLocalPlacement (#{eid})"
+
+    # ==========================================================================
+    # Interaction Graph (non-spatial IFC relationships)
+    # ==========================================================================
+
+    def _add_graph_only_element(self, element):
+        """Add an element to the graph and element registry, but NOT the tree.
+
+        Used for IFC entities that participate in relationships (graph edges)
+        but are not part of the spatial hierarchy (e.g. ``IfcOpeningElement``).
+
+        Parameters
+        ----------
+        element : GenericElement
+            The element to register.
+
+        """
+        guid = str(element.guid)
+        self._elements[guid] = element
+        self.graph.add_element(element)
+        element.model = self
+        if element.global_id:
+            self._elements_by_global_id[element.global_id] = element
+
+    def _build_entity_lookup(self):
+        """Build a mapping from raw IFC entity id to GenericElement.
+
+        Returns
+        -------
+        dict[int, GenericElement]
+
+        """
+        lookup = {}
+        for element in self._elements.values():
+            if hasattr(element, "_ifc_entity") and element._ifc_entity is not None:
+                lookup[element._ifc_entity.entity.id()] = element
+        return lookup
+
+    def _load_relationships_into_graph(self):
+        """Populate the interaction graph from non-spatial IFC relationships.
+
+        Walks ``IfcRelVoidsElement``, ``IfcRelFillsElement``,
+        ``IfcRelConnectsPathElements``, and ``IfcRelSpaceBoundary`` in the IFC
+        file and creates graph edges with a ``category`` attribute.
+
+        ``IfcOpeningElement`` entities (not in the spatial tree) are added as
+        graph-only elements so they can serve as nodes for void/fill edges.
+        """
+        entity_lookup = self._build_entity_lookup()
+        stats = {"void": 0, "fill": 0, "connection": 0, "space_boundary": 0}
+
+        # --- A. IfcRelVoidsElement → category "void" ---
+        # Creates opening elements as graph-only nodes.
+        for rel in self._file.get_entities_by_type("IfcRelVoidsElement"):
+            host = rel.RelatingBuildingElement
+            opening = rel.RelatedOpeningElement
+
+            host_elem = entity_lookup.get(host.entity.id())
+            if host_elem is None:
+                continue
+
+            # Create graph-only element for the opening if not seen yet
+            opening_id = opening.entity.id()
+            opening_elem = entity_lookup.get(opening_id)
+            if opening_elem is None:
+                opening_elem = GenericElement.from_ifc_entity(opening, file=self._file)
+                # Compute local transform relative to host
+                host_global = getattr(host_elem, "_global_transform", None)
+                if host_global is None and host_elem.transformation is not None:
+                    host_global = host_elem.modeltransformation
+                if host_global is None:
+                    host_global = Transformation()
+                opening_global = getattr(opening_elem, "_global_transform", Transformation())
+                opening_elem.transformation = host_global.inverse() * opening_global
+                if hasattr(opening_elem, "_global_transform"):
+                    del opening_elem._global_transform
+
+                self._add_graph_only_element(opening_elem)
+                entity_lookup[opening_id] = opening_elem
+
+            edge = self.add_interaction(host_elem, opening_elem)
+            self.graph.edge_attribute(edge, "category", "void")
+            stats["void"] += 1
+
+        # --- B. IfcRelFillsElement → category "fill" ---
+        for rel in self._file.get_entities_by_type("IfcRelFillsElement"):
+            opening = rel.RelatingOpeningElement
+            filler = rel.RelatedBuildingElement
+
+            opening_elem = entity_lookup.get(opening.entity.id())
+            filler_elem = entity_lookup.get(filler.entity.id())
+
+            if opening_elem is None or filler_elem is None:
+                continue
+
+            edge = self.add_interaction(opening_elem, filler_elem)
+            self.graph.edge_attribute(edge, "category", "fill")
+            stats["fill"] += 1
+
+        # --- C. IfcRelConnectsPathElements → category "connection" ---
+        for rel in self._file.get_entities_by_type("IfcRelConnectsPathElements"):
+            elem_a = entity_lookup.get(rel.RelatingElement.entity.id())
+            elem_b = entity_lookup.get(rel.RelatedElement.entity.id())
+
+            if elem_a is None or elem_b is None:
+                continue
+
+            edge = self.add_interaction(elem_a, elem_b)
+            self.graph.edge_attribute(edge, "category", "connection")
+            stats["connection"] += 1
+
+        # --- D. IfcRelSpaceBoundary → category "space_boundary" ---
+        for rel in self._file.get_entities_by_type("IfcRelSpaceBoundary"):
+            space = rel.RelatingSpace
+            related = rel.RelatedBuildingElement
+
+            if related is None:
+                continue
+
+            space_elem = entity_lookup.get(space.entity.id())
+            related_elem = entity_lookup.get(related.entity.id())
+
+            if space_elem is None or related_elem is None:
+                continue
+
+            edge = self.add_interaction(space_elem, related_elem)
+            self.graph.edge_attribute(edge, "category", "space_boundary")
+            stats["space_boundary"] += 1
+
+        total = sum(stats.values())
+        if total > 0:
+            parts = [f"{v} {k}" for k, v in stats.items() if v > 0]
+            print(f"Loaded {total} graph edges: {', '.join(parts)}.")
+
+    # ---------- Graph queries ----------
+
+    def get_interactions_by_category(self, category: str) -> list:
+        """Get all graph edges of a specific category.
+
+        Parameters
+        ----------
+        category : str
+            The category string (e.g. ``"connection"``, ``"void"``, ``"fill"``,
+            ``"space_boundary"``).
+
+        Returns
+        -------
+        list[tuple[int, int]]
+            Graph edges matching the category.
+
+        """
+        return [edge for edge in self.graph.edges() if self.graph.edge_attribute(edge, "category") == category]
+
+    @property
+    def connections(self) -> list:
+        """All wall-to-wall connection edges (from ``IfcRelConnectsPathElements``)."""
+        return self.get_interactions_by_category("connection")
+
+    @property
+    def voids(self) -> list:
+        """All void/opening edges (from ``IfcRelVoidsElement``)."""
+        return self.get_interactions_by_category("void")
+
+    @property
+    def fills(self) -> list:
+        """All fill edges (from ``IfcRelFillsElement``)."""
+        return self.get_interactions_by_category("fill")
+
+    @property
+    def space_boundaries(self) -> list:
+        """All space boundary edges (from ``IfcRelSpaceBoundary``)."""
+        return self.get_interactions_by_category("space_boundary")
+
+    def edge_elements(self, edge) -> tuple:
+        """Return the two GenericElements connected by a graph edge.
+
+        Parameters
+        ----------
+        edge : tuple[int, int]
+            A graph edge.
+
+        Returns
+        -------
+        tuple[GenericElement, GenericElement]
+
+        """
+        u, v = edge
+        return self.graph.node_element(u), self.graph.node_element(v)
 
     # ==========================================================================
     # IFC Export
