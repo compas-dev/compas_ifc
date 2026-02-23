@@ -453,11 +453,13 @@ class IFCFile(object):
     def _export_mutual_relationships(self, new_file, exported):
         """Export non-spatial IFC relationships where both endpoints are already exported.
 
-        Walks ``IfcRelConnectsPathElements``, ``IfcRelVoidsElement``,
-        ``IfcRelFillsElement``, and ``IfcRelSpaceBoundary`` in the source file.
-        For each relationship, if all referenced building elements are present
-        in the ``exported`` dict, a corresponding relationship entity is created
-        in the new file.
+        Covers all relationship types that ``BuildingInformationModel`` loads
+        into its interaction graph: topology (voids, fills, connections, space
+        boundaries, coverings, interference, projections), structural, and MEP.
+
+        For each relationship in the source file, if all referenced entities
+        are present in the ``exported`` dict, a corresponding relationship
+        entity is created in ``new_file``.
 
         Parameters
         ----------
@@ -476,11 +478,58 @@ class IFCFile(object):
         count = 0
         oh = new_file.default_owner_history
 
-        # IfcRelConnectsPathElements (wall-to-wall connections)
-        for rel in self.get_entities_by_type("IfcRelConnectsPathElements"):
+        def _by_type(type_name):
+            """Query entities by type, returning [] for types missing in the schema."""
+            try:
+                return self.get_entities_by_type(type_name)
+            except RuntimeError:
+                return []
+
+        def _all_exported(*entities):
+            """Return True if all entities are non-None and in the exported dict."""
+            return all(e is not None and e in exported for e in entities)
+
+        def _exported_list(entities):
+            """Return exported counterparts for entities that are in the exported dict."""
+            return [exported[e] for e in entities if e in exported]
+
+        # ==================================================================
+        # Topology
+        # ==================================================================
+
+        # A. IfcRelVoidsElement (wall/slab -> opening)
+        for rel in _by_type("IfcRelVoidsElement"):
+            host = rel.RelatingBuildingElement
+            opening = rel.RelatedOpeningElement
+            if _all_exported(host, opening):
+                new_file._create_entity(
+                    "IfcRelVoidsElement",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingBuildingElement=exported[host],
+                    RelatedOpeningElement=exported[opening],
+                )
+                count += 1
+
+        # B. IfcRelFillsElement (opening -> door/window)
+        for rel in _by_type("IfcRelFillsElement"):
+            opening = rel.RelatingOpeningElement
+            filler = rel.RelatedBuildingElement
+            if _all_exported(opening, filler):
+                new_file._create_entity(
+                    "IfcRelFillsElement",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingOpeningElement=exported[opening],
+                    RelatedBuildingElement=exported[filler],
+                )
+                count += 1
+
+        # C. IfcRelConnectsPathElements (wall-to-wall path connections)
+        for rel in _by_type("IfcRelConnectsPathElements"):
             relating = rel.RelatingElement
             related = rel.RelatedElement
-            if relating in exported and related in exported:
+            if _all_exported(relating, related):
                 new_file._create_entity(
                     "IfcRelConnectsPathElements",
                     GlobalId=ifcopenshell.guid.new(),
@@ -494,39 +543,44 @@ class IFCFile(object):
                 )
                 count += 1
 
-        # IfcRelVoidsElement (wall/slab -> opening)
-        for rel in self.get_entities_by_type("IfcRelVoidsElement"):
-            host = rel.RelatingBuildingElement
-            opening = rel.RelatedOpeningElement
-            if host in exported and opening in exported:
+        # C2. IfcRelConnectsElements (generic, excluding subtypes)
+        for rel in _by_type("IfcRelConnectsElements"):
+            exact_type = rel.is_a()
+            if exact_type in ("IfcRelConnectsPathElements", "IfcRelConnectsWithRealizingElements"):
+                continue
+            relating = rel.RelatingElement
+            related = rel.RelatedElement
+            if _all_exported(relating, related):
                 new_file._create_entity(
-                    "IfcRelVoidsElement",
+                    "IfcRelConnectsElements",
                     GlobalId=ifcopenshell.guid.new(),
                     OwnerHistory=oh,
-                    RelatingBuildingElement=exported[host],
-                    RelatedOpeningElement=exported[opening],
+                    RelatingElement=exported[relating],
+                    RelatedElement=exported[related],
                 )
                 count += 1
 
-        # IfcRelFillsElement (opening -> door/window)
-        for rel in self.get_entities_by_type("IfcRelFillsElement"):
-            opening = rel.RelatingOpeningElement
-            filler = rel.RelatedBuildingElement
-            if opening in exported and filler in exported:
+        # C3. IfcRelConnectsWithRealizingElements
+        for rel in _by_type("IfcRelConnectsWithRealizingElements"):
+            relating = rel.RelatingElement
+            related = rel.RelatedElement
+            if _all_exported(relating, related):
+                realizing = _exported_list(rel.RealizingElements or [])
                 new_file._create_entity(
-                    "IfcRelFillsElement",
+                    "IfcRelConnectsWithRealizingElements",
                     GlobalId=ifcopenshell.guid.new(),
                     OwnerHistory=oh,
-                    RelatingOpeningElement=exported[opening],
-                    RelatedBuildingElement=exported[filler],
+                    RelatingElement=exported[relating],
+                    RelatedElement=exported[related],
+                    RealizingElements=realizing or None,
                 )
                 count += 1
 
-        # IfcRelSpaceBoundary (space <-> element)
-        for rel in self.get_entities_by_type("IfcRelSpaceBoundary"):
+        # D. IfcRelSpaceBoundary (space <-> element)
+        for rel in _by_type("IfcRelSpaceBoundary"):
             space = rel.RelatingSpace
             related = rel.RelatedBuildingElement
-            if related is not None and space in exported and related in exported:
+            if _all_exported(space, related):
                 new_file._create_entity(
                     "IfcRelSpaceBoundary",
                     GlobalId=ifcopenshell.guid.new(),
@@ -535,6 +589,172 @@ class IFCFile(object):
                     RelatedBuildingElement=exported[related],
                     PhysicalOrVirtualBoundary=rel.PhysicalOrVirtualBoundary or "NOTDEFINED",
                     InternalOrExternalBoundary=rel.InternalOrExternalBoundary or "NOTDEFINED",
+                )
+                count += 1
+
+        # E. IfcRelCoversBldgElements (host -> coverings)
+        for rel in _by_type("IfcRelCoversBldgElements"):
+            host = rel.RelatingBuildingElement
+            coverings = _exported_list(rel.RelatedCoverings or [])
+            if host in exported and coverings:
+                new_file._create_entity(
+                    "IfcRelCoversBldgElements",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingBuildingElement=exported[host],
+                    RelatedCoverings=coverings,
+                )
+                count += 1
+
+        # E2. IfcRelCoversSpaces (space -> coverings)
+        for rel in _by_type("IfcRelCoversSpaces"):
+            space = rel.RelatingSpace
+            coverings = _exported_list(rel.RelatedCoverings or [])
+            if space in exported and coverings:
+                new_file._create_entity(
+                    "IfcRelCoversSpaces",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingSpace=exported[space],
+                    RelatedCoverings=coverings,
+                )
+                count += 1
+
+        # F. IfcRelInterferesElements (IFC4+ only)
+        for rel in _by_type("IfcRelInterferesElements"):
+            relating = rel.RelatingElement
+            related = rel.RelatedElement
+            if _all_exported(relating, related):
+                kwargs = {
+                    "GlobalId": ifcopenshell.guid.new(),
+                    "OwnerHistory": oh,
+                    "RelatingElement": exported[relating],
+                    "RelatedElement": exported[related],
+                }
+                interference_type = getattr(rel, "InterferenceType", None)
+                if interference_type is not None:
+                    kwargs["InterferenceType"] = interference_type
+                new_file._create_entity("IfcRelInterferesElements", **kwargs)
+                count += 1
+
+        # G. IfcRelProjectsElement
+        for rel in _by_type("IfcRelProjectsElement"):
+            host = rel.RelatingElement
+            feature = rel.RelatedFeatureElement
+            if _all_exported(host, feature):
+                new_file._create_entity(
+                    "IfcRelProjectsElement",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingElement=exported[host],
+                    RelatedFeatureElement=exported[feature],
+                )
+                count += 1
+
+        # ==================================================================
+        # Structural
+        # ==================================================================
+
+        # H. IfcRelConnectsStructuralMember / IfcRelConnectsWithEccentricity
+        for rel in _by_type("IfcRelConnectsStructuralMember"):
+            exact_type = rel.is_a()
+            member = rel.RelatingStructuralMember
+            connection = rel.RelatedStructuralConnection
+            if _all_exported(member, connection):
+                new_file._create_entity(
+                    exact_type,
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingStructuralMember=exported[member],
+                    RelatedStructuralConnection=exported[connection],
+                )
+                count += 1
+
+        # I. IfcRelConnectsStructuralActivity
+        for rel in _by_type("IfcRelConnectsStructuralActivity"):
+            relating = rel.RelatingElement
+            activity = rel.RelatedStructuralActivity
+            if _all_exported(relating, activity):
+                new_file._create_entity(
+                    "IfcRelConnectsStructuralActivity",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingElement=exported[relating],
+                    RelatedStructuralActivity=exported[activity],
+                )
+                count += 1
+
+        # ==================================================================
+        # MEP
+        # ==================================================================
+
+        # J. IfcRelConnectsPorts
+        for rel in _by_type("IfcRelConnectsPorts"):
+            port_a = rel.RelatingPort
+            port_b = rel.RelatedPort
+            if _all_exported(port_a, port_b):
+                new_file._create_entity(
+                    "IfcRelConnectsPorts",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingPort=exported[port_a],
+                    RelatedPort=exported[port_b],
+                )
+                count += 1
+
+        # K. IfcRelConnectsPortToElement
+        for rel in _by_type("IfcRelConnectsPortToElement"):
+            port = rel.RelatingPort
+            element = rel.RelatedElement
+            if _all_exported(port, element):
+                new_file._create_entity(
+                    "IfcRelConnectsPortToElement",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingPort=exported[port],
+                    RelatedElement=exported[element],
+                )
+                count += 1
+
+        # L. IfcRelFlowControlElements (flow element -> control elements)
+        for rel in _by_type("IfcRelFlowControlElements"):
+            flow = rel.RelatingFlowElement
+            controls = _exported_list(rel.RelatedControlElements or [])
+            if flow in exported and controls:
+                new_file._create_entity(
+                    "IfcRelFlowControlElements",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingFlowElement=exported[flow],
+                    RelatedControlElements=controls,
+                )
+                count += 1
+
+        # M. IfcRelServicesBuildings (system -> buildings)
+        for rel in _by_type("IfcRelServicesBuildings"):
+            system = rel.RelatingSystem
+            buildings = _exported_list(rel.RelatedBuildings or [])
+            if system in exported and buildings:
+                new_file._create_entity(
+                    "IfcRelServicesBuildings",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingSystem=exported[system],
+                    RelatedBuildings=buildings,
+                )
+                count += 1
+
+        # N. IfcRelReferencedInSpatialStructure (spatial -> elements)
+        for rel in _by_type("IfcRelReferencedInSpatialStructure"):
+            structure = rel.RelatingStructure
+            elements = _exported_list(rel.RelatedElements or [])
+            if structure in exported and elements:
+                new_file._create_entity(
+                    "IfcRelReferencedInSpatialStructure",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingStructure=exported[structure],
+                    RelatedElements=elements,
                 )
                 count += 1
 

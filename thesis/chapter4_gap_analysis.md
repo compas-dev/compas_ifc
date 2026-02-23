@@ -41,12 +41,13 @@ Today's session completed the core implementation in 3 commits:
 
 4. **Pydantic validation** — `validation.py` module with Pydantic BaseModel schemas for 8 standard IFC property sets (Pset_WallCommon, Pset_SlabCommon, Pset_DoorCommon, Pset_WindowCommon, Pset_BeamCommon, Pset_ColumnCommon, Pset_SpaceCommon, Pset_RoofCommon). `Specification` dataclass mirrors IDS structure (applicability + requirements). Advisory `model.validate(specs)` for bulk reporting + optional enforcement via `model.specifications` list checked in `add_element()`. On the Duplex model: 146 checks, 145 pass, 1 fail. Pydantic schema is 79% more concise than equivalent IDS XML (14 vs 68 lines). JSON Schema export comes free via `model_json_schema()`.
 
+5. **Relationship export** — `_export_mutual_relationships()` expanded from 4 to all 14 relationship types (topology + structural + MEP). Schema-safe across IFC2X3/IFC4. Both `extract()` and `file.export()` benefit automatically. Tested with storey extraction: 169 relationship records exported across 135 unique edges.
+
 ### What remains
 
-- **Relationship export** — Graph edge `relationships` records → IFC relationship entities on export (topology + structural + MEP)
 - **Automatic connection creation** — Use `compas_model`'s contact detection (`compute_contacts()`) to automatically create `IfcRelConnectsElements` relationships between touching elements, bridging geometric proximity and semantic connectivity
 - **Geometry pre-loading** — Migrate multiprocessing-based geometry loading
-- **Abstract method implementations** — `compute_aabb`, `compute_point`, `compute_elementgeometry`, `collision_mesh`, `surface_mesh`
+- **Convenience queries** — by name, by storey, by material (by type already works)
 - **Evaluation scripts** — One per thesis section (4.6.1–4.6.5)
 
 ---
@@ -159,14 +160,14 @@ class BuildingElement(compas_model.Element):
 | `modeltransformation` (composed global) | compas_model.Element | **FREE** — auto-computed from ancestors |
 | Scene-graph propagation (move parent → moves children) | compas_model.Element | **FREE** |
 | `parent` / `children` | compas_model.Element | **FREE** |
-| `aabb` / `obb` | compas_model.Element (needs `compute_aabb`) | **BUILD** — implement abstract method, delegate to geometry |
-| `point` (centroid) | compas_model.Element (needs `compute_point`) | **BUILD** — implement, delegate to geometry centroid |
-| `collision_mesh` / `surface_mesh` | compas_model.Element (needs implementations) | **BUILD** — delegate to geometry.to_mesh() or similar |
-| `elementgeometry` | compas_model.Element (needs `compute_elementgeometry`) | **BUILD** — return stored geometry (identity for IFC imports) |
+| `aabb` / `obb` | compas_model.Element (needs `compute_aabb`) | **DONE** — delegates to geometry.aabb / geometry.obb, with Mesh fallback |
+| `point` (centroid) | compas_model.Element (needs `compute_point`) | **DONE** — delegates to geometry.centroid |
+| `collision_mesh` / `surface_mesh` | compas_model.Element (needs implementations) | **DONE** — delegates to geometry.to_tesselation() / to_mesh() |
+| `elementgeometry` | compas_model.Element (needs `compute_elementgeometry`) | **DONE** — returns stored geometry |
 | `_ifc_entity` reference | update/compas_model draft | **DONE** — stored on GenericElement, accessible as escape hatch |
 | `type` attribute (string → IFC class mapping) | thesis concept | **DONE** — `ifc_type` property on GenericElement |
 | `properties` (unified dict, lazy-loaded from _ifc_entity) | current Base.property_sets | **DONE** — bi-directional setter syncs to IFC file |
-| Pydantic validation | not implemented | **BUILD** |
+| Pydantic validation | not implemented | **DONE** — `validation.py` module with Specification + enforcement on `add_element()` |
 | Lazy loading of all properties from `_ifc_entity` | not implemented | **PARTIAL** — properties load from IFC entity; full lazy-loading pattern still evolving |
 
 ### 3. Spatial Hierarchy (Tree)
@@ -191,7 +192,7 @@ class BuildingElement(compas_model.Element):
 | **Two-level semantic query API** | NOT in compas_model | **DONE** — `RELATIONSHIP_GROUPS` constant defines three groups (topology, structural, MEP); `get_interactions_by_group()` and `get_interactions_by_category()` provide two-level filtering |
 | **Multi-record edge storage** | NOT in compas_model | **DONE** — each edge stores a `relationships` list of dicts preserving every IFC relationship instance (e.g. multiple space boundary levels between same pair); `edge_relationships(edge)` accessor |
 | IFC spatial relationship import → graph edges | not implemented | **DONE** — `_load_relationships_into_graph()` imports topology (voids, fills, connections, space boundaries, coverings, interference, projections), structural (member/activity), and MEP (ports, flow control, services, spatial references). Schema-safe across IFC2X3/IFC4/IFC4X3 |
-| IFC relationship export ← graph edges | not implemented | **BUILD** |
+| IFC relationship export ← graph edges | not implemented | **DONE** — `_export_mutual_relationships()` exports all 14 relationship types; used by both `extract()` and `file.export()` |
 | Automatic connection creation via contact detection | compas_model.Model.compute_contacts() | **PLANNED** — use AABB/collision detection to auto-generate `IfcRelConnectsElements` edges |
 
 ### 5. Pydantic Validation
@@ -316,7 +317,7 @@ These work well and should survive the refactor:
 
 1. ~~**Foundation:** Add compas_model dep, create BuildingModel + GenericElement skeletons~~ **DONE**
 2. ~~**Import pipeline:** IFC file → GenericElements → tree (with rectified transforms)~~ **DONE**
-3. **Abstract methods:** Implement `compute_elementgeometry`, `compute_aabb`, `compute_point`, etc.
+3. ~~**Abstract methods:** Implement `compute_elementgeometry`, `compute_aabb`, `compute_point`, etc.~~ **DONE**
 4. ~~**Basic export:** Tree → IFC file (using existing converters)~~ **DONE** (bi-directional sync)
 5. ~~**Interaction graph:** Import non-hierarchical IFC relationships as edges with categories~~ **DONE**
 6. **Automatic connections:** Use contact detection to auto-create `IfcRelConnectsElements` between touching elements
