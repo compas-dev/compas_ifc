@@ -1041,6 +1041,136 @@ class BuildingInformationModel(Model):
             )
 
     # ==========================================================================
+    # Automatic connection detection
+    # ==========================================================================
+
+    def compute_connections(
+        self,
+        tolerance: float = 1e-3,
+        minimum_area: float = 1e-2,
+        element_types: list = None,
+    ):
+        """Detect geometric contacts between building elements and add them as connection edges.
+
+        Uses a two-stage broadphase filter:
+
+        1. BVH spatial search with inflated AABBs to find rough neighbours.
+        2. Tight world-space AABB overlap test to discard false positives.
+
+        Then performs face-level contact detection on remaining pairs.
+        Discovered contacts are stored as ``"connection"`` relationship records
+        on the interaction graph, alongside any existing relationships.
+
+        Parameters
+        ----------
+        tolerance : float, optional
+            Distance tolerance for the coplanarity check (metres). Default ``1e-3``.
+        minimum_area : float, optional
+            Minimum area of a valid contact polygon (m²). Default ``1e-2``.
+        element_types : list[str], optional
+            IFC type names to include (e.g. ``["IfcWall", "IfcWallStandardCase",
+            "IfcSlab"]``).  If ``None``, all non-spatial elements with geometry
+            are considered.
+
+        Returns
+        -------
+        int
+            Number of new connection edges created.
+
+        """
+        from compas.geometry import Box
+        from compas.geometry import bounding_box
+        from compas_model.models.bvh import ElementBVH
+
+        from compas_ifc.brep.tessellatedbrep import TessellatedBrep
+
+        # ---- collect candidates ------------------------------------------------
+        candidates = []
+        for e in self.elements():
+            if e.is_spatial or e.geometry is None or e.treenode is None:
+                continue
+            if element_types is not None and e.ifc_type not in element_types:
+                continue
+            candidates.append(e)
+
+        if not candidates:
+            return 0
+
+        # ---- broadphase 1: BVH -------------------------------------------------
+        bvh = ElementBVH.from_elements(candidates)
+
+        # ---- pre-compute world AABBs for tight filter ---------------------------
+        world_aabbs = {}
+        for e in candidates:
+            mg = e.modelgeometry
+            if isinstance(mg, TessellatedBrep):
+                world_aabbs[id(e)] = Box.from_bounding_box(bounding_box(list(mg.vertices)))
+            elif hasattr(mg, "aabb"):
+                world_aabbs[id(e)] = mg.aabb
+            else:
+                world_aabbs[id(e)] = None
+
+        def _aabb_overlap(box_a, box_b, tol=0.01):
+            """Return True if two AABBs overlap within tolerance."""
+            if box_a is None or box_b is None:
+                return False
+            a_pts = box_a.points
+            b_pts = box_b.points
+            for i in range(3):
+                a_lo = min(p[i] for p in a_pts)
+                a_hi = max(p[i] for p in a_pts)
+                b_lo = min(p[i] for p in b_pts)
+                b_hi = max(p[i] for p in b_pts)
+                if a_lo > b_hi + tol or b_lo > a_hi + tol:
+                    return False
+            return True
+
+        # ---- narrowphase -------------------------------------------------------
+        new_connections = 0
+        seen_pairs = set()
+
+        for element in candidates:
+            neighbours = bvh.nearest_neighbors(element)
+            for neighbour in neighbours:
+                pair = frozenset((id(element), id(neighbour)))
+                if pair in seen_pairs:
+                    continue
+                seen_pairs.add(pair)
+
+                # broadphase 2: tight AABB overlap
+                if not _aabb_overlap(world_aabbs[id(element)], world_aabbs[id(neighbour)], tol=tolerance):
+                    continue
+
+                # narrowphase: face-level contact detection
+                contacts = element.compute_contacts(neighbour, tolerance=tolerance, minimum_area=minimum_area)
+                if not contacts:
+                    continue
+
+                # store on graph
+                node_a = element.graphnode
+                node_b = neighbour.graphnode
+                record = {"category": "connection", "source": "computed"}
+
+                if self.graph.has_edge((node_a, node_b)):
+                    edge = (node_a, node_b)
+                    rels = self.graph.edge_attribute(edge, "relationships") or []
+                    rels.append(record)
+                    self.graph.edge_attribute(edge, "relationships", rels)
+                    self.graph.edge_attribute(edge, "contacts", contacts)
+                elif self.graph.has_edge((node_b, node_a)):
+                    edge = (node_b, node_a)
+                    rels = self.graph.edge_attribute(edge, "relationships") or []
+                    rels.append(record)
+                    self.graph.edge_attribute(edge, "relationships", rels)
+                    self.graph.edge_attribute(edge, "contacts", contacts)
+                else:
+                    self.graph.add_edge(node_a, node_b, relationships=[record], contacts=contacts)
+
+                new_connections += 1
+
+        return new_connections
+
+    # ==========================================================================
     # IFC Export
     # ==========================================================================
 

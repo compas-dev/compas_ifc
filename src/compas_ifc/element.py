@@ -1,4 +1,5 @@
 from typing import Optional
+from typing import Type
 from typing import Union
 
 from compas.datastructures import Mesh
@@ -9,6 +10,7 @@ from compas.geometry import Point
 from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
+from compas_model.interactions import Contact
 
 from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
 
@@ -278,6 +280,56 @@ class GenericElement(Element):
 
     def compute_volumetric_mesh(self, meshsize_min=None, meshsize_max=None):
         return None
+
+    def compute_contacts(
+        self,
+        other: "GenericElement",
+        tolerance: float = 1e-6,
+        minimum_area: float = 1e-2,
+        contacttype: Type[Contact] = Contact,
+    ) -> list:
+        """Compute contacts between this element and another element.
+
+        Extends the base implementation to handle ``TessellatedBrep`` geometry
+        by converting it to ``Mesh`` before computing contacts.
+
+        Parameters
+        ----------
+        other : GenericElement
+            The other element.
+        tolerance : float, optional
+            Distance tolerance for coplanarity check.
+        minimum_area : float, optional
+            Minimum area of a valid contact polygon.
+        contacttype : type, optional
+            Contact class to instantiate.
+
+        Returns
+        -------
+        list[Contact]
+
+        """
+        from compas_ifc.brep.tessellatedbrep import TessellatedBrep
+        from compas_model.algorithms.contacts import brep_brep_contacts
+        from compas_model.algorithms.contacts import mesh_mesh_contacts
+
+        a = self.modelgeometry
+        b = other.modelgeometry
+        if a is None or b is None:
+            return []
+
+        # Convert TessellatedBrep to Mesh for contact detection
+        if isinstance(a, TessellatedBrep):
+            a = a.to_mesh()
+        if isinstance(b, TessellatedBrep):
+            b = b.to_mesh()
+
+        if isinstance(a, Mesh) and isinstance(b, Mesh):
+            return mesh_mesh_contacts(a, b, tolerance=tolerance, minimum_area=minimum_area, contacttype=contacttype)
+        elif isinstance(a, Brep) and isinstance(b, Brep):
+            return brep_brep_contacts(a, b, tolerance=tolerance, minimum_area=minimum_area, contacttype=contacttype)
+
+        return []
 
     # ==========================================================================
     # Construction

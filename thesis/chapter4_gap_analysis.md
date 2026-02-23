@@ -45,10 +45,53 @@ Today's session completed the core implementation in 3 commits:
 
 ### What remains
 
-- **Automatic connection creation** — Use `compas_model`'s contact detection (`compute_contacts()`) to automatically create `IfcRelConnectsElements` relationships between touching elements, bridging geometric proximity and semantic connectivity
+- **~~Automatic connection creation~~** — **DONE** — see § Automatic Connection Detection below
 - **Geometry pre-loading** — Migrate multiprocessing-based geometry loading
 - **Convenience queries** — by name, by storey, by material (by type already works)
 - **Evaluation scripts** — One per thesis section (4.6.1–4.6.5)
+
+### Automatic Connection Detection (2026-02-23)
+
+**Implementation:** `GenericElement.compute_contacts()` (element.py) + `BuildingInformationModel.compute_connections()` (bim.py). Test script: `scripts/9.10_auto_connections_test.py`.
+
+**How it works:**
+1. `GenericElement.compute_contacts()` overrides `compas_model.Element.compute_contacts()` to handle `TessellatedBrep` geometry (the default IFC geometry type that is neither `Mesh` nor `Brep`) by converting it to `compas.Mesh` before calling `mesh_mesh_contacts`. Also dispatches to `brep_brep_contacts` when `use_occ=True`.
+2. `compute_connections()` runs a two-stage broadphase pipeline:
+   - **Stage 1:** BVH spatial search (inflated 1.2× AABBs, from `compas_model`)
+   - **Stage 2:** Tight world-space AABB overlap test — reduces candidates dramatically (1596 → 150 for Duplex walls)
+   - **Narrowphase:** `mesh_mesh_contacts` on surviving pairs
+3. Discovered contacts are stored as `"connection"` edges (with `"source": "computed"`) in the interaction graph, alongside any existing IFC-imported relationships.
+4. Accepts `element_types` filter (e.g. `["IfcWall", "IfcWallStandardCase"]`) to scope the search.
+
+**Duplex model results (57 walls):**
+
+| Metric | Count |
+|---|---|
+| Original IFC connections (`IfcRelConnectsPathElements`) | 78 |
+| Auto-discovered connections | 99 |
+| Recovered (overlap) | 64 (82%) |
+| Missed (in IFC, not auto-found) | 14 |
+| Newly found (not in IFC) | 35 |
+
+**Analysis:**
+- **82% recovery rate** — the geometric method rediscovers most IFC-defined connections.
+- **14 missed:** Mostly thin furring walls (38mm stud) that connect end-to-end. Their contact areas fall below the `minimum_area` threshold on tessellated geometry, or the triangulated normals don't align as precisely opposing. IFC defines these as path connections (topological), not face contacts (geometric).
+- **35 new:** Real geometric contacts that `IfcRelConnectsPathElements` does not capture: wall-to-foundation contacts, stacked exterior walls between floors, etc. These are valid adjacencies that the IFC authoring tool's "wall join" logic never created.
+
+**Limitations to address in future work:**
+
+1. **Performance — O(n×m) face-pair loop (17–18s for 57 walls).** The bottleneck is `mesh_mesh_contacts` in `compas_model`, which iterates all face pairs between two meshes in pure Python. For walls with 76–112 triangular faces each, this means ~8k comparisons per pair × 150 pairs. Potential improvements:
+   - *Face-normal pre-grouping:* Bucket faces by quantised normal direction; only pair buckets with opposing normals. Would reduce per-pair work by ~6× for typical wall meshes.
+   - *Per-face AABB tree:* Spatial index on individual faces to skip distant face pairs entirely.
+   - *C-level implementation:* Move the hot loop to compiled code (upstream `compas_model` improvement).
+
+2. **Tessellated geometry mismatch.** `mesh_mesh_contacts` checks for *exactly* opposing face normals. Tessellated IFC geometry produces triangulated faces that may not be perfectly coplanar even on nominally flat surfaces, causing near-miss false negatives. A tolerance on the normal opposition check (currently strict `is_opposite_normal_normal`) would improve recall.
+
+3. **Path connections vs face contacts.** IFC's `IfcRelConnectsPathElements` represents *topological* wall-join relationships (L-joins, T-joins, etc.) which do not require shared face area — just edge adjacency. The geometric contact method inherently requires a shared face polygon with area ≥ `minimum_area`. Thin walls that join end-on have zero (or sub-threshold) shared face area. Recovering these would require an *edge-adjacency* detection mode in addition to face-contact detection.
+
+4. **No IFC relationship generation yet.** Currently `compute_connections()` only creates graph edges with `"source": "computed"`. It does not yet generate `IfcRelConnectsElements` entities in the IFC file. This would require a write-back step: for each new computed connection edge, create the corresponding IFC relationship entity via `model.create()`.
+
+5. **Element type scoping.** Without `element_types` filter, including all 215 elements (railings, furniture, stairs with 700–1100 faces) would make the BVH produce thousands of false-positive pairs and push runtime to minutes. The `element_types` parameter is essential for practical use but requires the user to know which types to include.
 
 ---
 
@@ -193,7 +236,7 @@ class BuildingElement(compas_model.Element):
 | **Multi-record edge storage** | NOT in compas_model | **DONE** — each edge stores a `relationships` list of dicts preserving every IFC relationship instance (e.g. multiple space boundary levels between same pair); `edge_relationships(edge)` accessor |
 | IFC spatial relationship import → graph edges | not implemented | **DONE** — `_load_relationships_into_graph()` imports topology (voids, fills, connections, space boundaries, coverings, interference, projections), structural (member/activity), and MEP (ports, flow control, services, spatial references). Schema-safe across IFC2X3/IFC4/IFC4X3 |
 | IFC relationship export ← graph edges | not implemented | **DONE** — `_export_mutual_relationships()` exports all 14 relationship types; used by both `extract()` and `file.export()` |
-| Automatic connection creation via contact detection | compas_model.Model.compute_contacts() | **PLANNED** — use AABB/collision detection to auto-generate `IfcRelConnectsElements` edges |
+| Automatic connection creation via contact detection | compas_model.Model.compute_contacts() | **DONE** — `compute_connections()` with two-stage broadphase (BVH + tight AABB); 82% recovery on Duplex walls; see § Automatic Connection Detection for limitations |
 
 ### 5. Pydantic Validation
 
@@ -320,7 +363,7 @@ These work well and should survive the refactor:
 3. ~~**Abstract methods:** Implement `compute_elementgeometry`, `compute_aabb`, `compute_point`, etc.~~ **DONE**
 4. ~~**Basic export:** Tree → IFC file (using existing converters)~~ **DONE** (bi-directional sync)
 5. ~~**Interaction graph:** Import non-hierarchical IFC relationships as edges with categories~~ **DONE**
-6. **Automatic connections:** Use contact detection to auto-create `IfcRelConnectsElements` between touching elements
+6. ~~**Automatic connections:** Use contact detection to auto-create `IfcRelConnectsElements` between touching elements~~ **DONE** (82% recovery on Duplex walls; limitations documented)
 7. ~~**Pydantic validation:** Replace jsonschema~~ **DONE** (8 Pset schemas, Specification, advisory + enforcement)
 8. **Evaluation scripts:** One per thesis section
 9. **Polish:** Convenience API, edge cases, docs
