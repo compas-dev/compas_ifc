@@ -30,12 +30,19 @@ Today's session completed the core implementation in 3 commits:
 
 2. **Element extraction** (`1cb7f5a`) — `extract_elements()` method that creates self-contained sub-models from selected elements, with options to preserve geometry, properties, materials, styles, and type definitions.
 
-3. **Non-hierarchical spatial relationship graph** (`4f3e3a5`) — `_load_relationships_into_graph()` imports non-hierarchical spatial relationships as typed edges in the interaction graph: topology (voids, fills, connections, space boundaries, coverings, interference, projections) and connectivity (ports, structural members/activities, flow control, services, spatial references). Non-spatial relationships (type definitions, materials, group assignments, external references, decomposition) are excluded — they are accessible via `_ifc_entity`.
+3. **Non-hierarchical spatial relationship graph** (`4f3e3a5`, refined in follow-up) — `_load_relationships_into_graph()` imports non-hierarchical spatial relationships as typed edges in the interaction graph, organized into three groups:
+   - **Topology** — voids, fills, connections, space boundaries, coverings, interference, projections
+   - **Structural** — structural member/activity relationships
+   - **MEP** — port connections, port-element links, flow control, services, spatial references
+
+   Non-spatial relationships (type definitions, materials, group assignments, external references, decomposition) are excluded — they are accessible via `_ifc_entity`.
+
+   Edge storage preserves **every IFC relationship instance**: each edge carries a `relationships` list of dicts (one record per IFC relationship), so multiple relationships between the same element pair (e.g. multiple space boundary levels, wall connections at both ends) are not collapsed. Two-level query API: `get_interactions_by_group("topology")` and `get_interactions_by_category("connection")`. Schema-safe across IFC2X3/IFC4/IFC4X3.
 
 ### What remains
 
 - **Pydantic validation** — Replace jsonschema with Pydantic for element property validation
-- **Relationship export** — Topology graph edges → IFC relationship entities on export (voids, fills, connections, space boundaries, coverings, interference, projections)
+- **Relationship export** — Graph edge `relationships` records → IFC relationship entities on export (topology + structural + MEP)
 - **Automatic connection creation** — Use `compas_model`'s contact detection (`compute_contacts()`) to automatically create `IfcRelConnectsElements` relationships between touching elements, bridging geometric proximity and semantic connectivity
 - **Geometry pre-loading** — Migrate multiprocessing-based geometry loading
 - **Abstract method implementations** — `compute_aabb`, `compute_point`, `compute_elementgeometry`, `collision_mesh`, `surface_mesh`
@@ -180,8 +187,9 @@ class BuildingElement(compas_model.Element):
 | Graph structure | compas_model.InteractionGraph | **FREE** |
 | Edge storage (modifiers, contacts) | compas_model.InteractionGraph | **FREE** |
 | Contact detection | compas_model.Model.compute_contacts() | **FREE** (once `compute_aabb` etc. are implemented) |
-| **Category/semantic filtering** | NOT in compas_model | **DONE** — edges have `category` attribute; filtered query via `get_interactions_by_category()` |
-| IFC spatial relationship import → graph edges | not implemented | **DONE** — `_load_relationships_into_graph()` imports topology (voids, fills, connections, space boundaries, coverings, interference, projections) and connectivity (ports, structural, flow control, services, spatial references) |
+| **Two-level semantic query API** | NOT in compas_model | **DONE** — `RELATIONSHIP_GROUPS` constant defines three groups (topology, structural, MEP); `get_interactions_by_group()` and `get_interactions_by_category()` provide two-level filtering |
+| **Multi-record edge storage** | NOT in compas_model | **DONE** — each edge stores a `relationships` list of dicts preserving every IFC relationship instance (e.g. multiple space boundary levels between same pair); `edge_relationships(edge)` accessor |
+| IFC spatial relationship import → graph edges | not implemented | **DONE** — `_load_relationships_into_graph()` imports topology (voids, fills, connections, space boundaries, coverings, interference, projections), structural (member/activity), and MEP (ports, flow control, services, spatial references). Schema-safe across IFC2X3/IFC4/IFC4X3 |
 | IFC relationship export ← graph edges | not implemented | **BUILD** |
 | Automatic connection creation via contact detection | compas_model.Model.compute_contacts() | **PLANNED** — use AABB/collision detection to auto-generate `IfcRelConnectsElements` edges |
 
@@ -258,9 +266,16 @@ BuildingModel (= IfcProject-level)
 
 Spatial containers simply have no geometry. Uniform interface, no special classes.
 
-### Q3: InteractionGraph — **Edge attributes, spatial relationships only**
+### Q3: InteractionGraph — **Multi-record edges, three relationship groups, two-level query API**
 
-The interaction graph stores non-hierarchical spatial relationships in two groups: topology (voids, fills, connections, space boundaries, coverings, interference, projections) and connectivity (ports, structural, flow control, services, spatial references). Non-spatial relationships (type definitions, materials, group assignments, external references, decomposition) are excluded — they are accessible via `_ifc_entity`. Edge `category` attribute distinguishes relationship types; no subclassing needed.
+The interaction graph stores non-hierarchical spatial relationships in three groups:
+- **Topology** — voids, fills, connections, space boundaries, coverings, interference, projections
+- **Structural** — structural member/activity relationships
+- **MEP** — port connections, port-element links, flow control, services, spatial references
+
+Non-spatial relationships (type definitions, materials, group assignments, external references, decomposition) are excluded — they are accessible via `_ifc_entity`.
+
+Each edge stores a `relationships` list of dicts (one record per IFC relationship instance), preserving multiplicity. For example, the Duplex model has 407 IFC relationship instances mapped to 358 unique graph edges, with 39 edges carrying multiple records (e.g. multiple space boundary levels between the same space and wall, or walls connecting at both ends). Two-level query API: `get_interactions_by_group("topology")` filters by group; `get_interactions_by_category("connection")` filters by individual category. `RELATIONSHIP_GROUPS` class constant maps group names to category sets.
 
 ### Q4: Transformations — **Compute relative transforms during import**
 

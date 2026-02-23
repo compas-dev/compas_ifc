@@ -135,12 +135,18 @@ print(f"\nAll graph edges: {len(all_edges)}")
 print(f"All group edges: {len(all_group_edges)}")
 print(f"Coverage: {all_group_edges == all_edges}")
 
-# Check multi-category edges
-multi = [edge for edge in model.graph.edges() if len(model.graph.edge_attribute(edge, "categories") or set()) > 1]
-print(f"\nMulti-category edges: {len(multi)}")
+# Verify total relationship records == IFC relationship count
+total_records = sum(len(model.edge_relationships(edge)) for edge in model.graph.edges())
+print(f"\nTotal relationship records: {total_records}")
+print(f"Total unique edges: {len(all_edges)}")
+
+# Edges with multiple relationship records
+multi = [edge for edge in model.graph.edges() if len(model.edge_relationships(edge)) > 1]
+print(f"Edges with multiple records: {len(multi)}")
 for edge in multi[:5]:
     a, b = model.edge_elements(edge)
-    cats = model.graph.edge_attribute(edge, "categories")
-    print(f"  {a.ifc_type} '{a.name}' <-> {b.ifc_type} '{b.name}': {cats}")
+    rels = model.edge_relationships(edge)
+    cats = [r["category"] for r in rels]
+    print(f"  {a.ifc_type} '{a.name}' <-> {b.ifc_type} '{b.name}': {len(rels)}x {cats}")
 
 print("\nDone!")

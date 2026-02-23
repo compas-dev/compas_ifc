@@ -697,21 +697,22 @@ class BuildingInformationModel(Model):
             return elem
 
         def _add_edge(elem_a, elem_b, category, **attrs):
-            """Add an interaction edge with category and optional extra attributes.
+            """Add a relationship record to the interaction edge between two elements.
 
-            Categories are stored as a set so that parallel IFC relationships
-            between the same element pair accumulate rather than overwrite.
+            Each IFC relationship instance is stored as a separate record in the
+            edge's ``relationships`` list, preserving multiplicity (e.g. multiple
+            space boundaries between the same space and wall).
             """
             if elem_a is None or elem_b is None:
                 return None
             edge = self.add_interaction(elem_a, elem_b)
-            existing = self.graph.edge_attribute(edge, "categories")
-            if existing is None:
-                existing = set()
-            existing.add(category)
-            self.graph.edge_attribute(edge, "categories", existing)
-            for k, v in attrs.items():
-                self.graph.edge_attribute(edge, k, v)
+            rels = self.graph.edge_attribute(edge, "relationships")
+            if rels is None:
+                rels = []
+            record = {"category": category}
+            record.update(attrs)
+            rels.append(record)
+            self.graph.edge_attribute(edge, "relationships", rels)
             _stat(category)
             return edge
 
@@ -881,12 +882,26 @@ class BuildingInformationModel(Model):
 
     # ---------- Graph queries ----------
 
-    def get_interactions_by_category(self, category: str) -> list:
-        """Get all graph edges that include a specific category.
+    def edge_relationships(self, edge) -> list:
+        """Return the list of relationship records stored on a graph edge.
 
-        An edge may carry multiple categories (e.g. both ``"connection"`` and
-        ``"space_boundary"`` if the same element pair has both relationship
-        types in the IFC file).
+        Each record is a dict with at least a ``"category"`` key. Additional
+        keys depend on the relationship type (e.g. ``"interference_type"``).
+
+        Parameters
+        ----------
+        edge : tuple[int, int]
+            A graph edge.
+
+        Returns
+        -------
+        list[dict]
+
+        """
+        return self.graph.edge_attribute(edge, "relationships") or []
+
+    def get_interactions_by_category(self, category: str) -> list:
+        """Get all graph edges that have at least one relationship of a given category.
 
         Parameters
         ----------
@@ -900,12 +915,13 @@ class BuildingInformationModel(Model):
             Graph edges that include the category.
 
         """
-        return [edge for edge in self.graph.edges() if category in (self.graph.edge_attribute(edge, "categories") or set())]
+        return [edge for edge in self.graph.edges() if any(r["category"] == category for r in self.edge_relationships(edge))]
 
     def get_interactions_by_group(self, group: str) -> list:
         """Get all graph edges belonging to a relationship group.
 
-        Returns edges that have at least one category in the group.
+        Returns edges that have at least one relationship whose category
+        belongs to the group.
 
         Parameters
         ----------
@@ -926,7 +942,7 @@ class BuildingInformationModel(Model):
         group_categories = self.RELATIONSHIP_GROUPS.get(group)
         if group_categories is None:
             raise ValueError(f"Unknown group '{group}'. Choose from: {', '.join(self.RELATIONSHIP_GROUPS)}")
-        return [edge for edge in self.graph.edges() if (self.graph.edge_attribute(edge, "categories") or set()) & group_categories]
+        return [edge for edge in self.graph.edges() if any(r["category"] in group_categories for r in self.edge_relationships(edge))]
 
     @property
     def connections(self) -> list:
