@@ -43,9 +43,14 @@ Today's session completed the core implementation in 3 commits:
 
 5. **Relationship export** — `_export_mutual_relationships()` expanded from 4 to all 14 relationship types (topology + structural + MEP). Schema-safe across IFC2X3/IFC4. Both `extract()` and `file.export()` benefit automatically. Tested with storey extraction: 169 relationship records exported across 135 unique edges.
 
+6. **Automatic connection detection** — `compute_connections()` with vectorized NumPy broadphase (`fast_mesh_mesh_contacts` in `algorithms/contacts.py`). Two-stage candidate filtering (BVH + tight AABB). 82% recovery rate on Duplex walls (99 auto-discovered vs 78 IFC-defined). 14× faster than `compas_model`'s `mesh_mesh_contacts` (1.25s vs 17.9s). See § Automatic Connection Detection for detailed analysis.
+
+7. **Collision / interference detection** — `compute_collisions()` with ray-casting point-in-mesh (`fast_mesh_mesh_collision` in `algorithms/collisions.py`). Fully vectorized Möller–Trumbore ray-triangle intersection with XY perturbation and minimum surface distance filter. 16 collisions on Duplex in ~7s. Interactive viewer via `show_collisions()` with collision list sidebar, red/green pair highlighting, and toggle isolation. See § Collision Detection.
+
 ### What remains
 
 - **~~Automatic connection creation~~** — **DONE** — see § Automatic Connection Detection below
+- **~~Collision / interference detection~~** — **DONE** — see § Collision Detection below
 - **Geometry pre-loading** — Migrate multiprocessing-based geometry loading
 - **Convenience queries** — by name, by storey, by material (by type already works)
 - **Evaluation scripts** — One per thesis section (4.6.1–4.6.5)
@@ -92,15 +97,76 @@ The initial implementation used `mesh_mesh_contacts` from `compas_model`, which 
 
 This vectorized approach should be upstreamed into `compas_model` itself, replacing the current `mesh_mesh_contacts` implementation.  The API is identical; only the inner algorithm changes.
 
-**Remaining limitations:**
+**Remaining limitations and how to recover missed connections:**
 
-1. **Tessellated geometry mismatch.** `is_opposite_normal_normal` checks for *exactly* opposing face normals (dot ≈ −1 within `rtol=1e-3`). Tessellated IFC geometry produces triangulated faces that may not be perfectly coplanar even on nominally flat surfaces, causing near-miss false negatives. A more tolerant normal opposition check would improve recall.
+Diagnostic analysis of the 14 missed connections reveals three distinct failure modes:
 
-2. **Path connections vs face contacts.** IFC's `IfcRelConnectsPathElements` represents *topological* wall-join relationships (L-joins, T-joins, etc.) which do not require shared face area — just edge adjacency. The geometric contact method inherently requires a shared face polygon with area ≥ `minimum_area`. Thin walls that join end-on have zero (or sub-threshold) shared face area. Recovering these would require an *edge-adjacency* detection mode in addition to face-contact detection.
+**Category A — Small contact area on thin walls (8 of 14).** The 38mm furring walls form L-joins where the shared face is only 54mm × 288mm = ~0.0078 m², below the default `minimum_area=0.01`. These contacts *are* detected when `minimum_area` is lowered to 0.001.  **Recovery: lower `minimum_area` or make it proportional to the thinnest wall dimension.** A value of 0.005 m² would recover all 8 without significant false-positive risk.
 
-3. **No IFC relationship generation yet.** Currently `compute_connections()` only creates graph edges with `"source": "computed"`. It does not yet generate `IfcRelConnectsElements` entities in the IFC file. This would require a write-back step: for each new computed connection edge, create the corresponding IFC relationship entity via `model.create()`.
+**Category B — Non-touching walls (2 of 14).** The partition-to-furring pairs have an AABB gap of 28mm or 152mm — the walls genuinely do not touch in the geometry. IFC defines these as path connections (topological intent: "these walls are joined") even though there is a physical gap in the tessellated model (likely a modelling imprecision or a connection through a layer that was subtracted).  **Recovery: not possible with geometric contact detection alone.** These would require either (a) an inflated tolerance that risks false positives, or (b) a separate *proximity-based* connection mode that connects walls within a distance threshold (e.g. walls whose AABBs are within 200mm).
 
-4. **Element type scoping.** Without `element_types` filter, including all 215 elements (railings, furniture, stairs with 700–1100 faces) would make the BVH produce thousands of false-positive pairs and push runtime beyond practical limits. The `element_types` parameter is essential for practical use but requires the user to know which types to include.
+**Category C — T-join with no shared face (4 of 14).** The party wall (550mm thick) meets a partition or plumbing wall end-on. The AABBs overlap but no face pairs have opposing normals — the partition wall's end face is embedded *inside* the party wall's volume. IFC's `IfcRelConnectsPathElements` models this as a T-join (topological), not a face contact.  **Recovery: detect edge-to-face adjacency**, where one wall's edge lies on another wall's face. This requires computing the intersection of one mesh's edges with the other's face planes — a different algorithm from face-face contact. Alternatively, a *volumetric overlap* test (do the two wall volumes intersect?) would catch these, using e.g. `trimesh.boolean` or OCC `BRepAlgoAPI_Common`.
+
+**Summary of recovery strategies:**
+
+| Category | Count | Fix | Complexity |
+|---|---|---|---|
+| A: Small contact area | 8 | Lower `minimum_area` to 0.005 | Trivial (parameter change) |
+| B: Non-touching walls | 2 | Proximity-based connection (AABB gap < threshold) | Low (new mode) |
+| C: T-join (embedded end) | 4 | Edge-to-face adjacency or volumetric overlap test | Medium (new algorithm) |
+
+Implementing strategies A+B would recover 10 of 14 missed connections (92% total recovery). Strategy C would bring it to 100% but requires a substantially different algorithm.
+
+**Other limitations:**
+
+1. **No IFC relationship generation yet.** Currently `compute_connections()` only creates graph edges with `"source": "computed"`. It does not yet generate `IfcRelConnectsElements` entities in the IFC file. This would require a write-back step: for each new computed connection edge, create the corresponding IFC relationship entity via `model.create()`.
+
+2. **Element type scoping.** Without `element_types` filter, including all 215 elements (railings, furniture, stairs with 700–1100 faces) would make the BVH produce thousands of false-positive pairs and push runtime beyond practical limits. The `element_types` parameter is essential for practical use but requires the user to know which types to include.
+
+### Collision / Interference Detection (2026-02-23)
+
+**Implementation:** `GenericElement.compute_collisions()` (element.py) + `BuildingInformationModel.compute_collisions()` (bim.py) + `fast_mesh_mesh_collision()` (algorithms/collisions.py). Test script: `scripts/9.11_collision_test.py`. Viewer: `scripts/9.12_collision_viewer.py`.
+
+**How it works:**
+
+Unlike connection detection (which finds co-planar face contacts), collision detection finds **volumetric interferences** — elements whose solid bodies overlap.
+
+1. **Broadphase** — Same two-stage pipeline as connection detection: BVH spatial search (inflated 1.2× AABBs) → tight world-space AABB overlap test.
+2. **Narrowphase — Ray-casting point-in-mesh** — For each candidate pair (A, B), test whether vertices of A lie inside the closed volume of B, and vice versa:
+   - Fan-triangulate mesh faces into triangle arrays
+   - Cast +Z rays from each vertex through all triangles of the other mesh using a **fully vectorized Möller–Trumbore algorithm** (NumPy broadcasting over all (P, T) pairs)
+   - Count intersections per vertex: odd count = inside
+   - **XY perturbation** (±1e-8, seeded RNG) avoids double-counting on shared triangle edges
+   - **Minimum surface distance filter**: compute point-to-face-plane distance for each "inside" vertex; discard those closer than `min_depth` to the nearest surface (touching but not penetrating)
+3. Discovered interferences are stored as `"interference"` edges (with `"source": "computed"`) in the interaction graph.
+
+**Key parameters:**
+
+| Parameter | Role | Default |
+|---|---|---|
+| `tolerance` | AABB inflation for broadphase candidate selection | `1e-6` |
+| `min_depth` | Minimum penetration depth — vertices closer than this to the surface are considered "touching", not "penetrating" | `1e-4` |
+
+> **TODO:** Both `tolerance` and `min_depth` should be **auto-determined from the model's unit context** when not explicitly provided. For example, a model in millimetres needs much larger absolute tolerances than one in metres. Currently they are hard-coded defaults that assume metre-scale geometry.
+
+**Synthetic test results (4 box tests):**
+
+| Test | Expected | Result |
+|---|---|---|
+| Overlapping boxes (0.5m overlap) | Penetrating points detected | 2 points |
+| Separated boxes (1m gap) | No collision | 0 points |
+| Touching boxes (shared face) | No collision (below `min_depth`) | 0 points |
+| Contained box (fully inside) | Penetrating points detected | 7 points |
+
+**Duplex model results:** 16 collisions detected in ~7s (57 walls + slabs + other elements).
+
+**Interactive viewer (`show_collisions()`):**
+
+`BuildingInformationModel.show_collisions()` opens `compas_viewer` with:
+- All building elements rendered in the 3D viewport
+- A **collision list** Treeform in the sidebar listing each collision pair with element names and penetrating point count
+- A **property panel** Treeform showing details of the selected collision or element
+- **Selection behaviour:** clicking a collision pair isolates the two elements (one **red**, one **green**), hiding everything else. Clicking the same pair again or clicking the scene tree restores the full model. Colour updates are minimised — only the 2 highlighted objects rebuild GPU buffers, all others just toggle visibility.
 
 ---
 
@@ -246,6 +312,7 @@ class BuildingElement(compas_model.Element):
 | IFC spatial relationship import → graph edges | not implemented | **DONE** — `_load_relationships_into_graph()` imports topology (voids, fills, connections, space boundaries, coverings, interference, projections), structural (member/activity), and MEP (ports, flow control, services, spatial references). Schema-safe across IFC2X3/IFC4/IFC4X3 |
 | IFC relationship export ← graph edges | not implemented | **DONE** — `_export_mutual_relationships()` exports all 14 relationship types; used by both `extract()` and `file.export()` |
 | Automatic connection creation via contact detection | compas_model.Model.compute_contacts() | **DONE** — `compute_connections()` with two-stage broadphase (BVH + tight AABB); 82% recovery on Duplex walls; see § Automatic Connection Detection for limitations |
+| Collision / interference detection | not in compas_model | **DONE** — `compute_collisions()` with ray-casting point-in-mesh (vectorized Möller–Trumbore); 16 collisions on Duplex in ~7s; interactive viewer via `show_collisions()`; see § Collision Detection |
 
 ### 5. Pydantic Validation
 
