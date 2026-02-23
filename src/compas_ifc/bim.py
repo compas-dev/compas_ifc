@@ -81,6 +81,9 @@ class BuildingInformationModel(Model):
         # Element lookup by IFC GlobalId
         self._elements_by_global_id: dict[str, GenericElement] = {}
 
+        # Validation specifications (opt-in enforcement)
+        self.specifications = []
+
         # Load spatial hierarchy if opening an existing file
         if filepath:
             self._load_from_ifc(rectify_placements=rectify_placements, rectify_verbose=rectify_verbose)
@@ -237,6 +240,10 @@ class BuildingInformationModel(Model):
         # Sync properties → IFC property sets
         if element._properties:
             ifc_entity.property_sets = element._properties
+
+        # Enforce validation specifications if any are active
+        if self.specifications:
+            self._enforce_specifications(element)
 
         return result
 
@@ -979,6 +986,59 @@ class BuildingInformationModel(Model):
         """
         u, v = edge
         return self.graph.node_element(u), self.graph.node_element(v)
+
+    # ==========================================================================
+    # Validation
+    # ==========================================================================
+
+    def validate(self, specifications=None):
+        """Validate all elements against information requirements.
+
+        Parameters
+        ----------
+        specifications : list[:class:`~compas_ifc.validation.Specification`], optional
+            Specifications to check. If ``None``, uses ``self.specifications``.
+
+        Returns
+        -------
+        list[:class:`~compas_ifc.validation.ValidationResult`]
+            One result per (element, applicable specification) pair.
+
+        """
+        from compas_ifc.validation import validate_model
+
+        specs = specifications if specifications is not None else self.specifications
+        return validate_model(self, specs)
+
+    def _enforce_specifications(self, element):
+        """Check an element against active specifications, raise on failure.
+
+        Called automatically from ``add_element`` when ``self.specifications``
+        is non-empty.
+
+        Raises
+        ------
+        ValueError
+            If the element fails any applicable specification.
+
+        """
+        from compas_ifc.validation import validate_element
+
+        results = validate_element(element, self.specifications)
+        failures = [r for r in results if r.status == "fail"]
+        if failures:
+            msgs = []
+            for f in failures:
+                parts = []
+                if f.missing_psets:
+                    parts.append(f"missing psets: {f.missing_psets}")
+                if f.property_errors:
+                    parts.append(f"property errors: {f.property_errors}")
+                msgs.append(f"[{f.specification}] {'; '.join(parts)}")
+            raise ValueError(
+                f"Element '{element.name}' ({element.ifc_type}) "
+                f"failed validation: {' | '.join(msgs)}"
+            )
 
     # ==========================================================================
     # IFC Export

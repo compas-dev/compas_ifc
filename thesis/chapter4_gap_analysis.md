@@ -39,9 +39,10 @@ Today's session completed the core implementation in 3 commits:
 
    Edge storage preserves **every IFC relationship instance**: each edge carries a `relationships` list of dicts (one record per IFC relationship), so multiple relationships between the same element pair (e.g. multiple space boundary levels, wall connections at both ends) are not collapsed. Two-level query API: `get_interactions_by_group("topology")` and `get_interactions_by_category("connection")`. Schema-safe across IFC2X3/IFC4/IFC4X3.
 
+4. **Pydantic validation** — `validation.py` module with Pydantic BaseModel schemas for 8 standard IFC property sets (Pset_WallCommon, Pset_SlabCommon, Pset_DoorCommon, Pset_WindowCommon, Pset_BeamCommon, Pset_ColumnCommon, Pset_SpaceCommon, Pset_RoofCommon). `Specification` dataclass mirrors IDS structure (applicability + requirements). Advisory `model.validate(specs)` for bulk reporting + optional enforcement via `model.specifications` list checked in `add_element()`. On the Duplex model: 146 checks, 145 pass, 1 fail. Pydantic schema is 79% more concise than equivalent IDS XML (14 vs 68 lines). JSON Schema export comes free via `model_json_schema()`.
+
 ### What remains
 
-- **Pydantic validation** — Replace jsonschema with Pydantic for element property validation
 - **Relationship export** — Graph edge `relationships` records → IFC relationship entities on export (topology + structural + MEP)
 - **Automatic connection creation** — Use `compas_model`'s contact detection (`compute_contacts()`) to automatically create `IfcRelConnectsElements` relationships between touching elements, bridging geometric proximity and semantic connectivity
 - **Geometry pre-loading** — Migrate multiprocessing-based geometry loading
@@ -197,11 +198,13 @@ class BuildingElement(compas_model.Element):
 
 | Capability | Status |
 |---|---|
-| Replace jsonschema with Pydantic | **BUILD** |
-| Schema definition as BaseModel subclasses | **BUILD** |
-| Validate element properties | **BUILD** |
-| JSON Schema export | **FREE** via `model_json_schema()` |
-| Add `pydantic` dependency | **BUILD** |
+| Replace jsonschema with Pydantic | **DONE** — `validation.py` module |
+| Schema definition as BaseModel subclasses | **DONE** — 8 standard IFC Pset schemas (Wall, Slab, Door, Window, Beam, Column, Space, Roof) |
+| Validate element properties | **DONE** — `validate_model()` / `model.validate()` with structured `ValidationResult` |
+| JSON Schema export | **DONE** — `Pset_WallCommon.model_json_schema()` etc. |
+| Add `pydantic` dependency | **DONE** — already in `requirements.txt` |
+| Specification class (IDS-like) | **DONE** — `Specification` dataclass with applicability + required Psets |
+| Enforcement on add_element | **DONE** — `model.specifications` list, checked in `add_element()`, raises `ValueError` |
 
 ### 6. Geometry
 
@@ -317,6 +320,6 @@ These work well and should survive the refactor:
 4. ~~**Basic export:** Tree → IFC file (using existing converters)~~ **DONE** (bi-directional sync)
 5. ~~**Interaction graph:** Import non-hierarchical IFC relationships as edges with categories~~ **DONE**
 6. **Automatic connections:** Use contact detection to auto-create `IfcRelConnectsElements` between touching elements
-7. **Pydantic validation:** Replace jsonschema
+7. ~~**Pydantic validation:** Replace jsonschema~~ **DONE** (8 Pset schemas, Specification, advisory + enforcement)
 8. **Evaluation scripts:** One per thesis section
 9. **Polish:** Convenience API, edge cases, docs
