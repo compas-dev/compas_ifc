@@ -353,7 +353,7 @@ class IFCFile(object):
         """
         self._file.write(path)
 
-    def export(self, path: str, entities: list[Base] = [], as_snippet: bool = False, export_materials: bool = True, export_properties: bool = True, export_styles: bool = True, export_types: bool = True):
+    def export(self, path: str, entities: list[Base] = [], as_snippet: bool = False, export_materials: bool = True, export_properties: bool = True, export_styles: bool = True, export_types: bool = True, export_relationships: bool = True):
         """
         Export a subset of the IFC file to a new IFC file.
 
@@ -373,6 +373,10 @@ class IFCFile(object):
             Whether to export styles. Default is True.
         export_types : bool
             Whether to export type definitions (IfcRelDefinesByType). Default is True.
+        export_relationships : bool
+            Whether to export non-spatial relationships (connections, voids, fills,
+            space boundaries) where both endpoints are in the exported set.
+            Default is True.
 
         """
         new_file = IFCFile(None, schema=self.schema_name)
@@ -440,7 +444,101 @@ class IFCFile(object):
         for entity in entities:
             export_entity(entity, new_file)
 
+        # Export non-spatial relationships where both endpoints are in the exported set
+        if export_relationships:
+            self._export_mutual_relationships(new_file, exported)
+
         new_file.save(path)
+
+    def _export_mutual_relationships(self, new_file, exported):
+        """Export non-spatial IFC relationships where both endpoints are already exported.
+
+        Walks ``IfcRelConnectsPathElements``, ``IfcRelVoidsElement``,
+        ``IfcRelFillsElement``, and ``IfcRelSpaceBoundary`` in the source file.
+        For each relationship, if all referenced building elements are present
+        in the ``exported`` dict, a corresponding relationship entity is created
+        in the new file.
+
+        Parameters
+        ----------
+        new_file : IFCFile
+            The target file to create relationship entities in.
+        exported : dict
+            Mapping from source ``Base`` wrappers to their counterparts in
+            ``new_file``.
+
+        Returns
+        -------
+        int
+            The number of relationship entities created.
+
+        """
+        count = 0
+        oh = new_file.default_owner_history
+
+        # IfcRelConnectsPathElements (wall-to-wall connections)
+        for rel in self.get_entities_by_type("IfcRelConnectsPathElements"):
+            relating = rel.RelatingElement
+            related = rel.RelatedElement
+            if relating in exported and related in exported:
+                new_file._create_entity(
+                    "IfcRelConnectsPathElements",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingElement=exported[relating],
+                    RelatedElement=exported[related],
+                    RelatingPriorities=list(rel.RelatingPriorities or []),
+                    RelatedPriorities=list(rel.RelatedPriorities or []),
+                    RelatedConnectionType=rel.RelatedConnectionType or "NOTDEFINED",
+                    RelatingConnectionType=rel.RelatingConnectionType or "NOTDEFINED",
+                )
+                count += 1
+
+        # IfcRelVoidsElement (wall/slab -> opening)
+        for rel in self.get_entities_by_type("IfcRelVoidsElement"):
+            host = rel.RelatingBuildingElement
+            opening = rel.RelatedOpeningElement
+            if host in exported and opening in exported:
+                new_file._create_entity(
+                    "IfcRelVoidsElement",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingBuildingElement=exported[host],
+                    RelatedOpeningElement=exported[opening],
+                )
+                count += 1
+
+        # IfcRelFillsElement (opening -> door/window)
+        for rel in self.get_entities_by_type("IfcRelFillsElement"):
+            opening = rel.RelatingOpeningElement
+            filler = rel.RelatedBuildingElement
+            if opening in exported and filler in exported:
+                new_file._create_entity(
+                    "IfcRelFillsElement",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingOpeningElement=exported[opening],
+                    RelatedBuildingElement=exported[filler],
+                )
+                count += 1
+
+        # IfcRelSpaceBoundary (space <-> element)
+        for rel in self.get_entities_by_type("IfcRelSpaceBoundary"):
+            space = rel.RelatingSpace
+            related = rel.RelatedBuildingElement
+            if related is not None and space in exported and related in exported:
+                new_file._create_entity(
+                    "IfcRelSpaceBoundary",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=oh,
+                    RelatingSpace=exported[space],
+                    RelatedBuildingElement=exported[related],
+                    PhysicalOrVirtualBoundary=rel.PhysicalOrVirtualBoundary or "NOTDEFINED",
+                    InternalOrExternalBoundary=rel.InternalOrExternalBoundary or "NOTDEFINED",
+                )
+                count += 1
+
+        return count
 
     def create(self, cls=None, parent=None, geometry=None, frame=None, properties=None, **kwargs) -> Base:
         """

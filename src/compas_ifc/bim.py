@@ -49,6 +49,12 @@ class BuildingInformationModel(Model):
 
     """
 
+    RELATIONSHIP_GROUPS = {
+        "topology": {"void", "fill", "connection", "space_boundary", "covering", "interference", "projection"},
+        "structural": {"structural"},
+        "mep": {"port_connection", "port_element", "flow_control", "services", "spatial_reference"},
+    }
+
     def __init__(
         self,
         filepath: str = None,
@@ -626,21 +632,95 @@ class BuildingInformationModel(Model):
         return lookup
 
     def _load_relationships_into_graph(self):
-        """Populate the interaction graph from non-spatial IFC relationships.
+        """Populate the interaction graph with spatial relationships.
 
-        Walks ``IfcRelVoidsElement``, ``IfcRelFillsElement``,
-        ``IfcRelConnectsPathElements``, and ``IfcRelSpaceBoundary`` in the IFC
-        file and creates graph edges with a ``category`` attribute.
+        Loads non-hierarchical spatial relationships between building elements
+        as graph edges. Only topological relationships that describe physical
+        spatial interactions are included — the spatial hierarchy (containment,
+        spatial decomposition) is already expressed by the model tree.
 
-        ``IfcOpeningElement`` entities (not in the spatial tree) are added as
-        graph-only elements so they can serve as nodes for void/fill edges.
+        **Topology** (element-to-element physical connections):
+
+            ``void`` — IfcRelVoidsElement (wall/slab → opening)
+            ``fill`` — IfcRelFillsElement (opening → door/window)
+            ``connection`` — IfcRelConnectsPathElements, IfcRelConnectsElements
+            ``space_boundary`` — IfcRelSpaceBoundary (space → bounding element)
+            ``covering`` — IfcRelCoversBldgElements, IfcRelCoversSpaces
+            ``interference`` — IfcRelInterferesElements (clash)
+            ``projection`` — IfcRelProjectsElement
+
+        **Structural** (analytical model connections):
+
+            ``structural`` — IfcRelConnectsStructuralMember / Activity / Eccentricity
+
+        **MEP** (distribution systems):
+
+            ``port_connection`` — IfcRelConnectsPorts
+            ``port_element`` — IfcRelConnectsPortToElement
+            ``flow_control`` — IfcRelFlowControlElements
+            ``services`` — IfcRelServicesBuildings
+            ``spatial_reference`` — IfcRelReferencedInSpatialStructure
+
+        Non-spatial relationships (type definitions, material associations,
+        group assignments, external references, decomposition, etc.) are
+        intentionally excluded — they are accessible via the underlying
+        ``_ifc_entity``.
+
+        Entities not already in the spatial tree (e.g. ``IfcOpeningElement``)
+        are added as graph-only nodes.
         """
         entity_lookup = self._build_entity_lookup()
-        stats = {"void": 0, "fill": 0, "connection": 0, "space_boundary": 0}
+        stats = {}
 
-        # --- A. IfcRelVoidsElement → category "void" ---
-        # Creates opening elements as graph-only nodes.
-        for rel in self._file.get_entities_by_type("IfcRelVoidsElement"):
+        def _stat(category):
+            stats[category] = stats.get(category, 0) + 1
+
+        def _by_type(type_name):
+            """Query entities by type, returning [] for types missing in the schema."""
+            try:
+                return self._file.get_entities_by_type(type_name)
+            except RuntimeError:
+                return []
+
+        def _ensure_element(ifc_entity):
+            """Return GenericElement for ifc_entity, creating graph-only node if needed."""
+            if ifc_entity is None:
+                return None
+            eid = ifc_entity.entity.id()
+            elem = entity_lookup.get(eid)
+            if elem is None:
+                elem = GenericElement.from_ifc_entity(ifc_entity, file=self._file)
+                if hasattr(elem, "_global_transform"):
+                    del elem._global_transform
+                self._add_graph_only_element(elem)
+                entity_lookup[eid] = elem
+            return elem
+
+        def _add_edge(elem_a, elem_b, category, **attrs):
+            """Add an interaction edge with category and optional extra attributes.
+
+            Categories are stored as a set so that parallel IFC relationships
+            between the same element pair accumulate rather than overwrite.
+            """
+            if elem_a is None or elem_b is None:
+                return None
+            edge = self.add_interaction(elem_a, elem_b)
+            existing = self.graph.edge_attribute(edge, "categories")
+            if existing is None:
+                existing = set()
+            existing.add(category)
+            self.graph.edge_attribute(edge, "categories", existing)
+            for k, v in attrs.items():
+                self.graph.edge_attribute(edge, k, v)
+            _stat(category)
+            return edge
+
+        # ==================================================================
+        # GROUP 1: Topology
+        # ==================================================================
+
+        # --- A. IfcRelVoidsElement → "void" ---
+        for rel in _by_type("IfcRelVoidsElement"):
             host = rel.RelatingBuildingElement
             opening = rel.RelatedOpeningElement
 
@@ -648,12 +728,11 @@ class BuildingInformationModel(Model):
             if host_elem is None:
                 continue
 
-            # Create graph-only element for the opening if not seen yet
+            # Create graph-only element for the opening
             opening_id = opening.entity.id()
             opening_elem = entity_lookup.get(opening_id)
             if opening_elem is None:
                 opening_elem = GenericElement.from_ifc_entity(opening, file=self._file)
-                # Compute local transform relative to host
                 host_global = getattr(host_elem, "_global_transform", None)
                 if host_global is None and host_elem.transformation is not None:
                     host_global = host_elem.modeltransformation
@@ -663,59 +742,138 @@ class BuildingInformationModel(Model):
                 opening_elem.transformation = host_global.inverse() * opening_global
                 if hasattr(opening_elem, "_global_transform"):
                     del opening_elem._global_transform
-
                 self._add_graph_only_element(opening_elem)
                 entity_lookup[opening_id] = opening_elem
 
-            edge = self.add_interaction(host_elem, opening_elem)
-            self.graph.edge_attribute(edge, "category", "void")
-            stats["void"] += 1
+            _add_edge(host_elem, opening_elem, "void")
 
-        # --- B. IfcRelFillsElement → category "fill" ---
-        for rel in self._file.get_entities_by_type("IfcRelFillsElement"):
-            opening = rel.RelatingOpeningElement
-            filler = rel.RelatedBuildingElement
+        # --- B. IfcRelFillsElement → "fill" ---
+        for rel in _by_type("IfcRelFillsElement"):
+            opening_elem = entity_lookup.get(rel.RelatingOpeningElement.entity.id())
+            filler_elem = entity_lookup.get(rel.RelatedBuildingElement.entity.id())
+            _add_edge(opening_elem, filler_elem, "fill")
 
-            opening_elem = entity_lookup.get(opening.entity.id())
-            filler_elem = entity_lookup.get(filler.entity.id())
-
-            if opening_elem is None or filler_elem is None:
-                continue
-
-            edge = self.add_interaction(opening_elem, filler_elem)
-            self.graph.edge_attribute(edge, "category", "fill")
-            stats["fill"] += 1
-
-        # --- C. IfcRelConnectsPathElements → category "connection" ---
-        for rel in self._file.get_entities_by_type("IfcRelConnectsPathElements"):
+        # --- C. IfcRelConnectsPathElements → "connection" ---
+        for rel in _by_type("IfcRelConnectsPathElements"):
             elem_a = entity_lookup.get(rel.RelatingElement.entity.id())
             elem_b = entity_lookup.get(rel.RelatedElement.entity.id())
+            _add_edge(elem_a, elem_b, "connection")
 
-            if elem_a is None or elem_b is None:
+        # --- C2. IfcRelConnectsElements (base class, excluding subtypes) ---
+        for rel in _by_type("IfcRelConnectsElements"):
+            # Skip subtypes that are handled explicitly
+            exact_type = rel.is_a()
+            if exact_type in ("IfcRelConnectsPathElements", "IfcRelConnectsWithRealizingElements"):
                 continue
+            elem_a = entity_lookup.get(rel.RelatingElement.entity.id())
+            elem_b = entity_lookup.get(rel.RelatedElement.entity.id())
+            _add_edge(elem_a, elem_b, "connection")
 
-            edge = self.add_interaction(elem_a, elem_b)
-            self.graph.edge_attribute(edge, "category", "connection")
-            stats["connection"] += 1
+        # --- C3. IfcRelConnectsWithRealizingElements → "connection" ---
+        for rel in _by_type("IfcRelConnectsWithRealizingElements"):
+            elem_a = entity_lookup.get(rel.RelatingElement.entity.id())
+            elem_b = entity_lookup.get(rel.RelatedElement.entity.id())
+            _add_edge(elem_a, elem_b, "connection")
 
-        # --- D. IfcRelSpaceBoundary → category "space_boundary" ---
-        for rel in self._file.get_entities_by_type("IfcRelSpaceBoundary"):
-            space = rel.RelatingSpace
+        # --- D. IfcRelSpaceBoundary → "space_boundary" ---
+        for rel in _by_type("IfcRelSpaceBoundary"):
             related = rel.RelatedBuildingElement
-
             if related is None:
                 continue
-
-            space_elem = entity_lookup.get(space.entity.id())
+            space_elem = entity_lookup.get(rel.RelatingSpace.entity.id())
             related_elem = entity_lookup.get(related.entity.id())
+            _add_edge(space_elem, related_elem, "space_boundary")
 
-            if space_elem is None or related_elem is None:
-                continue
+        # --- E. IfcRelCoversBldgElements → "covering" ---
+        for rel in _by_type("IfcRelCoversBldgElements"):
+            host_elem = entity_lookup.get(rel.RelatingBuildingElement.entity.id())
+            for covering in rel.RelatedCoverings:
+                covering_elem = _ensure_element(covering)
+                _add_edge(host_elem, covering_elem, "covering")
 
-            edge = self.add_interaction(space_elem, related_elem)
-            self.graph.edge_attribute(edge, "category", "space_boundary")
-            stats["space_boundary"] += 1
+        # --- E2. IfcRelCoversSpaces → "covering" ---
+        for rel in _by_type("IfcRelCoversSpaces"):
+            space_elem = entity_lookup.get(rel.RelatingSpace.entity.id())
+            for covering in rel.RelatedCoverings:
+                covering_elem = _ensure_element(covering)
+                _add_edge(space_elem, covering_elem, "covering")
 
+        # --- F. IfcRelInterferesElements → "interference" ---
+        for rel in _by_type("IfcRelInterferesElements"):
+            elem_a = entity_lookup.get(rel.RelatingElement.entity.id())
+            elem_b = entity_lookup.get(rel.RelatedElement.entity.id())
+            interference_type = getattr(rel, "InterferenceType", None)
+            _add_edge(elem_a, elem_b, "interference", interference_type=interference_type)
+
+        # --- G. IfcRelProjectsElement → "projection" ---
+        for rel in _by_type("IfcRelProjectsElement"):
+            host_elem = entity_lookup.get(rel.RelatingElement.entity.id())
+            feature_elem = _ensure_element(rel.RelatedFeatureElement)
+            _add_edge(host_elem, feature_elem, "projection")
+
+        # ==================================================================
+        # Structural (analytical model connections)
+        # ==================================================================
+
+        # --- H. IfcRelConnectsStructuralMember → "structural" ---
+        for rel_type in ("IfcRelConnectsStructuralMember", "IfcRelConnectsWithEccentricity"):
+            for rel in _by_type(rel_type):
+                member_elem = _ensure_element(rel.RelatingStructuralMember)
+                conn_elem = _ensure_element(rel.RelatedStructuralConnection)
+                _add_edge(member_elem, conn_elem, "structural")
+
+        # --- I. IfcRelConnectsStructuralActivity → "structural" ---
+        for rel in _by_type("IfcRelConnectsStructuralActivity"):
+            element_elem = _ensure_element(rel.RelatingElement)
+            activity_elem = _ensure_element(rel.RelatedStructuralActivity)
+            _add_edge(element_elem, activity_elem, "structural")
+
+        # ==================================================================
+        # MEP (distribution systems)
+        # ==================================================================
+
+        # --- J. IfcRelConnectsPorts → "port_connection" ---
+        for rel in _by_type("IfcRelConnectsPorts"):
+            port_a = _ensure_element(rel.RelatingPort)
+            port_b = _ensure_element(rel.RelatedPort)
+            _add_edge(port_a, port_b, "port_connection")
+
+        # --- K. IfcRelConnectsPortToElement → "port_element" ---
+        for rel in _by_type("IfcRelConnectsPortToElement"):
+            port_elem = _ensure_element(rel.RelatingPort)
+            host_elem = entity_lookup.get(rel.RelatedElement.entity.id())
+            if host_elem is None:
+                host_elem = _ensure_element(rel.RelatedElement)
+            _add_edge(port_elem, host_elem, "port_element")
+
+        # --- L. IfcRelFlowControlElements → "flow_control" ---
+        for rel in _by_type("IfcRelFlowControlElements"):
+            flow_elem = entity_lookup.get(rel.RelatingFlowElement.entity.id())
+            if flow_elem is None:
+                flow_elem = _ensure_element(rel.RelatingFlowElement)
+            for ctrl in rel.RelatedControlElements:
+                ctrl_elem = _ensure_element(ctrl)
+                _add_edge(flow_elem, ctrl_elem, "flow_control")
+
+        # --- M. IfcRelServicesBuildings → "services" ---
+        for rel in _by_type("IfcRelServicesBuildings"):
+            system_elem = _ensure_element(rel.RelatingSystem)
+            for bldg in rel.RelatedBuildings:
+                bldg_elem = entity_lookup.get(bldg.entity.id())
+                _add_edge(system_elem, bldg_elem, "services")
+
+        # --- N. IfcRelReferencedInSpatialStructure → "spatial_reference" ---
+        for rel in _by_type("IfcRelReferencedInSpatialStructure"):
+            space_elem = entity_lookup.get(rel.RelatingStructure.entity.id())
+            for obj in rel.RelatedElements:
+                obj_elem = entity_lookup.get(obj.entity.id())
+                if obj_elem is None:
+                    obj_elem = _ensure_element(obj)
+                _add_edge(space_elem, obj_elem, "spatial_reference")
+
+        # ==================================================================
+        # Summary
+        # ==================================================================
         total = sum(stats.values())
         if total > 0:
             parts = [f"{v} {k}" for k, v in stats.items() if v > 0]
@@ -724,7 +882,11 @@ class BuildingInformationModel(Model):
     # ---------- Graph queries ----------
 
     def get_interactions_by_category(self, category: str) -> list:
-        """Get all graph edges of a specific category.
+        """Get all graph edges that include a specific category.
+
+        An edge may carry multiple categories (e.g. both ``"connection"`` and
+        ``"space_boundary"`` if the same element pair has both relationship
+        types in the IFC file).
 
         Parameters
         ----------
@@ -735,10 +897,36 @@ class BuildingInformationModel(Model):
         Returns
         -------
         list[tuple[int, int]]
-            Graph edges matching the category.
+            Graph edges that include the category.
 
         """
-        return [edge for edge in self.graph.edges() if self.graph.edge_attribute(edge, "category") == category]
+        return [edge for edge in self.graph.edges() if category in (self.graph.edge_attribute(edge, "categories") or set())]
+
+    def get_interactions_by_group(self, group: str) -> list:
+        """Get all graph edges belonging to a relationship group.
+
+        Returns edges that have at least one category in the group.
+
+        Parameters
+        ----------
+        group : str
+            One of ``"topology"``, ``"structural"``, or ``"mep"``.
+
+        Returns
+        -------
+        list[tuple[int, int]]
+            Graph edges in the group.
+
+        Raises
+        ------
+        ValueError
+            If the group name is not recognised.
+
+        """
+        group_categories = self.RELATIONSHIP_GROUPS.get(group)
+        if group_categories is None:
+            raise ValueError(f"Unknown group '{group}'. Choose from: {', '.join(self.RELATIONSHIP_GROUPS)}")
+        return [edge for edge in self.graph.edges() if (self.graph.edge_attribute(edge, "categories") or set()) & group_categories]
 
     @property
     def connections(self) -> list:
@@ -804,6 +992,7 @@ class BuildingInformationModel(Model):
         export_properties: bool = True,
         export_styles: bool = True,
         export_types: bool = True,
+        export_relationships: bool = True,
     ) -> "BuildingInformationModel":
         """Extract elements into a new standalone BuildingInformationModel.
 
@@ -812,9 +1001,14 @@ class BuildingInformationModel(Model):
         properties, materials, styles, type definitions), then loads the result
         as a new model.
 
-        Ancestor spatial containers (IfcProject → IfcSite → IfcBuilding →
+        Ancestor spatial containers (IfcProject, IfcSite, IfcBuilding,
         IfcBuildingStorey) are included automatically so the extracted file is
         a valid, self-contained IFC file.
+
+        Non-spatial IFC relationships (connections, voids, fills, space
+        boundaries) are preserved when both endpoints of the relationship are
+        in the exported set. This ensures the interaction graph is maintained
+        in the extracted model.
 
         Parameters
         ----------
@@ -833,6 +1027,10 @@ class BuildingInformationModel(Model):
             Whether to export visual styles. Default True.
         export_types : bool, optional
             Whether to export type definitions (IfcRelDefinesByType). Default True.
+        export_relationships : bool, optional
+            Whether to export non-spatial relationships (connections, voids,
+            fills, space boundaries) where both endpoints are in the exported
+            set. Default True.
 
         Returns
         -------
@@ -884,6 +1082,7 @@ class BuildingInformationModel(Model):
             export_properties=export_properties,
             export_styles=export_styles,
             export_types=export_types,
+            export_relationships=export_relationships,
         )
 
         # Load extracted IFC into a new model

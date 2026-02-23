@@ -1,6 +1,6 @@
 # Chapter 4 Gap Analysis: Thesis Claims vs. Implementation
 
-> **Date:** 2026-02-20 (updated after discussion)
+> **Date:** 2026-02-23 (updated after implementation session)
 > **Scope:** Chapter 4 — "Data Model for Humans"
 > **Repos:** `compas_ifc` (branch: `brep`), `compas_model` (`D:\Github\compas_model`)
 > **Prior art:** `update/compas_model` branch — early draft of integration (reviewed)
@@ -19,6 +19,27 @@
 | **Geometry import** | ifcopenshell handles all import (converts everything → Brep via OCC); may need special treatment for primitives later — defer |
 | **Backwards compat** | Not needed; all existing scripts can be rewritten with new clean API |
 | **Class/method names** | Thesis names are tentative; implementation should aim for clean minimal API, thesis adapts |
+
+---
+
+## Implementation Progress (2026-02-23)
+
+Today's session completed the core implementation in 3 commits:
+
+1. **Bi-directional BIM model** (`2578076`) — Full creation pipeline with IFCFile compatibility layer, `add_element`/`remove_element` overrides that sync to IFC, `template()` classmethod for scaffolding, typed convenience methods (`create_wall`, `create_slab`, etc.), and placement rectification during import.
+
+2. **Element extraction** (`1cb7f5a`) — `extract_elements()` method that creates self-contained sub-models from selected elements, with options to preserve geometry, properties, materials, styles, and type definitions.
+
+3. **Non-hierarchical spatial relationship graph** (`4f3e3a5`) — `_load_relationships_into_graph()` imports non-hierarchical spatial relationships as typed edges in the interaction graph: topology (voids, fills, connections, space boundaries, coverings, interference, projections) and connectivity (ports, structural members/activities, flow control, services, spatial references). Non-spatial relationships (type definitions, materials, group assignments, external references, decomposition) are excluded — they are accessible via `_ifc_entity`.
+
+### What remains
+
+- **Pydantic validation** — Replace jsonschema with Pydantic for element property validation
+- **Relationship export** — Topology graph edges → IFC relationship entities on export (voids, fills, connections, space boundaries, coverings, interference, projections)
+- **Automatic connection creation** — Use `compas_model`'s contact detection (`compute_contacts()`) to automatically create `IfcRelConnectsElements` relationships between touching elements, bridging geometric proximity and semantic connectivity
+- **Geometry pre-loading** — Migrate multiprocessing-based geometry loading
+- **Abstract method implementations** — `compute_aabb`, `compute_point`, `compute_elementgeometry`, `collision_mesh`, `surface_mesh`
+- **Evaluation scripts** — One per thesis section (4.6.1–4.6.5)
 
 ---
 
@@ -106,16 +127,17 @@ class BuildingElement(compas_model.Element):
 | Tree + Graph (structure) | compas_model.Model | **FREE** |
 | Element storage + lookup | compas_model.Model | **FREE** |
 | `add_element` / `remove_element` | compas_model.Model | **FREE** |
-| IFC file I/O (`IFCFile` wrapper) | current Model | **MIGRATE** |
-| Schema detection (IFC2X3/IFC4/IFC4X3) | current Model via IFCFile | **MIGRATE** |
-| Entity queries by IFC type (e.g. "IfcWall") | current Model | **REBUILD** — adapt `find_all_elements_of_type` to work with string-based IFC types, not Python class types |
-| Entity creation with fuzzy type matching | current Model.create() | **MIGRATE** |
+| IFC file I/O (`IFCFile` wrapper) | current Model | **DONE** — compatibility layer in `bim.py` delegates to `IFCFile` |
+| Schema detection (IFC2X3/IFC4/IFC4X3) | current Model via IFCFile | **DONE** — inherited from `IFCFile` |
+| Entity queries by IFC type (e.g. "IfcWall") | current Model | **DONE** — `elements_of_type()` queries by IFC class string |
+| Entity creation with fuzzy type matching | current Model.create() | **DONE** — `create_element()` and typed helpers (`create_wall`, `create_slab`, etc.) |
 | Geometry pre-loading (multiprocessing) | current Model via IFCFile | **MIGRATE** |
 | Export with hierarchy scaffolding | current Model.export() | **MIGRATE** |
-| `project`, `sites`, `buildings`, `storeys` properties | current Model | **REBUILD** — IfcProject merges into BuildingModel; sites/buildings/storeys become tree queries |
-| IFC import pipeline (file → elements → tree → graph) | update/compas_model draft | **REBUILD** — needs rectified transformations, graph edges, proper geometry |
-| IFC export pipeline (tree → IFC entities → file) | not implemented | **BUILD** |
-| Convenience queries: by name, by type, by storey, by material | some exist | **BUILD** |
+| `project`, `sites`, `buildings`, `storeys` properties | current Model | **DONE** — IfcProject merged into BuildingModel; `sites`/`buildings`/`storeys` are tree queries |
+| IFC import pipeline (file → elements → tree → graph) | update/compas_model draft | **DONE** — full pipeline with rectified transforms + relationship graph loading |
+| IFC export pipeline (tree → IFC entities → file) | not implemented | **DONE** — bi-directional sync: mutations on GenericElement immediately update the IFC file |
+| Convenience queries: by name, by type, by storey, by material | some exist | **PARTIAL** — by type works; by name/storey/material still needed |
+| Element extraction (subset → new model) | not implemented | **DONE** — `extract_elements()` with options for geometry, properties, materials, styles, types |
 
 ### 2. GenericElement — The Unified Element
 
@@ -133,11 +155,11 @@ class BuildingElement(compas_model.Element):
 | `point` (centroid) | compas_model.Element (needs `compute_point`) | **BUILD** — implement, delegate to geometry centroid |
 | `collision_mesh` / `surface_mesh` | compas_model.Element (needs implementations) | **BUILD** — delegate to geometry.to_mesh() or similar |
 | `elementgeometry` | compas_model.Element (needs `compute_elementgeometry`) | **BUILD** — return stored geometry (identity for IFC imports) |
-| `_ifc_entity` reference | update/compas_model draft | **BUILD** — raw IFC entity as optional escape hatch |
-| `type` attribute (string → IFC class mapping) | thesis concept | **BUILD** |
-| `properties` (unified dict, lazy-loaded from _ifc_entity) | current Base.property_sets | **BUILD** — lazy load from `_ifc_entity.property_sets`, store locally for programmatic elements |
+| `_ifc_entity` reference | update/compas_model draft | **DONE** — stored on GenericElement, accessible as escape hatch |
+| `type` attribute (string → IFC class mapping) | thesis concept | **DONE** — `ifc_type` property on GenericElement |
+| `properties` (unified dict, lazy-loaded from _ifc_entity) | current Base.property_sets | **DONE** — bi-directional setter syncs to IFC file |
 | Pydantic validation | not implemented | **BUILD** |
-| Lazy loading of all properties from `_ifc_entity` | not implemented | **BUILD** — core design: first access triggers extraction, then cached |
+| Lazy loading of all properties from `_ifc_entity` | not implemented | **PARTIAL** — properties load from IFC entity; full lazy-loading pattern still evolving |
 
 ### 3. Spatial Hierarchy (Tree)
 
@@ -146,10 +168,10 @@ class BuildingElement(compas_model.Element):
 | Parent-child structure | compas_model.ElementTree | **FREE** |
 | Add/remove elements | compas_model | **FREE** |
 | Hierarchy traversal | compas_model | **FREE** |
-| IfcProject as root | Need to map IfcProject → BuildingModel (not a tree element) | **BUILD** — IfcSite becomes first-level tree element |
-| Placement chain rectification during import | not implemented | **BUILD** — critical algorithm |
-| Granular export (subset → valid IFC) | current Model.export() | **REBUILD** |
-| Auto-generate IFC scaffolding for export | current Model.export(as_snippet=True) | **MIGRATE** |
+| IfcProject as root | Need to map IfcProject → BuildingModel (not a tree element) | **DONE** — IfcProject merged into BuildingModel; IfcSite is first tree element |
+| Placement chain rectification during import | not implemented | **DONE** — `rectify_placements=True` rewrites `PlacementRelTo` to match spatial hierarchy, with verbose reporting |
+| Granular export (subset → valid IFC) | current Model.export() | **DONE** — `extract_elements()` creates self-contained sub-models |
+| Auto-generate IFC scaffolding for export | current Model.export(as_snippet=True) | **DONE** — `template()` classmethod creates Project→Site→Building→Storey scaffold |
 
 ### 4. Interaction Graph
 
@@ -158,10 +180,10 @@ class BuildingElement(compas_model.Element):
 | Graph structure | compas_model.InteractionGraph | **FREE** |
 | Edge storage (modifiers, contacts) | compas_model.InteractionGraph | **FREE** |
 | Contact detection | compas_model.Model.compute_contacts() | **FREE** (once `compute_aabb` etc. are implemented) |
-| **Category/semantic filtering** | NOT in compas_model | **BUILD** — need to add edge `category` attribute and filtered queries |
-| IFC relationship import → graph edges | not implemented | **BUILD** |
+| **Category/semantic filtering** | NOT in compas_model | **DONE** — edges have `category` attribute; filtered query via `get_interactions_by_category()` |
+| IFC spatial relationship import → graph edges | not implemented | **DONE** — `_load_relationships_into_graph()` imports topology (voids, fills, connections, space boundaries, coverings, interference, projections) and connectivity (ports, structural, flow control, services, spatial references) |
 | IFC relationship export ← graph edges | not implemented | **BUILD** |
-| Semantic groupings: structural, system, material, geometric | not implemented | **BUILD** |
+| Automatic connection creation via contact detection | compas_model.Model.compute_contacts() | **PLANNED** — use AABB/collision detection to auto-generate `IfcRelConnectsElements` edges |
 
 ### 5. Pydantic Validation
 
@@ -236,9 +258,9 @@ BuildingModel (= IfcProject-level)
 
 Spatial containers simply have no geometry. Uniform interface, no special classes.
 
-### Q3: InteractionGraph — **Subclass in compas_ifc**
+### Q3: InteractionGraph — **Edge attributes, spatial relationships only**
 
-Subclass InteractionGraph and modify as needed to support IFC relationship categories. If the changes are small enough, just use edge attributes instead. Can also push useful generalizations upstream to compas_model.
+The interaction graph stores non-hierarchical spatial relationships in two groups: topology (voids, fills, connections, space boundaries, coverings, interference, projections) and connectivity (ports, structural, flow control, services, spatial references). Non-spatial relationships (type definitions, materials, group assignments, external references, decomposition) are excluded — they are accessible via `_ifc_entity`. Edge `category` attribute distinguishes relationship types; no subclassing needed.
 
 ### Q4: Transformations — **Compute relative transforms during import**
 
@@ -274,11 +296,12 @@ These work well and should survive the refactor:
 
 ## Suggested Implementation Order
 
-1. **Foundation:** Add compas_model dep, create BuildingModel + GenericElement skeletons
-2. **Import pipeline:** IFC file → GenericElements → tree (with rectified transforms)
+1. ~~**Foundation:** Add compas_model dep, create BuildingModel + GenericElement skeletons~~ **DONE**
+2. ~~**Import pipeline:** IFC file → GenericElements → tree (with rectified transforms)~~ **DONE**
 3. **Abstract methods:** Implement `compute_elementgeometry`, `compute_aabb`, `compute_point`, etc.
-4. **Basic export:** Tree → IFC file (using existing converters)
-5. **Interaction graph:** Import non-hierarchical IFC relationships as edges with categories
-6. **Pydantic validation:** Replace jsonschema
-7. **Evaluation scripts:** One per thesis section
-8. **Polish:** Convenience API, edge cases, docs
+4. ~~**Basic export:** Tree → IFC file (using existing converters)~~ **DONE** (bi-directional sync)
+5. ~~**Interaction graph:** Import non-hierarchical IFC relationships as edges with categories~~ **DONE**
+6. **Automatic connections:** Use contact detection to auto-create `IfcRelConnectsElements` between touching elements
+7. **Pydantic validation:** Replace jsonschema
+8. **Evaluation scripts:** One per thesis section
+9. **Polish:** Convenience API, edge cases, docs
