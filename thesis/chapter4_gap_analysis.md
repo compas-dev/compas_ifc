@@ -59,7 +59,7 @@ Today's session completed the core implementation in 3 commits:
 2. `compute_connections()` runs a two-stage broadphase pipeline:
    - **Stage 1:** BVH spatial search (inflated 1.2× AABBs, from `compas_model`)
    - **Stage 2:** Tight world-space AABB overlap test — reduces candidates dramatically (1596 → 150 for Duplex walls)
-   - **Narrowphase:** `mesh_mesh_contacts` on surviving pairs
+   - **Narrowphase:** `fast_mesh_mesh_contacts` (vectorized NumPy broadphase + Shapely; 14× faster than `compas_model`'s `mesh_mesh_contacts`)
 3. Discovered contacts are stored as `"connection"` edges (with `"source": "computed"`) in the interaction graph, alongside any existing IFC-imported relationships.
 4. Accepts `element_types` filter (e.g. `["IfcWall", "IfcWallStandardCase"]`) to scope the search.
 
@@ -78,20 +78,29 @@ Today's session completed the core implementation in 3 commits:
 - **14 missed:** Mostly thin furring walls (38mm stud) that connect end-to-end. Their contact areas fall below the `minimum_area` threshold on tessellated geometry, or the triangulated normals don't align as precisely opposing. IFC defines these as path connections (topological), not face contacts (geometric).
 - **35 new:** Real geometric contacts that `IfcRelConnectsPathElements` does not capture: wall-to-foundation contacts, stacked exterior walls between floors, etc. These are valid adjacencies that the IFC authoring tool's "wall join" logic never created.
 
-**Limitations to address in future work:**
+**Performance optimisation (vectorized broadphase):**
 
-1. **Performance — O(n×m) face-pair loop (17–18s for 57 walls).** The bottleneck is `mesh_mesh_contacts` in `compas_model`, which iterates all face pairs between two meshes in pure Python. For walls with 76–112 triangular faces each, this means ~8k comparisons per pair × 150 pairs. Potential improvements:
-   - *Face-normal pre-grouping:* Bucket faces by quantised normal direction; only pair buckets with opposing normals. Would reduce per-pair work by ~6× for typical wall meshes.
-   - *Per-face AABB tree:* Spatial index on individual faces to skip distant face pairs entirely.
-   - *C-level implementation:* Move the hot loop to compiled code (upstream `compas_model` improvement).
+The initial implementation used `mesh_mesh_contacts` from `compas_model`, which iterates all face pairs in a pure-Python O(n×m) loop — 17–18s for 57 walls.  This was replaced with a custom `fast_mesh_mesh_contacts` in `compas_ifc/algorithms/contacts.py` that uses a NumPy vectorized broadphase:
 
-2. **Tessellated geometry mismatch.** `mesh_mesh_contacts` checks for *exactly* opposing face normals. Tessellated IFC geometry produces triangulated faces that may not be perfectly coplanar even on nominally flat surfaces, causing near-miss false negatives. A tolerance on the normal opposition check (currently strict `is_opposite_normal_normal`) would improve recall.
+1. Extract all face normals, centroids, and vertex coordinates as NumPy arrays (once per mesh).
+2. Compute the `(n, m)` dot-product matrix of normals in one operation; mask pairs where `dot ≈ −1`.
+3. Compute the `(n, m)` centroid-plane-distance matrix; mask pairs within tolerance.
+4. AND the two masks → typically reduces ~14,400 face pairs to 5–20 candidates per mesh pair.
+5. For each candidate, project polygons to 2D using the known face normal directly (no SVD), compute Shapely intersection, transform back to 3D.
 
-3. **Path connections vs face contacts.** IFC's `IfcRelConnectsPathElements` represents *topological* wall-join relationships (L-joins, T-joins, etc.) which do not require shared face area — just edge adjacency. The geometric contact method inherently requires a shared face polygon with area ≥ `minimum_area`. Thin walls that join end-on have zero (or sub-threshold) shared face area. Recovering these would require an *edge-adjacency* detection mode in addition to face-contact detection.
+**Result: 17.9s → 1.25s (14.3× speedup)**, identical output (same 99 connections, same contact areas).  No new dependencies — only NumPy and Shapely, both already required.
 
-4. **No IFC relationship generation yet.** Currently `compute_connections()` only creates graph edges with `"source": "computed"`. It does not yet generate `IfcRelConnectsElements` entities in the IFC file. This would require a write-back step: for each new computed connection edge, create the corresponding IFC relationship entity via `model.create()`.
+This vectorized approach should be upstreamed into `compas_model` itself, replacing the current `mesh_mesh_contacts` implementation.  The API is identical; only the inner algorithm changes.
 
-5. **Element type scoping.** Without `element_types` filter, including all 215 elements (railings, furniture, stairs with 700–1100 faces) would make the BVH produce thousands of false-positive pairs and push runtime to minutes. The `element_types` parameter is essential for practical use but requires the user to know which types to include.
+**Remaining limitations:**
+
+1. **Tessellated geometry mismatch.** `is_opposite_normal_normal` checks for *exactly* opposing face normals (dot ≈ −1 within `rtol=1e-3`). Tessellated IFC geometry produces triangulated faces that may not be perfectly coplanar even on nominally flat surfaces, causing near-miss false negatives. A more tolerant normal opposition check would improve recall.
+
+2. **Path connections vs face contacts.** IFC's `IfcRelConnectsPathElements` represents *topological* wall-join relationships (L-joins, T-joins, etc.) which do not require shared face area — just edge adjacency. The geometric contact method inherently requires a shared face polygon with area ≥ `minimum_area`. Thin walls that join end-on have zero (or sub-threshold) shared face area. Recovering these would require an *edge-adjacency* detection mode in addition to face-contact detection.
+
+3. **No IFC relationship generation yet.** Currently `compute_connections()` only creates graph edges with `"source": "computed"`. It does not yet generate `IfcRelConnectsElements` entities in the IFC file. This would require a write-back step: for each new computed connection edge, create the corresponding IFC relationship entity via `model.create()`.
+
+4. **Element type scoping.** Without `element_types` filter, including all 215 elements (railings, furniture, stairs with 700–1100 faces) would make the BVH produce thousands of false-positive pairs and push runtime beyond practical limits. The `element_types` parameter is essential for practical use but requires the user to know which types to include.
 
 ---
 

@@ -309,9 +309,9 @@ class GenericElement(Element):
         list[Contact]
 
         """
+        from compas_ifc.algorithms.contacts import fast_mesh_mesh_contacts
         from compas_ifc.brep.tessellatedbrep import TessellatedBrep
         from compas_model.algorithms.contacts import brep_brep_contacts
-        from compas_model.algorithms.contacts import mesh_mesh_contacts
 
         a = self.modelgeometry
         b = other.modelgeometry
@@ -325,7 +325,7 @@ class GenericElement(Element):
             b = b.to_mesh()
 
         if isinstance(a, Mesh) and isinstance(b, Mesh):
-            return mesh_mesh_contacts(a, b, tolerance=tolerance, minimum_area=minimum_area, contacttype=contacttype)
+            return fast_mesh_mesh_contacts(a, b, tolerance=tolerance, minimum_area=minimum_area, contacttype=contacttype)
         elif isinstance(a, Brep) and isinstance(b, Brep):
             return brep_brep_contacts(a, b, tolerance=tolerance, minimum_area=minimum_area, contacttype=contacttype)
 
