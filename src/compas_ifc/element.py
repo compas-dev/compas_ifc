@@ -4,9 +4,11 @@ from typing import Union
 from compas.datastructures import Mesh
 from compas.geometry import Box
 from compas.geometry import Brep
+from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Transformation
 from compas_model.elements import Element
+from compas_model.elements import reset_computed
 
 from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
 
@@ -23,6 +25,9 @@ class GenericElement(Element):
     spatial containers (IfcSite, IfcBuilding, IfcBuildingStorey) are represented
     uniformly as ``GenericElement`` instances with different ``ifc_type`` values.
 
+    Property setters are **bi-directional**: setting geometry, name, properties,
+    or transformation on the element also updates the underlying IFC entity.
+
     Parameters
     ----------
     ifc_type : str, optional
@@ -33,23 +38,6 @@ class GenericElement(Element):
         The local transformation relative to the parent element.
     name : str, optional
         The name of the element.
-
-    User-facing attributes
-    ----------------------
-    ifc_type : str
-        The IFC class name of the element.
-    global_id : str
-        The IFC GlobalId of the element.
-    geometry : TessellatedBrep | Brep | Mesh
-        The geometry of the element (lazy-loaded from IFC).
-    properties : dict
-        Unified dict merging IFC schema attributes and property sets.
-    style : dict
-        Visual style attributes (color, transparency).
-    is_spatial : bool
-        Whether this element is a spatial container.
-    ifc_entity : Base
-        Escape hatch to the underlying raw IFC entity (read-only).
 
     """
 
@@ -69,6 +57,13 @@ class GenericElement(Element):
         name: Optional[str] = None,
         **kwargs,
     ) -> None:
+        # Must initialize before super().__init__ because Data.__init__
+        # calls self.name = name which triggers the name setter.
+        self._ifc_entity = None
+        self._global_id = None
+        self._properties = None
+        self._style = None
+
         super().__init__(
             geometry=geometry,
             transformation=transformation,
@@ -76,10 +71,6 @@ class GenericElement(Element):
             **kwargs,
         )
         self.ifc_type = ifc_type
-        self._ifc_entity = None
-        self._global_id = None
-        self._properties = None
-        self._style = None
 
     def __repr__(self) -> str:
         return f"<GenericElement {self.ifc_type} '{self.name}'>"
@@ -88,7 +79,7 @@ class GenericElement(Element):
         return f"<GenericElement {self.ifc_type} '{self.name}'>"
 
     # ==========================================================================
-    # User-facing API
+    # User-facing API (bi-directional: reads from IFC, writes back to IFC)
     # ==========================================================================
 
     @property
@@ -111,15 +102,23 @@ class GenericElement(Element):
         self._global_id = value
 
     @property
+    def name(self):
+        return super().name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+        # Sync to IFC
+        if self._ifc_entity is not None and getattr(self, "model", None) is not None:
+            self._ifc_entity.Name = value
+
+    @property
     def properties(self) -> dict:
         """Unified properties of the element.
 
         Merges IFC schema attributes (Name, Description, ObjectType, etc.)
         and property sets (Pset_WallCommon, etc.) into a single flat dict.
         Lazy-loaded from the IFC entity on first access.
-
-        The top-level keys include both individual IFC attributes and
-        property set names. Property set values are nested dicts.
         """
         if self._properties is None:
             if self._ifc_entity is not None:
@@ -131,6 +130,15 @@ class GenericElement(Element):
     @properties.setter
     def properties(self, value: dict) -> None:
         self._properties = value
+        # Sync to IFC
+        if self._ifc_entity is not None and getattr(self, "model", None) is not None and value:
+            schema_attrs = {"Description", "ObjectType", "Tag", "PredefinedType"}
+            psets = {k: v for k, v in value.items() if k not in schema_attrs and isinstance(v, dict)}
+            if psets:
+                self._ifc_entity.property_sets = psets
+            for attr in schema_attrs:
+                if attr in value:
+                    setattr(self._ifc_entity, attr, value[attr])
 
     @property
     def style(self) -> dict:
@@ -157,8 +165,7 @@ class GenericElement(Element):
         """The geometry of the element.
 
         Lazy-loaded from the underlying IFC entity on first access.
-        Returns a TessellatedBrep, Brep, or Mesh depending on how the
-        geometry was loaded.
+        Setting geometry also updates the IFC representation.
         """
         if self._geometry is None and self._ifc_entity is not None:
             geom = self._ifc_entity.geometry
@@ -167,8 +174,25 @@ class GenericElement(Element):
         return self._geometry
 
     @geometry.setter
+    @reset_computed
     def geometry(self, geometry) -> None:
         self._geometry = geometry
+        # Sync to IFC
+        if self._ifc_entity is not None and getattr(self, "model", None) is not None and geometry is not None:
+            self._ifc_entity.geometry = geometry
+
+    @property
+    def transformation(self):
+        return self._transformation
+
+    @transformation.setter
+    @reset_computed
+    def transformation(self, transformation) -> None:
+        self._transformation = transformation
+        # Sync to IFC
+        if self._ifc_entity is not None and getattr(self, "model", None) is not None and transformation is not None:
+            frame = Frame.from_transformation(transformation)
+            self._ifc_entity.frame = frame
 
     # ==========================================================================
     # Internal helpers
