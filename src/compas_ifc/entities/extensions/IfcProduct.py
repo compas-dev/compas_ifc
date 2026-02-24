@@ -21,8 +21,10 @@ class IfcProduct(IfcProduct):
     visual_geometry : :class:`compas_ifc.brep.TessellatedBrep` or :class:`compas_occ.brep.OCCBrep`
         The evaluated visual geometry of the product, produced by ifcopenshell.geom.iterator.
         Suitable for display but does NOT preserve parametric information.
-    geometry : :class:`compas_ifc.brep.TessellatedBrep` or :class:`compas_occ.brep.OCCBrep`
-        Backward-compatible access. Getter returns visual_geometry.
+    geometry : :class:`~compas.geometry.Geometry` or :class:`~compas.datastructures.Mesh` or None
+        Parsed COMPAS geometry from the IFC body representation.
+        Returns Box, Sphere, Cone, Cylinder, Extrusion, Mesh, etc.
+        Falls back to visual_geometry if parsing is not available.
         Setter writes COMPAS geometry to the IFC file as a body representation.
     frame : :class:`compas.geometry.Frame`
         The frame of the product.
@@ -62,21 +64,36 @@ class IfcProduct(IfcProduct):
 
     @property
     def geometry(self):
-        """Backward-compatible geometry access.
+        """Parsed COMPAS geometry from the IFC body representation.
 
-        Getter returns the evaluated visual geometry (same as ``visual_geometry``).
-        Setter writes a COMPAS geometry object to the IFC file as a body
-        representation (IfcShapeRepresentation).
+        Attempts to parse the IFC representation graph into native COMPAS
+        geometry (Box, Sphere, Cone, Cylinder, Mesh, Extrusion).
+        Falls back to the evaluated ``visual_geometry`` if the representation
+        type is not yet supported by the parser.
 
         Returns
         -------
-        :class:`compas_ifc.brep.TessellatedBrep` or :class:`compas_occ.brep.OCCBrep` or None
+        :class:`~compas.geometry.Geometry` | :class:`~compas.datastructures.Mesh` | None
         """
-        return self.visual_geometry
+        if not getattr(self, "_parsed_geometry", None):
+            from compas_ifc.conversions.reading import read_body_representation
+
+            try:
+                parsed = read_body_representation(self)
+            except Exception:
+                parsed = None
+
+            if parsed is not None:
+                self._parsed_geometry = parsed
+            else:
+                self._parsed_geometry = self.visual_geometry
+
+        return self._parsed_geometry
 
     @geometry.setter
     def geometry(self, geometry):
-        self._visual_geometry = geometry
+        self._parsed_geometry = geometry
+        self._visual_geometry = None  # clear visual cache
         assign_body_representation(self, geometry)
         # TODO: delete existing representation
 
