@@ -28,7 +28,6 @@ def box_to_IfcBlock(model: Model, box: Box) -> Base:
     """
     pt = box.frame.point.copy()
     pt -= [box.xsize / 2, box.ysize / 2, box.zsize / 2]
-    print(pt)
     return model.create(
         "IfcBlock",
         Position=create_IfcAxis2Placement3D(model, pt, box.frame.zaxis, box.frame.xaxis),
