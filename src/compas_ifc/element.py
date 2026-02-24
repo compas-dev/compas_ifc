@@ -170,7 +170,11 @@ class GenericElement(Element):
         Setting geometry also updates the IFC representation.
         """
         if self._geometry is None and self._ifc_entity is not None:
-            geom = self._ifc_entity.geometry
+            try:
+                geom = self._ifc_entity.geometry
+            except AttributeError:
+                # Not all IFC types have geometry (e.g. IfcSystem, IfcGroup)
+                geom = None
             if geom is not None:
                 self._geometry = geom
         return self._geometry
