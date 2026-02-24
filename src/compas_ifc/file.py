@@ -83,8 +83,8 @@ class IFCFile(object):
         self.verbose = verbose
         self.ensure_classes_generated()
         self._entitymap = {}
-        self._geometrymap = {}
-        self._stylemap = {}
+        self._geometrymap = {}  # entity_id → visual geometry (TessellatedBrep or OCCBrep)
+        self._stylemap = {}  # entity_id → visual style dict (facecolors or shellcolors)
         self._relationmap_aggregates = {}  # map of IfcRelAggregates
         self._relationmap_contains = {}  # map of IfcRelContainedInSpatialStructure
         self._default_context = None
@@ -255,17 +255,22 @@ class IFCFile(object):
 
     def get_preloaded_geometry(self, entity: Base) -> "TessellatedBrep":
         """
-        Get the preloaded geometry of an entity.
+        Get the preloaded visual geometry of an entity.
+
+        Returns the evaluated (tessellated or B-Rep) geometry produced by
+        ``ifcopenshell.geom.iterator`` during ``load_geometries()``.
+        Parametric information (extrusion profiles, boolean trees, etc.)
+        is NOT preserved.
 
         Parameters
         ----------
         entity : :class:`compas_ifc.entities.base.Base`
-            The entity to get the geometry of.
+            The entity to get the visual geometry of.
 
         Returns
         -------
-        :class:`compas_ifc.brep.TessellatedBrep`
-            The preloaded geometry of the entity. (OCCBrep if use_occ is True)
+        :class:`compas_ifc.brep.TessellatedBrep` or :class:`compas_occ.brep.OCCBrep` or None
+            The preloaded visual geometry, or None if not available.
         """
         return self._geometrymap.get(entity.entity.id())
 
@@ -345,7 +350,7 @@ class IFCFile(object):
                     break
 
         if self.verbose:
-            print(f"Time to load all {len(self._geometrymap)} geometries {(time.time() - start):.3f}s")
+            print(f"Time to load all {len(self._geometrymap)} visual geometries {(time.time() - start):.3f}s")
 
     def save(self, path: str):
         """

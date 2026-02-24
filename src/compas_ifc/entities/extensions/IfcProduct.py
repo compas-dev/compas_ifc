@@ -16,10 +16,14 @@ class IfcProduct(IfcProduct):
 
     Attributes
     ----------
-    style : :class:`IfcStyle`
+    style : dict
         The style of the product.
-    geometry : :class:`compas_ifc.brep.TessellatedBrep`
-        The geometry of the product. (OCCBrep is using COMPAS OCC)
+    visual_geometry : :class:`compas_ifc.brep.TessellatedBrep` or :class:`compas_occ.brep.OCCBrep`
+        The evaluated visual geometry of the product, produced by ifcopenshell.geom.iterator.
+        Suitable for display but does NOT preserve parametric information.
+    geometry : :class:`compas_ifc.brep.TessellatedBrep` or :class:`compas_occ.brep.OCCBrep`
+        Backward-compatible access. Getter returns visual_geometry.
+        Setter writes COMPAS geometry to the IFC file as a body representation.
     frame : :class:`compas.geometry.Frame`
         The frame of the product.
     """
@@ -29,22 +33,50 @@ class IfcProduct(IfcProduct):
         return self.file.get_preloaded_style(self)
 
     @property
-    def geometry(self):
-        if not getattr(self, "_geometry", None):
-            self._geometry = self.file.get_preloaded_geometry(self)
-            if self._geometry:
-                self._geometry.name = self.Name
+    def visual_geometry(self):
+        """The evaluated visual geometry of the product.
+
+        Produced by ifcopenshell.geom.iterator during ``load_geometries()``.
+        Suitable for display but does NOT preserve parametric information
+        (extrusion profiles, boolean trees, instancing relationships, etc.).
+
+        Returns
+        -------
+        :class:`compas_ifc.brep.TessellatedBrep` or :class:`compas_occ.brep.OCCBrep` or None
+        """
+        if not getattr(self, "_visual_geometry", None):
+            self._visual_geometry = self.file.get_preloaded_geometry(self)
+            if self._visual_geometry:
+                self._visual_geometry.name = self.Name
                 if self.file.use_occ:
                     # NOTE: When using OCC, the geometry is pre-transformed to the frame of the entity.
                     # We need to re-transform the geometry back to its original location.
                     # This is not necessary when using TessellatedBrep.
                     T = self.frame.to_transformation()
-                    self._geometry.transform(T.inverse())
-        return self._geometry
+                    self._visual_geometry.transform(T.inverse())
+        return self._visual_geometry
+
+    @visual_geometry.setter
+    def visual_geometry(self, value):
+        self._visual_geometry = value
+
+    @property
+    def geometry(self):
+        """Backward-compatible geometry access.
+
+        Getter returns the evaluated visual geometry (same as ``visual_geometry``).
+        Setter writes a COMPAS geometry object to the IFC file as a body
+        representation (IfcShapeRepresentation).
+
+        Returns
+        -------
+        :class:`compas_ifc.brep.TessellatedBrep` or :class:`compas_occ.brep.OCCBrep` or None
+        """
+        return self.visual_geometry
 
     @geometry.setter
     def geometry(self, geometry):
-        self._geometry = geometry
+        self._visual_geometry = geometry
         assign_body_representation(self, geometry)
         # TODO: delete existing representation
 
