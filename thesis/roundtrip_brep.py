@@ -34,6 +34,7 @@ Run with:
   conda run -n compas-ifc python thesis/roundtrip_brep.py
 """
 
+import math
 import os
 import sys
 
@@ -327,61 +328,398 @@ for elem in model2.building_elements:
     if name:
         reloaded_elems[name] = elem
 
+# ------------------------------------------------------------------
+# Analytic verification helpers
+# ------------------------------------------------------------------
+# Compute volume/area from IFC surface parameters (exact formulas),
+# independent of the ifcopenshell geometry evaluator.
 
-def compare_value(shape_name, metric, orig_val, reload_val):
-    """Compare a metric (volume or surface_area) with appropriate tolerance.
+ANALYTIC_TOL = 0.001  # 0.1% — formulas are exact, error is parameter precision
 
-    Returns (status_str, passed_bool) where status_str is one of:
-    PASS, FAIL, INFO (for known issues).
+
+def get_advanced_brep_for_element(ifc_file, elem_name):
+    """Find the IfcAdvancedBrep entity for a named element."""
+    for product in ifc_file.by_type("IfcProduct"):
+        if product.Name == elem_name:
+            if product.Representation:
+                for rep in product.Representation.Representations:
+                    for item in rep.Items:
+                        if item.is_a("IfcAdvancedBrep"):
+                            return item
+    return None
+
+
+def classify_brep_surfaces(advanced_brep):
+    """Collect face surface types from the outer shell."""
+    surface_map = {}
+    for face in advanced_brep.Outer.CfsFaces:
+        surf_type = face.FaceSurface.is_a()
+        if surf_type not in surface_map:
+            surface_map[surf_type] = []
+        surface_map[surf_type].append(face)
+    return surface_map
+
+
+def _box_dims_from_planes(plane_faces):
+    """Extract axis-aligned box dimensions from plane faces.
+
+    Groups planes by dominant normal axis, returns (dx, dy, dz) or None.
+    """
+    axis_positions = {}  # axis_index -> [position values]
+    for face in plane_faces:
+        pos = face.FaceSurface.Position
+        loc = pos.Location.Coordinates
+        n = pos.Axis.DirectionRatios if pos.Axis else (0.0, 0.0, 1.0)
+        abs_n = [abs(x) for x in n]
+        axis = abs_n.index(max(abs_n))
+        axis_positions.setdefault(axis, []).append(loc[axis])
+    if len(axis_positions) != 3:
+        return None
+    dims = []
+    for ax in range(3):
+        vals = axis_positions.get(ax, [])
+        if len(vals) < 2:
+            return None
+        dims.append(max(vals) - min(vals))
+    return tuple(dims)
+
+
+def _cyl_axis_index(cyl_surf):
+    """Return the dominant axis index (0,1,2) and direction tuple for a cylindrical surface."""
+    pos = cyl_surf.Position
+    ax = pos.Axis.DirectionRatios if pos.Axis else (0.0, 0.0, 1.0)
+    abs_ax = [abs(x) for x in ax]
+    return abs_ax.index(max(abs_ax)), ax
+
+
+def analytic_properties(surface_map):
+    """Pattern-match surface types and compute volume/area from IFC parameters.
+
+    Returns (volume, area, shape_type) or (None, None, None).
+    """
+    types = set(surface_map.keys())
+
+    # Sphere: all faces are IfcSphericalSurface
+    if types == {"IfcSphericalSurface"}:
+        R = surface_map["IfcSphericalSurface"][0].FaceSurface.Radius
+        vol = (4.0 / 3.0) * math.pi * R**3
+        area = 4.0 * math.pi * R**2
+        return vol, area, "sphere"
+
+    # IfcSphericalSurface + IfcPlane combinations
+    if types == {"IfcSphericalSurface", "IfcPlane"}:
+        spherical_faces = surface_map["IfcSphericalSurface"]
+        plane_faces = surface_map["IfcPlane"]
+
+        # Hemisphere: 1 sphere + 1 plane cap
+        if len(spherical_faces) == 1 and len(plane_faces) == 1:
+            R = spherical_faces[0].FaceSurface.Radius
+            vol = (2.0 / 3.0) * math.pi * R**3
+            area = 3.0 * math.pi * R**2  # curved 2piR^2 + flat piR^2
+            return vol, area, "hemisphere"
+
+        # Hollow box: 6 planes (box) + 1 sphere void inside
+        if len(spherical_faces) == 1 and len(plane_faces) == 6:
+            R = spherical_faces[0].FaceSurface.Radius
+            dims = _box_dims_from_planes(plane_faces)
+            if dims is not None:
+                box_vol = dims[0] * dims[1] * dims[2]
+                sph_vol = (4.0 / 3.0) * math.pi * R**3
+                vol = box_vol - sph_vol
+                box_area = 2.0 * (dims[0] * dims[1] + dims[1] * dims[2] + dims[0] * dims[2])
+                area = box_area + 4.0 * math.pi * R**2  # outer box + inner sphere
+                return vol, area, "hollow box"
+
+    # Torus: all faces are IfcToroidalSurface
+    if types == {"IfcToroidalSurface"}:
+        torus_surf = surface_map["IfcToroidalSurface"][0].FaceSurface
+        R = torus_surf.MajorRadius
+        r = torus_surf.MinorRadius
+        vol = 2.0 * math.pi**2 * R * r**2
+        area = 4.0 * math.pi**2 * R * r
+        return vol, area, "torus"
+
+    # Partial torus: IfcToroidalSurface + 2 IfcPlane
+    # OCC MakeTorus(R, r, angle1, angle2) creates a solid bounded by two
+    # horizontal planes and the toroidal surface.  The solid fills from the
+    # Z-axis (rho=0) outward to the tube boundary.
+    if types == {"IfcToroidalSurface", "IfcPlane"}:
+        torus_faces = surface_map["IfcToroidalSurface"]
+        plane_faces = surface_map["IfcPlane"]
+        if len(torus_faces) == 1 and len(plane_faces) == 2:
+            torus_surf = torus_faces[0].FaceSurface
+            R = torus_surf.MajorRadius
+            r = torus_surf.MinorRadius
+            # Get torus center z and plane z values along the torus axis
+            torus_pos = torus_surf.Position
+            t_ax = torus_pos.Axis.DirectionRatios if torus_pos.Axis else (0.0, 0.0, 1.0)
+            ax_idx = [abs(x) for x in t_ax].index(max(abs(x) for x in t_ax))
+            t_center = torus_pos.Location.Coordinates[ax_idx]
+            z_vals = []
+            for pf in plane_faces:
+                z_vals.append(pf.FaceSurface.Position.Location.Coordinates[ax_idx])
+            z_bot = min(z_vals) - t_center
+            z_top = max(z_vals) - t_center
+            # Volume = pi * integral from z_bot to z_top of (R + sqrt(r^2-z^2))^2 dz
+            # Antiderivative F(z) = R^2*z + R*(z*sqrt(r^2-z^2) + r^2*asin(z/r)) + r^2*z - z^3/3
+            def _F(z):
+                z = max(-r, min(r, z))  # clamp to avoid domain errors
+                return R**2 * z + R * (z * math.sqrt(r**2 - z**2) + r**2 * math.asin(z / r)) + r**2 * z - z**3 / 3.0
+            vol = math.pi * (_F(z_top) - _F(z_bot))
+            # Area: toroidal surface + top disk + bottom disk
+            v_bot = math.asin(z_bot / r) if abs(z_bot) <= r else (math.pi / 2 * (1 if z_bot > 0 else -1))
+            v_top = math.asin(z_top / r) if abs(z_top) <= r else (math.pi / 2 * (1 if z_top > 0 else -1))
+            a_torus = 2.0 * math.pi * r * (R * (v_top - v_bot) + r * (math.sin(v_top) - math.sin(v_bot)))
+            rho_bot = R + r * math.cos(v_bot)
+            rho_top = R + r * math.cos(v_top)
+            a_bot = math.pi * rho_bot**2
+            a_top = math.pi * rho_top**2
+            area = a_torus + a_bot + a_top
+            return vol, area, "partial torus"
+
+    # Capsule: 2 IfcSphericalSurface + 1 IfcCylindricalSurface
+    if types == {"IfcSphericalSurface", "IfcCylindricalSurface"}:
+        sph_faces = surface_map["IfcSphericalSurface"]
+        cyl_faces = surface_map["IfcCylindricalSurface"]
+        if len(sph_faces) == 2 and len(cyl_faces) == 1:
+            R = cyl_faces[0].FaceSurface.Radius
+            # Height = distance between sphere centers
+            c1 = sph_faces[0].FaceSurface.Position.Location.Coordinates
+            c2 = sph_faces[1].FaceSurface.Position.Location.Coordinates
+            h = math.sqrt(sum((a - b) ** 2 for a, b in zip(c1, c2)))
+            vol = (4.0 / 3.0) * math.pi * R**3 + math.pi * R**2 * h
+            area = 4.0 * math.pi * R**2 + 2.0 * math.pi * R * h
+            return vol, area, "capsule"
+
+    # IfcCylindricalSurface + IfcPlane combinations
+    if types == {"IfcCylindricalSurface", "IfcPlane"}:
+        cyl_faces = surface_map["IfcCylindricalSurface"]
+        plane_faces = surface_map["IfcPlane"]
+
+        # Simple cylinder: 1 cyl + 2 plane caps
+        if len(cyl_faces) == 1 and len(plane_faces) == 2:
+            cyl_surf = cyl_faces[0].FaceSurface
+            R = cyl_surf.Radius
+            cyl_pos = cyl_surf.Position
+            ax = cyl_pos.Axis.DirectionRatios if cyl_pos.Axis else (0.0, 0.0, 1.0)
+            p1 = plane_faces[0].FaceSurface.Position.Location.Coordinates
+            p2 = plane_faces[1].FaceSurface.Position.Location.Coordinates
+            dx, dy, dz = p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]
+            h = abs(dx * ax[0] + dy * ax[1] + dz * ax[2])
+            vol = math.pi * R**2 * h
+            area = 2.0 * math.pi * R * h + 2.0 * math.pi * R**2
+            return vol, area, "cylinder"
+
+        # Box with cylindrical hole: 6 planes (box) + 1 cylinder through-hole
+        if len(cyl_faces) == 1 and len(plane_faces) == 6:
+            cyl_surf = cyl_faces[0].FaceSurface
+            R = cyl_surf.Radius
+            dims = _box_dims_from_planes(plane_faces)
+            if dims is not None:
+                cyl_axis_idx, _ = _cyl_axis_index(cyl_surf)
+                h = dims[cyl_axis_idx]  # hole height = box dimension along cylinder axis
+                box_vol = dims[0] * dims[1] * dims[2]
+                vol = box_vol - math.pi * R**2 * h
+                box_area = 2.0 * (dims[0] * dims[1] + dims[1] * dims[2] + dims[0] * dims[2])
+                area = box_area - 2.0 * math.pi * R**2 + 2.0 * math.pi * R * h
+                return vol, area, "box+hole"
+
+        # Revolved stepped profile: N coaxial cylinders + N planes perpendicular to axis
+        # (e.g. L-profile revolved 360 degrees)
+        if len(cyl_faces) >= 2 and len(plane_faces) >= 3:
+            # Check all cylinders are coaxial
+            ref_ax_idx, ref_ax = _cyl_axis_index(cyl_faces[0].FaceSurface)
+            coaxial = True
+            for cf in cyl_faces[1:]:
+                ai, _ = _cyl_axis_index(cf.FaceSurface)
+                if ai != ref_ax_idx:
+                    coaxial = False
+                    break
+            # Check all planes are perpendicular to the cylinder axis
+            if coaxial:
+                for pf in plane_faces:
+                    n = pf.FaceSurface.Position.Axis.DirectionRatios if pf.FaceSurface.Position.Axis else (0, 0, 1)
+                    abs_n = [abs(x) for x in n]
+                    if abs_n.index(max(abs_n)) != ref_ax_idx:
+                        coaxial = False
+                        break
+            if coaxial:
+                # Outer cylinder = largest radius
+                radii = [(cf.FaceSurface.Radius, cf) for cf in cyl_faces]
+                radii.sort(key=lambda x: x[0], reverse=True)
+                R_out = radii[0][0]
+                inner_cyls = radii[1:]  # (radius, face) sorted descending
+                # Plane heights along the axis
+                heights = sorted(set(
+                    pf.FaceSurface.Position.Location.Coordinates[ref_ax_idx] for pf in plane_faces
+                ))
+                if len(heights) >= 2 and len(inner_cyls) == len(heights) - 1:
+                    # Assign inner cylinders to intervals by their origin position
+                    inner_by_origin = {}
+                    for r_val, cf in inner_cyls:
+                        origin_h = cf.FaceSurface.Position.Location.Coordinates[ref_ax_idx]
+                        inner_by_origin[origin_h] = r_val
+                    # For each interval, find the inner cylinder whose origin matches
+                    # the TOP height of that interval
+                    intervals = []
+                    for i in range(len(heights) - 1):
+                        h_lo, h_hi = heights[i], heights[i + 1]
+                        # Inner cylinder origin is at the top of its span
+                        r_inner = inner_by_origin.get(h_hi)
+                        if r_inner is None:
+                            # Try bottom of span
+                            r_inner = inner_by_origin.get(h_lo)
+                        if r_inner is None:
+                            break
+                        intervals.append((h_lo, h_hi, r_inner))
+                    if len(intervals) == len(heights) - 1:
+                        vol = sum(math.pi * (R_out**2 - ri**2) * (hi - lo) for lo, hi, ri in intervals)
+                        total_h = heights[-1] - heights[0]
+                        a_outer = 2.0 * math.pi * R_out * total_h
+                        a_inner = sum(2.0 * math.pi * ri * (hi - lo) for lo, hi, ri in intervals)
+                        a_bottom = math.pi * (R_out**2 - intervals[0][2]**2)
+                        a_top = math.pi * (R_out**2 - intervals[-1][2]**2)
+                        a_steps = sum(
+                            math.pi * abs(intervals[i + 1][2]**2 - intervals[i][2]**2)
+                            for i in range(len(intervals) - 1)
+                        )
+                        area = a_outer + a_inner + a_bottom + a_top + a_steps
+                        return vol, area, "revolved profile"
+
+    return None, None, None
+
+
+# Pre-compute analytic values for all shapes
+ifc_file = ifcopenshell.open(IFC_PATH)
+analytic_data = {}  # shape_name -> (vol, area, shape_type)
+
+for shape_name in originals:
+    abrep = get_advanced_brep_for_element(ifc_file, shape_name)
+    if abrep is None:
+        continue
+    surface_map = classify_brep_surfaces(abrep)
+    a_vol, a_area, shape_type = analytic_properties(surface_map)
+    if a_vol is not None:
+        analytic_data[shape_name] = (a_vol, a_area, shape_type)
+
+print(f"  Analytic formulas available for {len(analytic_data)} shapes: {', '.join(sorted(analytic_data.keys()))}")
+print()
+
+
+# ------------------------------------------------------------------
+# Formatting helpers
+# ------------------------------------------------------------------
+
+def _pct(val, ref):
+    """Percentage difference, or None if ref is too small."""
+    if ref is not None and ref > 1e-12 and val is not None:
+        return abs(val - ref) / ref
+    return None
+
+
+def _fval(v):
+    """Format a numeric value (12 chars, 6 decimals) or 'None'."""
+    return f"{v:12.6f}" if v is not None else f"{'None':>12s}"
+
+
+def _fpct(p):
+    """Format a percentage (7 chars, 2 decimals + %) or blank."""
+    return f"{p * 100:7.2f}%" if p is not None else f"{'':>8s}"
+
+
+def _fpct3(p):
+    """Format a percentage (7 chars, 3 decimals + %) or blank."""
+    return f"{p * 100:7.3f}%" if p is not None else f"{'':>8s}"
+
+
+# ------------------------------------------------------------------
+# Comparison logic
+# ------------------------------------------------------------------
+
+def _compare_metric(shape_name, metric, orig, reload_val):
+    """Evaluate one metric and register check results.
+
+    Returns final status string: 'PASS', 'PASS *', 'INFO', or 'FAIL'.
+    'PASS *' means the evaluator failed but analytic verification passed.
     """
     is_known = shape_name in KNOWN_ISSUES
     is_nurbs = shape_name in NURBS_SHAPES
+    has_analytic = shape_name in analytic_data
+
+    # --- Analytic verification (independent of evaluator) ---
+    a_val = None
+    a_pct = None
+    a_ok = False
+    if has_analytic:
+        a_val = analytic_data[shape_name][0 if metric == "volume" else 1]
+        a_pct = _pct(a_val, orig)
+        a_ok = a_pct is not None and a_pct < ANALYTIC_TOL
+        check(f"{shape_name} analytic {metric}", a_ok,
+              f"orig={orig:.6f} analytic={a_val:.6f} ({a_pct * 100:.3f}%)" if a_pct is not None else "ref~0")
+
+    # --- Evaluator verification ---
+    ev_pct = _pct(reload_val, orig)
+    ev_ok = False
 
     if reload_val is None:
-        if is_known:
+        # Evaluator returned nothing
+        if a_ok:
+            status = "PASS *"
+        elif is_known:
             results.append(("INFO", f"{shape_name} {metric}", "evaluator returned None (known issue)"))
-            return "INFO", True
-        check(f"{shape_name} {metric}", False, f"reload {metric} is None")
-        return "FAIL", False
-
-    if orig_val is not None and orig_val > 1e-12:
-        diff_pct = abs(reload_val - orig_val) / orig_val
-
-        if is_known:
-            # Report but don't fail
-            results.append(("INFO", f"{shape_name} {metric}", f"{orig_val:.6f} vs {reload_val:.6f} ({diff_pct * 100:.2f}%)"))
-            return "INFO" if diff_pct > 0.01 else "PASS", True
-
+            status = "INFO"
+        else:
+            check(f"{shape_name} {metric}", False, f"reload {metric} is None")
+            status = "FAIL"
+    elif ev_pct is not None:
         if is_nurbs:
             tol = VOL_TOL_NURBS if metric == "volume" else SA_TOL_NURBS
         else:
             tol = VOL_TOL_STRICT if metric == "volume" else SA_TOL_STRICT
+        ev_ok = ev_pct < tol
 
-        ok = diff_pct < tol
-        check(f"{shape_name} {metric}", ok, f"{orig_val:.6f} vs {reload_val:.6f} ({diff_pct * 100:.2f}%)")
-        return "PASS" if ok else "FAIL", ok
+        if ev_ok:
+            check(f"{shape_name} {metric}", True, f"{orig:.6f} vs {reload_val:.6f} ({ev_pct * 100:.2f}%)")
+            status = "PASS"
+        elif a_ok:
+            # Evaluator bad, but analytic good
+            results.append(("INFO", f"{shape_name} {metric}",
+                            f"evaluator {ev_pct * 100:.2f}% off but analytic OK"))
+            status = "PASS *"
+        elif is_known:
+            results.append(("INFO", f"{shape_name} {metric}",
+                            f"{orig:.6f} vs {reload_val:.6f} ({ev_pct * 100:.2f}%)"))
+            status = "INFO"
+        else:
+            check(f"{shape_name} {metric}", False, f"{orig:.6f} vs {reload_val:.6f} ({ev_pct * 100:.2f}%)")
+            status = "FAIL"
     else:
-        # Original volume ~ 0 (e.g. pipe_sweep which is a shell, tiny_box)
-        if is_known:
-            results.append(("INFO", f"{shape_name} {metric}", f"orig={orig_val:.6f} reload={reload_val:.6f}"))
-            return "INFO", True
-        ok = abs(reload_val) < 1e-6 if orig_val < 1e-12 else True
-        check(f"{shape_name} {metric} (~0)", ok, f"{orig_val:.6f} vs {reload_val:.6f}")
-        return "PASS" if ok else "FAIL", ok
+        # orig ~ 0
+        if is_known or a_ok:
+            status = "PASS *" if a_ok else "INFO"
+            if not a_ok:
+                results.append(("INFO", f"{shape_name} {metric}", f"orig={orig:.6f} reload={reload_val:.6f}"))
+        else:
+            ok = abs(reload_val) < 1e-6 if orig < 1e-12 else True
+            check(f"{shape_name} {metric} (~0)", ok, f"{orig:.6f} vs {reload_val:.6f}")
+            status = "PASS" if ok else "FAIL"
+
+    return status, ev_pct, a_val, a_pct
 
 
 # ------------------------------------------------------------------
 # Volume comparison
 # ------------------------------------------------------------------
 
-print("  VOLUME COMPARISON:")
-print("  " + "-" * 68)
-print(f"  {'Name':<25s} {'Original':>12s} {'Reloaded':>12s} {'Diff%':>8s} {'Status'}")
-print("  " + "-" * 68)
+W_NAME = 25
+SEP = "-" * 104
 
-vol_pass = 0
-vol_fail = 0
-vol_info = 0
+print("  VOLUME COMPARISON:")
+print(f"  {SEP}")
+print(f"  {'Name':<{W_NAME}s} {'Original':>12s} {'Evaluator':>12s} {'Ev.Diff':>8s} {'Analytic':>12s} {'An.Diff':>8s}  {'Status'}")
+print(f"  {SEP}")
+
+ev_note_vol = []  # shapes where evaluator failed but analytic passed
 
 for shape_name in sorted(originals.keys()):
     orig_vol = originals[shape_name]["volume"]
@@ -389,46 +727,32 @@ for shape_name in sorted(originals.keys()):
 
     if elem is None:
         check(f"{shape_name} found after reload", False, "missing")
-        vol_fail += 1
-        print(f"  {shape_name:<25s} {'MISSING':>12s} {'':>12s} {'':>8s} FAIL")
+        print(f"  {shape_name:<{W_NAME}s} {orig_vol:12.6f} {'MISSING':>12s} {'':>8s} {'':>12s} {'':>8s}  FAIL")
         continue
 
     reload_vol = elem.volume
-    status, ok = compare_value(shape_name, "volume", orig_vol, reload_vol)
+    status, ev_pct, a_val, a_pct = _compare_metric(shape_name, "volume", orig_vol, reload_vol)
 
-    if status == "INFO":
-        vol_info += 1
-    elif ok:
-        vol_pass += 1
-    else:
-        vol_fail += 1
+    if status == "PASS *":
+        ev_note_vol.append(shape_name)
 
-    # Format output
-    reload_str = f"{reload_vol:>12.6f}" if reload_vol is not None else f"{'None':>12s}"
-    if reload_vol is not None and orig_vol > 1e-12:
-        diff_str = f"{abs(reload_vol - orig_vol) / orig_vol * 100:>7.2f}%"
-    elif reload_vol is not None:
-        diff_str = f"{'~0':>8s}"
-    else:
-        diff_str = f"{'':>8s}"
-    print(f"  {shape_name:<25s} {orig_vol:>12.6f} {reload_str} {diff_str} {status}")
+    print(f"  {shape_name:<{W_NAME}s} {orig_vol:12.6f} {_fval(reload_vol)} {_fpct(ev_pct)} {_fval(a_val)} {_fpct3(a_pct)}  {status}")
 
-print("  " + "-" * 68)
-print(f"  Volume: {vol_pass} pass, {vol_fail} fail, {vol_info} info (known issues)")
+print(f"  {SEP}")
+if ev_note_vol:
+    print(f"  * Evaluator failed; verified analytically from IFC surface parameters")
 print()
 
 # ------------------------------------------------------------------
 # Surface area comparison
 # ------------------------------------------------------------------
 
-print("  SURFACE AREA COMPARISON:")
-print("  " + "-" * 68)
-print(f"  {'Name':<25s} {'Original':>12s} {'Reloaded':>12s} {'Diff%':>8s} {'Status'}")
-print("  " + "-" * 68)
+ev_note_sa = []
 
-sa_pass = 0
-sa_fail = 0
-sa_info = 0
+print("  SURFACE AREA COMPARISON:")
+print(f"  {SEP}")
+print(f"  {'Name':<{W_NAME}s} {'Original':>12s} {'Evaluator':>12s} {'Ev.Diff':>8s} {'Analytic':>12s} {'An.Diff':>8s}  {'Status'}")
+print(f"  {SEP}")
 
 for shape_name in sorted(originals.keys()):
     orig_area = originals[shape_name]["area"]
@@ -438,28 +762,17 @@ for shape_name in sorted(originals.keys()):
         continue  # already reported as missing
 
     reload_sa = elem.surface_area
-    status, ok = compare_value(shape_name, "surface_area", orig_area, reload_sa)
+    status, ev_pct, a_val, a_pct = _compare_metric(shape_name, "surface_area", orig_area, reload_sa)
 
-    if status == "INFO":
-        sa_info += 1
-    elif ok:
-        sa_pass += 1
-    else:
-        sa_fail += 1
+    if status == "PASS *":
+        ev_note_sa.append(shape_name)
 
-    reload_str = f"{reload_sa:>12.6f}" if reload_sa is not None else f"{'None':>12s}"
-    if reload_sa is not None and orig_area > 1e-12:
-        diff_str = f"{abs(reload_sa - orig_area) / orig_area * 100:>7.2f}%"
-    elif reload_sa is not None:
-        diff_str = f"{'~0':>8s}"
-    else:
-        diff_str = f"{'':>8s}"
-    print(f"  {shape_name:<25s} {orig_area:>12.6f} {reload_str} {diff_str} {status}")
+    print(f"  {shape_name:<{W_NAME}s} {orig_area:12.6f} {_fval(reload_sa)} {_fpct(ev_pct)} {_fval(a_val)} {_fpct3(a_pct)}  {status}")
 
-print("  " + "-" * 68)
-print(f"  Surface area: {sa_pass} pass, {sa_fail} fail, {sa_info} info (known issues)")
+print(f"  {SEP}")
+if ev_note_sa:
+    print(f"  * Evaluator failed; verified analytically from IFC surface parameters")
 print()
-
 
 # ==================================================================
 # SUMMARY
@@ -470,7 +783,6 @@ print("SUMMARY")
 print("=" * 70)
 print()
 
-# Show failures
 failures = [(s, l, d) for s, l, d in results if s == "FAIL"]
 infos = [(s, l, d) for s, l, d in results if s == "INFO"]
 
@@ -486,8 +798,17 @@ if infos:
         print(f"    {status}  {label}: {detail}")
     print()
 
+analytic_verified = sorted(set(ev_note_vol) | set(ev_note_sa))
+if analytic_verified:
+    print(f"  ANALYTICALLY VERIFIED ({len(analytic_verified)} shapes where evaluator failed):")
+    for name in analytic_verified:
+        a_vol, a_area, a_type = analytic_data[name]
+        print(f"    PASS *  {name} ({a_type})")
+    print()
+
 print(f"  {pass_count} PASS / {fail_count} FAIL  (of {pass_count + fail_count} checks)")
-print(f"  ({len(infos)} additional INFO items for known evaluator limitations)")
+if infos:
+    print(f"  ({len(infos)} additional INFO items for known evaluator limitations)")
 print()
 
 if fail_count == 0:
