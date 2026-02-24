@@ -25,8 +25,10 @@ from compas_ifc.conversions.frame import IfcAxis2Placement2D_to_frame
 from compas_ifc.conversions.frame import IfcAxis2Placement3D_to_frame
 from compas_ifc.conversions.primitives import IfcCartesianPoint_to_point
 from compas_ifc.conversions.primitives import IfcDirection_to_vector
+from compas_ifc.representations import BooleanResult
 from compas_ifc.representations import ClippedExtrusion
 from compas_ifc.representations import Extrusion
+from compas_ifc.representations import HalfSpace
 from compas_ifc.representations import Pipe
 from compas_ifc.representations import Revolution
 
@@ -135,7 +137,7 @@ def read_representation_item(item):
     elif type_name == "IfcMappedItem":
         return read_IfcMappedItem(item)
     elif type_name in ("IfcBooleanClippingResult", "IfcBooleanResult"):
-        return read_IfcBooleanClippingResult(item)
+        return read_IfcBooleanResult(item)
     else:
         return None
 
@@ -898,10 +900,15 @@ def _extract_trim_points(trim1, trim2):
 
 
 def read_IfcCsgSolid(csg):
-    """Parse an IfcCsgSolid containing a CSG primitive.
+    """Parse an IfcCsgSolid into COMPAS geometry.
 
-    Only handles the case where ``TreeRootExpression`` is an
-    ``IfcCsgPrimitive3D``.  Boolean trees return ``None``.
+    Handles two cases for ``TreeRootExpression``:
+
+    * **Primitive** — ``IfcBlock``, ``IfcSphere``, ``IfcRightCircularCone``,
+      ``IfcRightCircularCylinder`` are converted to COMPAS shape primitives.
+    * **Boolean tree** — ``IfcBooleanResult`` or ``IfcBooleanClippingResult``
+      is parsed recursively into a :class:`BooleanResult` (or
+      :class:`ClippedExtrusion` when the clipping pattern matches).
 
     Parameters
     ----------
@@ -909,7 +916,7 @@ def read_IfcCsgSolid(csg):
 
     Returns
     -------
-    :class:`Box` | :class:`Sphere` | :class:`Cone` | :class:`Cylinder` | None
+    :class:`Box` | :class:`Sphere` | :class:`Cone` | :class:`Cylinder` | :class:`BooleanResult` | :class:`ClippedExtrusion` | None
     """
     root = csg.TreeRootExpression
     type_name = root.is_a()
@@ -922,6 +929,8 @@ def read_IfcCsgSolid(csg):
         return read_IfcRightCircularCone(root)
     elif type_name == "IfcRightCircularCylinder":
         return read_IfcRightCircularCylinder(root)
+    elif type_name in ("IfcBooleanResult", "IfcBooleanClippingResult"):
+        return read_IfcBooleanResult(root)
     else:
         return None
 
@@ -1003,21 +1012,42 @@ def read_IfcRightCircularCylinder(cylinder):
 # ==========================================================================
 
 
-def read_IfcBooleanClippingResult(bcr):
-    """Parse an IfcBooleanClippingResult chain into a :class:`ClippedExtrusion`.
+def read_IfcBooleanResult(item):
+    """Parse an ``IfcBooleanResult`` or ``IfcBooleanClippingResult`` into
+    parametric COMPAS geometry.
 
-    Recursively walks the ``FirstOperand`` chain to find the leaf
-    ``IfcExtrudedAreaSolid``, collecting ``IfcHalfSpaceSolid`` clipping
-    planes from each ``SecondOperand`` along the way.
+    First tries the :class:`ClippedExtrusion` fast-path (extrusion clipped
+    by half-space planes).  If that pattern does not match, falls back to
+    a generic :class:`BooleanResult` that preserves the full CSG tree.
 
-    Returns ``None`` if the leaf is not an extrusion or if any
-    ``SecondOperand`` is not a half-space, causing the caller to
-    fall back to the visual geometry.
+    Parameters
+    ----------
+    item : :class:`~compas_ifc.entities.base.Base`
+        Wrapped ``IfcBooleanClippingResult`` or ``IfcBooleanResult``.
+
+    Returns
+    -------
+    :class:`ClippedExtrusion` | :class:`BooleanResult` | None
+    """
+    # Fast path: try ClippedExtrusion (extrusion + half-space chain)
+    clipped = _try_clipped_extrusion(item)
+    if clipped is not None:
+        return clipped
+
+    # Generic path: recursive BooleanResult tree
+    return _read_boolean_result_generic(item)
+
+
+def _try_clipped_extrusion(bcr):
+    """Try to parse a boolean chain as a :class:`ClippedExtrusion`.
+
+    Walks the ``FirstOperand`` chain collecting ``IfcHalfSpaceSolid``
+    clipping planes.  Succeeds only if *every* ``SecondOperand`` is a
+    half-space and the leaf ``FirstOperand`` is an ``IfcExtrudedAreaSolid``.
 
     Parameters
     ----------
     bcr : :class:`~compas_ifc.entities.base.Base`
-        Wrapped ``IfcBooleanClippingResult`` or ``IfcBooleanResult``.
 
     Returns
     -------
@@ -1028,19 +1058,16 @@ def read_IfcBooleanClippingResult(bcr):
     # Walk the recursive chain
     current = bcr
     while current.is_a() in ("IfcBooleanClippingResult", "IfcBooleanResult"):
-        # Collect clipping plane from SecondOperand
         second = current.SecondOperand
-        plane_data = _read_half_space(second)
+        plane_data = _read_half_space_tuple(second)
         if plane_data is None:
-            return None  # unsupported second operand -> fallback
+            return None  # non-half-space operand -> not a ClippedExtrusion
         clipping_planes.append(plane_data)
-
-        # Descend into FirstOperand
         current = current.FirstOperand
 
     # The leaf must be an IfcExtrudedAreaSolid
     if current.is_a() != "IfcExtrudedAreaSolid":
-        return None  # non-extrusion leaf -> fallback
+        return None
 
     extrusion = read_IfcExtrudedAreaSolid(current)
     if extrusion is None:
@@ -1052,12 +1079,100 @@ def read_IfcBooleanClippingResult(bcr):
     )
 
 
-def _read_half_space(item):
-    """Read an IfcHalfSpaceSolid into ``(Plane, agreement_flag)``.
+def _read_boolean_result_generic(item):
+    """Parse a boolean result node into a :class:`BooleanResult`.
 
-    Also handles ``IfcPolygonalBoundedHalfSpace`` (ignores the
-    boundary polygon, keeps just the plane -- the boundary is a
-    precision optimisation, not essential for parametric data).
+    Recursively reads both operands via :func:`_read_boolean_operand`.
+
+    Parameters
+    ----------
+    item : :class:`~compas_ifc.entities.base.Base`
+
+    Returns
+    -------
+    :class:`BooleanResult` | None
+    """
+    type_name = item.is_a()
+    if type_name not in ("IfcBooleanClippingResult", "IfcBooleanResult"):
+        return None
+
+    operator = str(item.Operator)
+
+    first = _read_boolean_operand(item.FirstOperand)
+    if first is None:
+        return None
+
+    second = _read_boolean_operand(item.SecondOperand)
+    if second is None:
+        return None
+
+    return BooleanResult(
+        operator=operator,
+        first_operand=first,
+        second_operand=second,
+    )
+
+
+def _read_boolean_operand(item):
+    """Read a boolean operand into COMPAS geometry.
+
+    Dispatches based on the IFC entity type.  Supports all solid model
+    types that can appear as ``IfcBooleanOperand``.
+
+    Parameters
+    ----------
+    item : :class:`~compas_ifc.entities.base.Base`
+
+    Returns
+    -------
+    :class:`~compas.geometry.Geometry` | None
+    """
+    type_name = item.is_a()
+
+    # Recursive boolean
+    if type_name in ("IfcBooleanClippingResult", "IfcBooleanResult"):
+        return read_IfcBooleanResult(item)
+
+    # Half-space solids
+    if type_name in ("IfcHalfSpaceSolid", "IfcPolygonalBoundedHalfSpace"):
+        return _read_half_space(item)
+
+    # Extrusion
+    if type_name == "IfcExtrudedAreaSolid":
+        return read_IfcExtrudedAreaSolid(item)
+
+    # Revolution
+    if type_name == "IfcRevolvedAreaSolid":
+        return read_IfcRevolvedAreaSolid(item)
+
+    # Swept disk
+    if type_name == "IfcSweptDiskSolid":
+        return read_IfcSweptDiskSolid(item)
+
+    # CSG primitives
+    if type_name == "IfcBlock":
+        return read_IfcBlock(item)
+    if type_name == "IfcSphere":
+        return read_IfcSphere(item)
+    if type_name == "IfcRightCircularCone":
+        return read_IfcRightCircularCone(item)
+    if type_name == "IfcRightCircularCylinder":
+        return read_IfcRightCircularCylinder(item)
+
+    # CSG solid container
+    if type_name == "IfcCsgSolid":
+        return read_IfcCsgSolid(item)
+
+    # Unsupported operand type
+    return None
+
+
+def _read_half_space(item):
+    """Read an ``IfcHalfSpaceSolid`` into a :class:`HalfSpace` geometry.
+
+    Also handles ``IfcPolygonalBoundedHalfSpace`` (ignores the boundary
+    polygon — the boundary is a precision optimisation, not essential
+    for parametric data).
 
     Parameters
     ----------
@@ -1066,8 +1181,34 @@ def _read_half_space(item):
 
     Returns
     -------
+    :class:`HalfSpace` | None
+    """
+    from compas.geometry import Plane
+
+    type_name = item.is_a()
+    if type_name not in ("IfcHalfSpaceSolid", "IfcPolygonalBoundedHalfSpace"):
+        return None
+
+    surface = item.BaseSurface
+    frame = IfcAxis2Placement3D_to_frame(surface.Position)
+    plane = Plane(frame.point, frame.zaxis)
+    agreement = bool(item.AgreementFlag)
+    return HalfSpace(plane=plane, agreement_flag=agreement)
+
+
+def _read_half_space_tuple(item):
+    """Read an ``IfcHalfSpaceSolid`` into a ``(Plane, agreement_flag)`` tuple.
+
+    Used by :func:`_try_clipped_extrusion` for backwards compatibility
+    with the :class:`ClippedExtrusion` data format.
+
+    Parameters
+    ----------
+    item : :class:`~compas_ifc.entities.base.Base`
+
+    Returns
+    -------
     tuple[:class:`Plane`, bool] | None
-        ``(plane, agreement_flag)`` or ``None`` for unsupported types.
     """
     from compas.geometry import Plane
 

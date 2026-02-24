@@ -29,8 +29,10 @@ from compas_ifc.conversions.shapes import cylinder_to_IfcRightCircularCylinder
 from compas_ifc.conversions.shapes import sphere_to_IfcSphere
 from compas_ifc.entities.extensions import IfcProduct
 from compas_ifc.model import Model
+from compas_ifc.representations import BooleanResult
 from compas_ifc.representations import ClippedExtrusion
 from compas_ifc.representations import Extrusion
+from compas_ifc.representations import HalfSpace
 from compas_ifc.representations import Pipe
 from compas_ifc.representations import Revolution
 
@@ -111,6 +113,10 @@ def _geometry_to_ifc_items(model: Model, representation):
         of IFC representation items and *representation_type* is the IFC
         representation type string (e.g. ``"SweptSolid"``, ``"CSG"``).
     """
+    if isinstance(representation, BooleanResult):
+        ifc_boolean = boolean_result_to_IfcBooleanResult(model, representation)
+        return [ifc_boolean], "CSG"
+
     if isinstance(representation, ClippedExtrusion):
         ifc_boolean = clipped_extrusion_to_IfcBooleanClippingResult(model, representation)
         return [ifc_boolean], "Clipping"
@@ -466,6 +472,111 @@ def clipped_extrusion_to_IfcBooleanClippingResult(model: Model, clipped: Clipped
         )
 
     return current
+
+
+# ==========================================================================
+# BooleanResult write helpers
+# ==========================================================================
+
+
+def boolean_result_to_IfcBooleanResult(model: Model, bool_result: BooleanResult):
+    """Convert a :class:`BooleanResult` to an ``IfcBooleanResult``.
+
+    Recursively converts both operands and wraps them in an
+    ``IfcBooleanResult`` with the appropriate operator.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    bool_result : :class:`BooleanResult`
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+    """
+    first = _geometry_to_ifc_operand(model, bool_result.first_operand)
+    second = _geometry_to_ifc_operand(model, bool_result.second_operand)
+
+    return model.create(
+        "IfcBooleanResult",
+        Operator=bool_result.operator,
+        FirstOperand=first,
+        SecondOperand=second,
+    )
+
+
+def half_space_to_IfcHalfSpaceSolid(model: Model, half_space: HalfSpace):
+    """Convert a :class:`HalfSpace` to an ``IfcHalfSpaceSolid``.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    half_space : :class:`HalfSpace`
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+    """
+    from compas_ifc.conversions.primitives import frame_to_IfcPlane
+
+    frame = Frame.from_plane(half_space.plane)
+    ifc_plane = frame_to_IfcPlane(model, frame)
+    return model.create(
+        "IfcHalfSpaceSolid",
+        BaseSurface=ifc_plane,
+        AgreementFlag=half_space.agreement_flag,
+    )
+
+
+def _geometry_to_ifc_operand(model: Model, geometry):
+    """Convert a COMPAS geometry object to an IFC boolean operand entity.
+
+    Dispatches based on the geometry type.  Supports all types that
+    can appear as ``IfcBooleanOperand``.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    geometry : :class:`~compas.geometry.Geometry`
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+
+    Raises
+    ------
+    NotImplementedError
+        If the geometry type is not supported as a boolean operand.
+    """
+    if isinstance(geometry, BooleanResult):
+        return boolean_result_to_IfcBooleanResult(model, geometry)
+
+    if isinstance(geometry, ClippedExtrusion):
+        return clipped_extrusion_to_IfcBooleanClippingResult(model, geometry)
+
+    if isinstance(geometry, HalfSpace):
+        return half_space_to_IfcHalfSpaceSolid(model, geometry)
+
+    if isinstance(geometry, Extrusion):
+        return extrusion_to_IfcExtrudedAreaSolid(model, geometry)
+
+    if isinstance(geometry, Revolution):
+        return revolution_to_IfcRevolvedAreaSolid(model, geometry)
+
+    if isinstance(geometry, Pipe):
+        return pipe_to_IfcSweptDiskSolid(model, geometry)
+
+    # CSG primitives
+    if isinstance(geometry, Box):
+        return box_to_IfcBlock(model, geometry)
+    if isinstance(geometry, Sphere):
+        return sphere_to_IfcSphere(model, geometry)
+    if isinstance(geometry, Cone):
+        return cone_to_IfcRightCircularCone(model, geometry)
+    if isinstance(geometry, Cylinder):
+        return cylinder_to_IfcRightCircularCylinder(model, geometry)
+
+    raise NotImplementedError(f"Cannot convert {type(geometry).__name__} to IFC boolean operand.")
 
 
 def _profile_to_ifc(model, profile):
