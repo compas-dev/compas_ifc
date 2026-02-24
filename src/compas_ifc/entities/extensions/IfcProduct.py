@@ -26,6 +26,9 @@ class IfcProduct(IfcProduct):
         Returns Box, Sphere, Cone, Cylinder, Extrusion, Mesh, etc.
         Falls back to visual_geometry if parsing is not available.
         Setter writes COMPAS geometry to the IFC file as a body representation.
+    axis : :class:`~compas.geometry.Polyline` or None
+        The axis (centerline) representation of the product, parsed from the
+        ``"Axis"`` representation.  Common for walls, beams, and columns.
     frame : :class:`compas.geometry.Frame`
         The frame of the product.
     """
@@ -96,6 +99,34 @@ class IfcProduct(IfcProduct):
         self._visual_geometry = None  # clear visual cache
         assign_body_representation(self, geometry)
         # TODO: delete existing representation
+
+    @property
+    def axis(self):
+        """The axis (centerline) representation of the product.
+
+        Parses the ``"Axis"`` representation into a :class:`~compas.geometry.Polyline`.
+        Common for linear elements such as walls, beams, and columns.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Polyline` | None
+        """
+        if not getattr(self, "_axis", None):
+            from compas_ifc.conversions.reading import read_axis_representation
+
+            try:
+                self._axis = read_axis_representation(self)
+            except Exception:
+                self._axis = None
+
+        return self._axis
+
+    @axis.setter
+    def axis(self, polyline):
+        self._axis = polyline
+        from compas_ifc.conversions.representation import assign_axis_representation
+
+        assign_axis_representation(self, polyline)
 
     @property
     def frame(self):

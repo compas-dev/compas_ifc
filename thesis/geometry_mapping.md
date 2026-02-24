@@ -1,6 +1,6 @@
 # Bidirectional Geometry Mapping: COMPAS ↔ IFC
 
-> **Date:** 2026-02-24 (updated after Phase 1 implementation)
+> **Date:** 2026-02-24 (updated after Phase 2 implementation)
 > **COMPAS version:** 2.15.0
 > **IFC schema:** IFC4
 > **Purpose:** Define every mapping between COMPAS geometry types and IFC entities, for both reading and writing.
@@ -43,8 +43,8 @@ These are building blocks used inside other representations, not standalone geom
 | COMPAS Curve | IFC Entity | Status | Where | Notes |
 |---|---|---|---|---|
 | `Line` | `IfcLine` | 🔧 | `brep.py` | Only as B-Rep edge curves, not standalone |
-| `Polyline` | `IfcPolyline` | ❌ | — | Not written. Needed for axis reps, profiles |
-| `Polygon` | `IfcPolyline` (closed) | ❌ | — | Polygon = closed polyline in IFC |
+| `Polyline` | `IfcPolyline` | ✅ | `representation.py` | `polyline_to_IfcPolyline` — standalone open curve |
+| `Polygon` | `IfcPolyline` (closed) | ✅ | `representation.py` | `polygon_to_IfcPolyline` — standalone closed curve |
 | `Circle` | `IfcCircle` | 🔧 | `brep.py` | Only as B-Rep edge curves |
 | `Arc` | `IfcTrimmedCurve(IfcCircle)` | ❌ | — | Arc = trimmed circle in IFC |
 | `Ellipse` | `IfcEllipse` | 🔧 | `brep.py` | Only as B-Rep edge curves |
@@ -53,14 +53,14 @@ These are building blocks used inside other representations, not standalone geom
 | `Parabola` | ➖ | ➖ | — | No direct IFC entity |
 | `Hyperbola` | ➖ | ➖ | — | No direct IFC entity |
 
-**Gap:** All curve types are only written inside B-Rep topology. None can be written as standalone curve geometry (e.g., for axis representations or profile definitions).
+**Note:** `Polyline` and `Polygon` can now be written as standalone curves (e.g., for axis representations). Other curve types are still only written inside B-Rep topology.
 
 ### 3.2 Reading: IFC Curve → COMPAS Curve
 
 | IFC Entity | COMPAS Type | Status | Notes |
 |---|---|---|---|
 | `IfcLine` | `Line` | ❌ | Not parsed standalone. Handled inside composite curves |
-| `IfcPolyline` | `Polygon` | ✅ | `reading.py`: parsed as profile curves for extrusions |
+| `IfcPolyline` | `Polygon` / `Polyline` | ✅ | `reading.py`: `Polygon` for profiles, `Polyline` for axis reps |
 | `IfcCircle` | `Circle` | 🔧 | Parsed inside `IfcTrimmedCurve` (arc sampling), not standalone |
 | `IfcEllipse` | `Ellipse` | ❌ | Not parsed directly |
 | `IfcTrimmedCurve` | `Polygon` (sampled) | ✅ | `reading.py`: arc segments sampled to polygon points |
@@ -69,7 +69,7 @@ These are building blocks used inside other representations, not standalone geom
 | `IfcRationalBSplineCurveWithKnots` | `NurbsCurve` | ❌ | Not parsed |
 | `IfcIndexedPolyCurve` | `Polygon` | ✅ | `reading.py`: parsed as profile curve with arc linearisation |
 
-**Note:** Curves are read as `Polygon` within the extrusion profile pipeline. Standalone curve reading (e.g., axis representations) is not yet implemented.
+**Note:** Curves are read as `Polygon` for extrusion profiles and as `Polyline` for axis/path representations. All four curve types support both outputs via parallel `read_curve_to_polygon` / `read_curve_to_polyline` dispatchers.
 
 ---
 
@@ -244,7 +244,7 @@ These are used inside `IfcAdvancedBrep` and are fully handled by `brep.py`.
 | RepresentationIdentifier | IFC Geometry Used | COMPAS Target | Write | Read |
 |---|---|---|---|---|
 | `"Body"` | Solids, B-Rep, CSG, etc. | `Brep` / `Mesh` / shapes | ✅ | ✅ |
-| `"Axis"` | `IfcPolyline` | `Polyline` | ❌ | ❌ |
+| `"Axis"` | `IfcPolyline` | `Polyline` | ✅ | ✅ |
 | `"Plan"` | `IfcGeometricSet` | list of curves | ❌ | ❌ |
 | `"Box"` | `IfcBoundingBox` | `Box` | ❌ | 🔧 |
 | `"Boundary"` | `IfcGeometricSet` | list of curves | ❌ | ❌ |
@@ -271,7 +271,7 @@ These are used inside `IfcAdvancedBrep` and are fully handled by `brep.py`.
 | Category | Total Mappings | ✅ Done | 🔧 Partial | ❌ Missing |
 |---|---|---|---|---|
 | **Points/Vectors/Frames** | 7 | 6 | 0 | 1 |
-| **Curves (write)** | 10 | 0 | 4 | 6 |
+| **Curves (write)** | 10 | 2 | 4 | 4 |
 | **Curves (read)** | 9 | 4 | 1 | 4 |
 | **Surfaces (write)** | 6 | 0 | 5 | 1 |
 | **Surfaces (read)** | 7 | 0 | 0 | 7 |
@@ -283,11 +283,11 @@ These are used inside `IfcAdvancedBrep` and are fully handled by `brep.py`.
 | **Profiles (read)** | 7 | 5 | 0 | 2 |
 | **Topology (B-Rep)** | 11 | 8 | 0 | 3 |
 | **Containers/Instancing** | 5 | 4 | 0 | 1 |
-| **Non-Body Reps** | 8 | 1 | 1 | 6 |
+| **Non-Body Reps** | 8 | 3 | 1 | 4 |
 | **Placements** | 5 | 3 | 0 | 2 |
-| **TOTAL** | **126** | **51** | **13** | **62** |
+| **TOTAL** | **126** | **55** | **13** | **58** |
 
-Phase 1 added **27 new implementations**, doubling coverage from 19% to 40%. Remaining 🔄 entries (IfcBooleanClippingResult, etc.) fall back to `visual_geometry`.
+Phase 1 added 27 new read implementations (40% coverage). Phase 2 added 4 more (Polyline/Polygon write + Axis read/write), bringing total to 44% coverage. Remaining 🔄 entries (IfcBooleanClippingResult, etc.) fall back to `visual_geometry`.
 
 ---
 
@@ -319,17 +319,24 @@ Duplex results: 282/286 (98.6%) directly parsed.
 Only 4 IfcBooleanClippingResult entities fall back to visual_geometry.
 ```
 
-### Phase 2: Curves & Non-Body Representations
+### Phase 2: Curves & Non-Body Representations ✅ COMPLETE
 
 ```
-Write:  Polyline → IfcPolyline (standalone)
-        Polygon → IfcPolyline (closed)
-Read:   IfcPolyline → Polyline (for axis representations)
+Write:  Polyline → IfcPolyline (standalone)                              ✅
+        Polygon → IfcPolyline (closed)                                   ✅
+Read:   IfcPolyline → Polyline (for axis representations)                ✅
 
-Requires implementing:
-  1. Standalone curve writers
-  2. Axis representation reader
-  3. Wire into IfcProduct.axis property
+Implemented:
+  1. Standalone curve writers (polyline_to_IfcPolyline, polygon_to_IfcPolyline)  ✅
+  2. Axis representation reader (read_axis_representation)                       ✅
+  3. Axis representation writer (assign_axis_representation)                     ✅
+  4. IfcProduct.axis property (getter + setter)                                  ✅
+  5. default_axis_context on IFCFile                                             ✅
+
+Duplex results: 65/295 products have axis representations
+  - 56 IfcWallStandardCase, 8 IfcBeam, 1 IfcWall
+  - All are 2-point IfcPolyline centerlines
+Round-trip verified: write axis → save IFC → reload → read axis back
 ```
 
 ### Phase 3: Instancing

@@ -13,7 +13,9 @@ from compas.geometry import Shape
 from compas.geometry import Sphere
 
 from compas.geometry import Circle
+from compas.geometry import Line
 from compas.geometry import Polygon
+from compas.geometry import Polyline
 
 from compas_ifc.conversions.brep import brep_to_IfcAdvancedBrep
 from compas_ifc.conversions.mesh import mesh_to_IfcFaceBasedSurfaceModel
@@ -118,6 +120,105 @@ def read_representation(model: Model, entity: IfcProduct):
     from compas_ifc.conversions.reading import read_body_representation
 
     return read_body_representation(entity)
+
+
+# ==========================================================================
+# Axis representation
+# ==========================================================================
+
+
+def assign_axis_representation(entity: IfcProduct, curve):
+    """Assign an axis (centerline) representation to an IfcProduct.
+
+    The axis representation is stored alongside the body representation
+    and uses ``RepresentationIdentifier="Axis"`` with ``RepresentationType="Curve2D"``.
+
+    Parameters
+    ----------
+    entity : :class:`IfcProduct`
+    curve : :class:`Polyline` | :class:`Line` | :class:`Polygon`
+        The axis curve.  A Polyline or Line is written as an open IfcPolyline;
+        a Polygon is written as a closed IfcPolyline.
+    """
+    model: Model = entity.model
+
+    if isinstance(curve, Line):
+        curve = Polyline([curve.start, curve.end])
+
+    if isinstance(curve, Polygon):
+        ifc_polyline = polygon_to_IfcPolyline(model, curve)
+    elif isinstance(curve, Polyline):
+        ifc_polyline = polyline_to_IfcPolyline(model, curve)
+    else:
+        raise NotImplementedError(f"Unsupported axis curve type: {type(curve)}")
+
+    ifc_shape_representation = model.create(
+        "IfcShapeRepresentation",
+        ContextOfItems=model.file.default_axis_context,
+        RepresentationIdentifier="Axis",
+        RepresentationType="Curve2D",
+        Items=[ifc_polyline],
+    )
+
+    # Add to existing ProductDefinitionShape or create a new one
+    existing_rep = entity.Representation
+    if existing_rep is not None:
+        reps = list(existing_rep.Representations)
+        # Remove any existing Axis representation
+        reps = [r for r in reps if r.RepresentationIdentifier != "Axis"]
+        reps.append(ifc_shape_representation)
+        existing_rep.Representations = reps
+    else:
+        ifc_product_definition_shape = model.create(
+            "IfcProductDefinitionShape",
+            Representations=[ifc_shape_representation],
+        )
+        entity.Representation = ifc_product_definition_shape
+
+
+# ==========================================================================
+# Standalone curve writers
+# ==========================================================================
+
+
+def polyline_to_IfcPolyline(model: Model, polyline: Polyline):
+    """Convert a :class:`Polyline` to an ``IfcPolyline`` (open curve).
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    polyline : :class:`Polyline`
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+    """
+    points = []
+    for p in polyline.points:
+        points.append(model.create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
+    return model.create("IfcPolyline", Points=points)
+
+
+def polygon_to_IfcPolyline(model: Model, polygon: Polygon):
+    """Convert a :class:`Polygon` to an ``IfcPolyline`` (closed curve).
+
+    The first point is repeated at the end to close the polyline.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    polygon : :class:`Polygon`
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+    """
+    points = []
+    for p in polygon.points:
+        points.append(model.create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
+    # Close the polyline
+    points.append(points[0])
+    return model.create("IfcPolyline", Points=points)
 
 
 # ==========================================================================

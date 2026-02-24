@@ -89,6 +89,7 @@ class IFCFile(object):
         self._relationmap_contains = {}  # map of IfcRelContainedInSpatialStructure
         self._default_context = None
         self._default_body_context = None
+        self._default_axis_context = None
         self._default_units = None
         self._default_owner_history = None
         self._default_project = None
@@ -1006,6 +1007,28 @@ class IFCFile(object):
             )
 
         return self._default_body_context
+
+    @property
+    def default_axis_context(self) -> Base:
+        if not self._default_axis_context:
+            contexts = self.get_entities_by_type("IfcGeometricRepresentationSubContext")
+            for context in contexts:
+                if context.ContextIdentifier == "Axis":
+                    self._default_axis_context = context
+                    return self._default_axis_context
+
+            self._default_axis_context = self.from_entity(
+                run(
+                    "context.add_context",
+                    self._file,
+                    context_type="Model",
+                    context_identifier="Axis",
+                    target_view="GRAPH_VIEW",
+                    parent=self.default_context.entity,
+                )
+            )
+
+        return self._default_axis_context
 
     @property
     def default_owner_history(self) -> Base:

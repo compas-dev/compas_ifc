@@ -16,6 +16,7 @@ from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polygon
+from compas.geometry import Polyline
 from compas.geometry import Sphere
 from compas.geometry import Transformation
 from compas.geometry import Vector
@@ -56,6 +57,38 @@ def read_body_representation(entity):
             for item in shape_rep.Items:
                 try:
                     result = read_representation_item(item)
+                    if result is not None:
+                        return result
+                except Exception:
+                    continue
+
+    return None
+
+
+def read_axis_representation(entity):
+    """Parse the axis representation of an IfcProduct into a :class:`Polyline`.
+
+    Looks for a representation with ``RepresentationIdentifier == "Axis"``
+    and parses its curve items into a COMPAS Polyline.
+
+    Parameters
+    ----------
+    entity : :class:`~compas_ifc.entities.base.Base`
+        An IfcProduct entity (wrapped by the Base class).
+
+    Returns
+    -------
+    :class:`~compas.geometry.Polyline` | None
+    """
+    rep = entity.Representation
+    if rep is None:
+        return None
+
+    for shape_rep in rep.Representations:
+        if shape_rep.RepresentationIdentifier == "Axis":
+            for item in shape_rep.Items:
+                try:
+                    result = read_curve_to_polyline(item)
                     if result is not None:
                         return result
                 except Exception:
@@ -428,6 +461,153 @@ def _read_IfcCompositeCurve_to_polygon(curve):
         return None
 
     return Polygon(points)
+
+
+# ==========================================================================
+# Polyline helpers (for axis / path representations)
+# ==========================================================================
+
+
+def read_curve_to_polyline(curve):
+    """Parse an IfcCurve into a :class:`Polyline` (open curve with 2+ points).
+
+    Unlike :func:`read_curve_to_polygon` (for closed profiles), this returns
+    a :class:`Polyline` suitable for axis/path representations.
+
+    Parameters
+    ----------
+    curve : :class:`~compas_ifc.entities.base.Base`
+
+    Returns
+    -------
+    :class:`Polyline` | None
+    """
+    type_name = curve.is_a()
+
+    if type_name == "IfcPolyline":
+        return _read_IfcPolyline_to_polyline(curve)
+    elif type_name == "IfcIndexedPolyCurve":
+        return _read_IfcIndexedPolyCurve_to_polyline(curve)
+    elif type_name == "IfcCompositeCurve":
+        return _read_IfcCompositeCurve_to_polyline(curve)
+    elif type_name == "IfcTrimmedCurve":
+        return _read_IfcTrimmedCurve_to_polyline(curve)
+    else:
+        return None
+
+
+def _read_IfcPolyline_to_polyline(polyline):
+    """Parse IfcPolyline into a :class:`Polyline`.
+
+    Parameters
+    ----------
+    polyline : :class:`~compas_ifc.entities.base.Base`
+
+    Returns
+    -------
+    :class:`Polyline` | None
+    """
+    points = []
+    for pt in polyline.Points:
+        coords = list(pt.Coordinates)
+        if len(coords) == 2:
+            coords.append(0.0)
+        points.append(Point(*coords))
+
+    if len(points) < 2:
+        return None
+
+    return Polyline(points)
+
+
+def _read_IfcIndexedPolyCurve_to_polyline(curve):
+    """Parse IfcIndexedPolyCurve into a :class:`Polyline`.
+
+    Parameters
+    ----------
+    curve : :class:`~compas_ifc.entities.base.Base`
+
+    Returns
+    -------
+    :class:`Polyline` | None
+    """
+    coord_list = curve.Points.CoordList
+
+    if curve.Segments:
+        ordered_indices = []
+        for segment in curve.Segments:
+            seg = segment.wrappedValue if hasattr(segment, "wrappedValue") else segment
+            if len(seg) == 3:
+                indices = [seg[0], seg[2]]
+            else:
+                indices = list(seg)
+            for idx in indices:
+                if not ordered_indices or ordered_indices[-1] != idx:
+                    ordered_indices.append(idx)
+        points = []
+        for i in ordered_indices:
+            coords = list(coord_list[i - 1])
+            if len(coords) == 2:
+                coords.append(0.0)
+            points.append(Point(*coords))
+    else:
+        points = []
+        for c in coord_list:
+            coords = list(c)
+            if len(coords) == 2:
+                coords.append(0.0)
+            points.append(Point(*coords))
+
+    if len(points) < 2:
+        return None
+
+    return Polyline(points)
+
+
+def _read_IfcCompositeCurve_to_polyline(curve):
+    """Parse IfcCompositeCurve into a :class:`Polyline`.
+
+    Parameters
+    ----------
+    curve : :class:`~compas_ifc.entities.base.Base`
+
+    Returns
+    -------
+    :class:`Polyline` | None
+    """
+    points = []
+    for segment in curve.Segments:
+        parent_curve = segment.ParentCurve
+        segment_points = _read_curve_to_points(parent_curve)
+        if segment_points:
+            same_sense = getattr(segment, "SameSense", True)
+            if not same_sense:
+                segment_points = list(reversed(segment_points))
+            for pt in segment_points:
+                if not points or Point(*pt).distance_to_point(Point(*points[-1])) > 1e-10:
+                    points.append(pt)
+
+    if len(points) < 2:
+        return None
+
+    return Polyline(points)
+
+
+def _read_IfcTrimmedCurve_to_polyline(curve):
+    """Parse IfcTrimmedCurve into a :class:`Polyline`.
+
+    Parameters
+    ----------
+    curve : :class:`~compas_ifc.entities.base.Base`
+
+    Returns
+    -------
+    :class:`Polyline` | None
+    """
+    pts = _read_trimmed_curve_points(curve)
+    if pts and len(pts) >= 2:
+        return Polyline(pts)
+    return None
 
 
 def _read_IfcTrimmedCurve_to_polygon(curve):
