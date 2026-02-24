@@ -1,10 +1,10 @@
 # Bidirectional Geometry Mapping: COMPAS ↔ IFC
 
-> **Date:** 2026-02-24 (updated after Phase 3 implementation)
+> **Date:** 2026-02-24 (updated after Phase 5+6 implementation)
 > **COMPAS version:** 2.15.0
 > **IFC schema:** IFC4
 > **Purpose:** Define every mapping between COMPAS geometry types and IFC entities, for both reading and writing.
-> **New type:** `compas_ifc.representations.Extrusion` — parametric solid preserving profile, direction, depth, frame from `IfcExtrudedAreaSolid`.
+> **New types:** `compas_ifc.representations.Extrusion`, `Revolution`, `Pipe` — parametric solids preserving swept solid parameters from IFC.
 
 ---
 
@@ -112,8 +112,8 @@ These are building blocks used inside other representations, not standalone geom
 | `Sphere` | `IfcSphere` → `IfcCsgSolid` | ✅ | `shapes.py` | |
 | `Cone` | `IfcRightCircularCone` → `IfcCsgSolid` | ✅ | `shapes.py` | |
 | `Cylinder` | `IfcRightCircularCylinder` → `IfcCsgSolid` | ✅ | `shapes.py` | |
-| `Torus` | ❌ | ❌ | — | No `IfcTorus` CSG primitive. Use `IfcAdvancedBrep` via Brep.from_torus |
-| `Capsule` | ❌ | ❌ | — | No IFC equivalent. Use `IfcAdvancedBrep` via Brep |
+| `Torus` | `IfcAdvancedBrep` | ✅ | `representation.py` | Via `Brep.from_torus()` → `brep_to_IfcAdvancedBrep` |
+| `Capsule` | `IfcPolygonalFaceSet` | ✅ | `representation.py` | Via tessellation (`.to_brep()` not available); falls back to B-Rep if OCC supports it |
 | `Polyhedron` | ❌ | ❌ | — | Use `IfcFacetedBrep` or Mesh export |
 
 ### 5.2 Reading: IFC CSG Primitive → COMPAS Shape
@@ -135,27 +135,27 @@ These are building blocks used inside other representations, not standalone geom
 | COMPAS Type | IFC Entity | RepresentationType | Status | Where |
 |---|---|---|---|---|
 | `Box/Sphere/Cone/Cylinder` | `IfcCsgSolid` | "CSG" | ✅ | `shapes.py` + `representation.py` |
-| `Mesh` | `IfcFaceBasedSurfaceModel` | "SurfaceModel" | ✅ | `mesh.py` |
-| `Mesh` | `IfcPolygonalFaceSet` | "Tessellation" | 🔧 | `mesh.py` — implemented but not wired into dispatch |
+| `Mesh` | `IfcPolygonalFaceSet` | "Tessellation" | ✅ | `mesh.py` — **default dispatch** since Phase 5 |
+| `Mesh` | `IfcFaceBasedSurfaceModel` | "SurfaceModel" | ✅ | `mesh.py` — available, no longer default |
+| `Mesh` | `IfcTriangulatedFaceSet` | "Tessellation" | ✅ | `mesh.py`: `mesh_to_IfcTriangulatedFaceSet` — fan triangulation |
 | `Mesh` | `IfcFacetedBrep` | "Brep" | ❌ | Would give solid semantics (closed=True meshes) |
-| `Mesh` | `IfcTriangulatedFaceSet` | "Tessellation" | ❌ | IFC4 indexed triangles with optional normals |
 | `Brep` (with OCC) | `IfcAdvancedBrep` | "SolidModel" | ✅ | `brep.py` |
-| `Brep` (no OCC) | `IfcFaceBasedSurfaceModel` | "SurfaceModel" | 🔄 | Tessellated fallback via `mesh.py` |
+| `Brep` (no OCC) | `IfcPolygonalFaceSet` | "Tessellation" | 🔄 | Tessellated fallback via `mesh.py` |
 | `Extrusion(profile, direction, depth)` | `IfcExtrudedAreaSolid` | "SweptSolid" | ✅ | `representation.py`: `extrusion_to_IfcExtrudedAreaSolid` |
 | `Brep.from_sweep(profile, path)` | `IfcSurfaceCurveSweptAreaSolid` | "AdvancedSweptSolid" | ❌ | Rare |
-| `Brep.from_pipe(path, radius)` | `IfcSweptDiskSolid` | "SweptSolid" | ❌ | Circle swept along directrix |
+| `Pipe(directrix, radius)` | `IfcSweptDiskSolid` | "SweptSolid" | ✅ | `representation.py`: `pipe_to_IfcSweptDiskSolid` |
 | `Brep.from_loft(curves)` | `IfcAdvancedBrep` | "SolidModel" | 🔄 | No parametric loft in IFC; falls back to B-Rep |
 | `Brep` (boolean result) | `IfcBooleanResult` | "CSG" | ❌ | Boolean tree not preserved |
-| `Torus` | `IfcAdvancedBrep` | "SolidModel" | ❌ | Via `Brep.from_torus()` → brep.py |
-| `Capsule` | `IfcAdvancedBrep` | "SolidModel" | ❌ | Via `Brep` → brep.py |
+| `Torus` | `IfcAdvancedBrep` | "SolidModel" | ✅ | Via `Brep.from_torus()` → `brep_to_IfcAdvancedBrep` |
+| `Capsule` | `IfcPolygonalFaceSet` | "Tessellation" | ✅ | Via tessellation; B-Rep if OCC supports it |
 
 ### 6.2 Reading: IFC Solid → COMPAS
 
 | IFC Entity | COMPAS Type | Status | Notes |
 |---|---|---|---|
 | `IfcExtrudedAreaSolid` | `Extrusion(profile, direction, depth)` | ✅ | `reading.py`: preserves profile, direction, depth, frame |
-| `IfcRevolvedAreaSolid` | `TessellatedBrep` / `OCCBrep` | 🔄 | Evaluated. Parameters lost. |
-| `IfcSweptDiskSolid` | `TessellatedBrep` / `OCCBrep` | 🔄 | Evaluated. Parameters lost. |
+| `IfcRevolvedAreaSolid` | `Revolution(profile, axis, angle)` | ✅ | `reading.py`: `read_IfcRevolvedAreaSolid` — preserves profile, axis, angle, frame |
+| `IfcSweptDiskSolid` | `Pipe(directrix, radius)` | ✅ | `reading.py`: `read_IfcSweptDiskSolid` — preserves directrix, radius, inner_radius |
 | `IfcCsgSolid` | `Box` / `Sphere` / `Cone` / `Cylinder` | ✅ | `reading.py`: `read_IfcCsgSolid` dispatches to primitive readers |
 | `IfcAdvancedBrep` | `TessellatedBrep` / `OCCBrep` | 🔄 | Evaluated. Topology preserved in OCC mode. |
 | `IfcFacetedBrep` | `TessellatedBrep` / `OCCBrep` | 🔄 | Evaluated. |
@@ -261,8 +261,8 @@ These are used inside `IfcAdvancedBrep` and are fully handled by `brep.py`.
 | `IfcAxis2Placement3D` | `Frame` | ✅ | ✅ | `frame.py` |
 | `IfcAxis2Placement2D` | `Frame` (2D) | ❌ | ✅ | `frame.py`: `IfcAxis2Placement2D_to_frame` — used for profile Position offsets |
 | `IfcLocalPlacement` | `Frame` / `Transformation` | ✅ | ✅ | `frame.py` |
-| `IfcAxis1Placement` | `(Point, Vector)` | ❌ | ❌ | Needed for revolved solids |
-| `IfcCartesianTransformationOperator3D` | `Transformation` | ❌ | ✅ | `reading.py`: `_cartesian_transform_operator_to_transformation` |
+| `IfcAxis1Placement` | `(Point, Vector)` | ✅ | ❌ | `frame.py`: `create_IfcAxis1Placement` — used for revolution axes |
+| `IfcCartesianTransformationOperator3D` | `Transformation` | ✅ | ✅ | Write: `representation.py`. Read: `reading.py` |
 
 ---
 
@@ -275,19 +275,19 @@ These are used inside `IfcAdvancedBrep` and are fully handled by `brep.py`.
 | **Curves (read)** | 9 | 4 | 1 | 4 |
 | **Surfaces (write)** | 6 | 0 | 5 | 1 |
 | **Surfaces (read)** | 7 | 0 | 0 | 7 |
-| **Shapes/CSG (write)** | 7 | 4 | 0 | 3 |
+| **Shapes/CSG (write)** | 7 | 6 | 0 | 1 |
 | **Shapes/CSG (read)** | 5 | 4 | 0 | 1 |
-| **Solids (write)** | 13 | 3 | 2 | 8 |
-| **Solids (read)** | 12 | 6 | 0 | 6 |
+| **Solids (write)** | 14 | 9 | 2 | 3 |
+| **Solids (read)** | 12 | 8 | 0 | 4 |
 | **Profiles (write)** | 14 | 3 | 0 | 11 |
 | **Profiles (read)** | 7 | 5 | 0 | 2 |
 | **Topology (B-Rep)** | 11 | 8 | 0 | 3 |
 | **Containers/Instancing** | 5 | 5 | 0 | 0 |
 | **Non-Body Reps** | 8 | 3 | 1 | 4 |
-| **Placements** | 5 | 3 | 0 | 2 |
-| **TOTAL** | **126** | **56** | **13** | **57** |
+| **Placements** | 5 | 4 | 1 | 0 |
+| **TOTAL** | **127** | **67** | **14** | **46** |
 
-Phase 1 added 27 new read implementations (40% coverage). Phase 2 added 4 more (Polyline/Polygon write + Axis read/write). Phase 3 completed instancing (IfcRepresentationMap + IfcMappedItem + IfcCartesianTransformationOperator3D write), bringing total to 44% coverage. Remaining 🔄 entries (IfcBooleanClippingResult, etc.) fall back to `visual_geometry`.
+Phase 1 added 27 new read implementations (40% coverage). Phase 2 added 4 more (Polyline/Polygon write + Axis read/write). Phase 3 completed instancing (IfcRepresentationMap + IfcMappedItem + IfcCartesianTransformationOperator3D write). Phase 4 confirmed CSG round-trip. Phase 5 added Torus/Capsule write, IfcTriangulatedFaceSet write, and switched default mesh to IfcPolygonalFaceSet. Phase 6 added IfcRevolvedAreaSolid and IfcSweptDiskSolid full round-trip with new `Revolution` and `Pipe` parametric classes. Total coverage: 53% (up from 44% after Phase 3). Remaining 🔄 entries (IfcBooleanClippingResult, IfcAdvancedBrep, etc.) fall back to `visual_geometry`.
 
 ---
 
@@ -376,20 +376,59 @@ Read:   IfcBlock → Box                                                 ✅
 All implemented in reading.py as part of Phase 1.
 ```
 
-### Phase 5: Missing Shapes & Mesh Improvements
+### Phase 5: Missing Shapes & Mesh Improvements ✅ COMPLETE
 
 ```
-Write:  Torus → IfcAdvancedBrep (via Brep.from_torus)
-        Capsule → IfcAdvancedBrep (via Brep)
-        Mesh → IfcPolygonalFaceSet (IFC4 dispatch)
-        Mesh → IfcTriangulatedFaceSet
-Read:   (covered by ifcopenshell)
+Write:  Torus → IfcAdvancedBrep (via Brep.from_torus())                     ✅
+        Capsule → IfcPolygonalFaceSet (tessellation fallback)               ✅
+        Mesh → IfcPolygonalFaceSet (new default dispatch)                   ✅
+        Mesh → IfcTriangulatedFaceSet (fan triangulation)                   ✅
+Read:   IfcPolygonalFaceSet / IfcTriangulatedFaceSet → Mesh                ✅ (Phase 1)
+
+Implemented:
+  1. mesh_to_IfcTriangulatedFaceSet (mesh.py)                                ✅
+  2. Torus dispatch: to_brep() → brep_to_IfcAdvancedBrep                     ✅
+  3. Capsule dispatch: to_vertices_and_faces() → mesh → IfcPolygonalFaceSet  ✅
+     (Capsule.to_brep() not available; graceful try/except fallback)
+  4. Default mesh write switched from IfcFaceBasedSurfaceModel
+     to IfcPolygonalFaceSet                                                  ✅
+
+Notes:
+  - Torus B-Rep write succeeds but read-back via ifcopenshell geometry
+    evaluator may fail (pre-existing brep.py toroidal surface limitation)
+  - Capsule uses tessellation because COMPAS Capsule.to_brep() raises
+    NotImplementedError; will auto-upgrade to B-Rep when OCC adds support
 ```
 
-### Phase 6: Remaining Swept Solids
+### Phase 6: Remaining Swept Solids ✅ COMPLETE
 
 ```
-Write:  Brep.from_pipe() → IfcSweptDiskSolid
-        Profile + axis + angle → IfcRevolvedAreaSolid
-Read:   Parse from entity graph
+Write:  Revolution(profile, axis, angle) → IfcRevolvedAreaSolid             ✅
+        Pipe(directrix, radius) → IfcSweptDiskSolid                         ✅
+Read:   IfcRevolvedAreaSolid → Revolution                                   ✅
+        IfcSweptDiskSolid → Pipe                                            ✅
+
+New parametric classes (compas_ifc.representations):
+  1. Revolution — IfcRevolvedAreaSolid round-trip                             ✅
+     - profile: Polygon | Circle | (Polygon, [Polygon])
+     - axis_point + axis_direction: revolution axis (IfcAxis1Placement)
+     - angle: degrees (IFC convention), 360 = full revolution
+     - frame: local placement (IfcAxis2Placement3D)
+     - to_vertices_and_faces(): Rodrigues' rotation mesh generation
+  2. Pipe — IfcSweptDiskSolid round-trip                                      ✅
+     - directrix: Polyline (3D sweep path)
+     - radius: outer radius
+     - inner_radius: optional (hollow pipes)
+     - to_vertices_and_faces(): ring-based tube mesh generation
+
+New helpers:
+  - create_IfcAxis1Placement (frame.py): point + direction axis placement    ✅
+  - _profile_to_ifc (representation.py): shared profile writer               ✅
+  - revolution_to_IfcRevolvedAreaSolid (representation.py)                    ✅
+  - pipe_to_IfcSweptDiskSolid (representation.py)                            ✅
+  - read_IfcRevolvedAreaSolid (reading.py)                                    ✅
+  - read_IfcSweptDiskSolid (reading.py)                                       ✅
+
+Round-trip verified: create → save → reload → parametric class returned
+  with correct parameters (4/4 test cases pass)
 ```

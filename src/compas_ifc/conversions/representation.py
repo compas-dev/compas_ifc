@@ -7,10 +7,12 @@ from typing import Union
 from compas.datastructures import Mesh
 from compas.geometry import Box
 from compas.geometry import Brep
+from compas.geometry import Capsule
 from compas.geometry import Cone
 from compas.geometry import Cylinder
 from compas.geometry import Shape
 from compas.geometry import Sphere
+from compas.geometry import Torus
 
 from compas.geometry import Circle
 from compas.geometry import Frame
@@ -20,6 +22,7 @@ from compas.geometry import Polyline
 
 from compas_ifc.conversions.brep import brep_to_IfcAdvancedBrep
 from compas_ifc.conversions.mesh import mesh_to_IfcFaceBasedSurfaceModel
+from compas_ifc.conversions.mesh import mesh_to_IfcPolygonalFaceSet
 from compas_ifc.conversions.shapes import box_to_IfcBlock
 from compas_ifc.conversions.shapes import cone_to_IfcRightCircularCone
 from compas_ifc.conversions.shapes import cylinder_to_IfcRightCircularCylinder
@@ -27,6 +30,8 @@ from compas_ifc.conversions.shapes import sphere_to_IfcSphere
 from compas_ifc.entities.extensions import IfcProduct
 from compas_ifc.model import Model
 from compas_ifc.representations import Extrusion
+from compas_ifc.representations import Pipe
+from compas_ifc.representations import Revolution
 
 REPRESENTATION_CACHE = {}
 SHAPE_REP_CACHE = {}
@@ -109,6 +114,14 @@ def _geometry_to_ifc_items(model: Model, representation):
         ifc_extruded = extrusion_to_IfcExtrudedAreaSolid(model, representation)
         return [ifc_extruded], "SweptSolid"
 
+    if isinstance(representation, Revolution):
+        ifc_revolved = revolution_to_IfcRevolvedAreaSolid(model, representation)
+        return [ifc_revolved], "SweptSolid"
+
+    if isinstance(representation, Pipe):
+        ifc_pipe = pipe_to_IfcSweptDiskSolid(model, representation)
+        return [ifc_pipe], "SweptSolid"
+
     if isinstance(representation, Shape):
         if isinstance(representation, Box):
             ifc_csg_primitive3d = box_to_IfcBlock(model, representation)
@@ -118,6 +131,17 @@ def _geometry_to_ifc_items(model: Model, representation):
             ifc_csg_primitive3d = cone_to_IfcRightCircularCone(model, representation)
         elif isinstance(representation, Cylinder):
             ifc_csg_primitive3d = cylinder_to_IfcRightCircularCylinder(model, representation)
+        elif isinstance(representation, (Torus, Capsule)):
+            # No CSG primitive in IFC — try B-Rep via OCC, fall back to mesh
+            try:
+                brep = representation.to_brep()
+                items = brep_to_IfcAdvancedBrep(model, brep)
+                return items, "SolidModel"
+            except NotImplementedError:
+                vertices, faces = representation.to_vertices_and_faces()
+                mesh = Mesh.from_vertices_and_faces(vertices, faces)
+                ifc_representation = mesh_to_IfcPolygonalFaceSet(model, mesh)
+                return [ifc_representation], "Tessellation"
         else:
             raise NotImplementedError(f"Conversion of {type(representation)} to IFC not implemented.")
 
@@ -125,8 +149,8 @@ def _geometry_to_ifc_items(model: Model, representation):
         return [ifc_csg_solid], "CSG"
 
     if isinstance(representation, Mesh):
-        ifc_representation = mesh_to_IfcFaceBasedSurfaceModel(model, representation)
-        return [ifc_representation], "SurfaceModel"
+        ifc_representation = mesh_to_IfcPolygonalFaceSet(model, representation)
+        return [ifc_representation], "Tessellation"
 
     if isinstance(representation, Brep):
         if model.file.use_occ:
@@ -134,8 +158,8 @@ def _geometry_to_ifc_items(model: Model, representation):
             return items, "SolidModel"
         else:
             mesh, _ = representation.to_tesselation()
-            ifc_representation = mesh_to_IfcFaceBasedSurfaceModel(model, mesh)
-            return [ifc_representation], "SurfaceModel"
+            ifc_representation = mesh_to_IfcPolygonalFaceSet(model, mesh)
+            return [ifc_representation], "Tessellation"
 
     raise NotImplementedError(f"Conversion of {type(representation)} to IFC not implemented.")
 
@@ -380,16 +404,7 @@ def extrusion_to_IfcExtrudedAreaSolid(model: Model, extrusion: Extrusion):
     from compas_ifc.conversions.frame import create_IfcAxis2Placement3D
 
     # Profile
-    profile = extrusion.profile
-    if isinstance(profile, tuple):
-        outer, inners = profile
-        swept_area = _profile_with_voids_to_ifc(model, outer, inners)
-    elif isinstance(profile, Circle):
-        swept_area = _circle_to_IfcCircleProfileDef(model, profile)
-    elif isinstance(profile, Polygon):
-        swept_area = _polygon_to_IfcArbitraryClosedProfileDef(model, profile)
-    else:
-        raise NotImplementedError(f"Unsupported profile type: {type(profile)}")
+    swept_area = _profile_to_ifc(model, extrusion.profile)
 
     # Position
     f = extrusion.frame
@@ -406,6 +421,106 @@ def extrusion_to_IfcExtrudedAreaSolid(model: Model, extrusion: Extrusion):
         ExtrudedDirection=direction,
         Depth=float(extrusion.depth),
     )
+
+
+def _profile_to_ifc(model, profile):
+    """Convert a COMPAS profile (Circle, Polygon, or tuple with voids) to an IFC profile def.
+
+    Shared helper used by both extrusion and revolution writers.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    profile : :class:`Circle` | :class:`Polygon` | tuple
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+    """
+    if isinstance(profile, tuple):
+        outer, inners = profile
+        return _profile_with_voids_to_ifc(model, outer, inners)
+    elif isinstance(profile, Circle):
+        return _circle_to_IfcCircleProfileDef(model, profile)
+    elif isinstance(profile, Polygon):
+        return _polygon_to_IfcArbitraryClosedProfileDef(model, profile)
+    else:
+        raise NotImplementedError(f"Unsupported profile type: {type(profile)}")
+
+
+# ==========================================================================
+# Revolution write helpers
+# ==========================================================================
+
+
+def revolution_to_IfcRevolvedAreaSolid(model: Model, revolution: Revolution):
+    """Convert a :class:`Revolution` to an ``IfcRevolvedAreaSolid``.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    revolution : :class:`Revolution`
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+    """
+    from compas_ifc.conversions.frame import create_IfcAxis1Placement
+    from compas_ifc.conversions.frame import create_IfcAxis2Placement3D
+
+    # Profile
+    swept_area = _profile_to_ifc(model, revolution.profile)
+
+    # Position (frame)
+    f = revolution.frame
+    position = create_IfcAxis2Placement3D(model, f.point, f.zaxis, f.xaxis)
+
+    # Axis (IfcAxis1Placement)
+    ap = revolution.axis_point
+    ad = revolution.axis_direction
+    axis = create_IfcAxis1Placement(
+        model,
+        point=[float(ap.x), float(ap.y), float(ap.z)],
+        direction=[float(ad.x), float(ad.y), float(ad.z)],
+    )
+
+    return model.create(
+        "IfcRevolvedAreaSolid",
+        SweptArea=swept_area,
+        Position=position,
+        Axis=axis,
+        Angle=float(revolution.angle),
+    )
+
+
+# ==========================================================================
+# Pipe write helpers
+# ==========================================================================
+
+
+def pipe_to_IfcSweptDiskSolid(model: Model, pipe: Pipe):
+    """Convert a :class:`Pipe` to an ``IfcSweptDiskSolid``.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    pipe : :class:`Pipe`
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+    """
+    # Directrix → IfcPolyline
+    directrix = polyline_to_IfcPolyline(model, pipe.directrix)
+
+    kwargs = {
+        "Directrix": directrix,
+        "Radius": float(pipe.radius),
+    }
+    if pipe.inner_radius is not None:
+        kwargs["InnerRadius"] = float(pipe.inner_radius)
+
+    return model.create("IfcSweptDiskSolid", **kwargs)
 
 
 def _polygon_to_IfcArbitraryClosedProfileDef(model: Model, polygon: Polygon):

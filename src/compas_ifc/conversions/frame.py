@@ -23,6 +23,29 @@ def create_IfcAxis2Placement3D(model: Model, point: Point = None, dir1: Vector =
     return axis2placement
 
 
+def create_IfcAxis1Placement(model: Model, point: Point = None, direction: Vector = None) -> Base:
+    """Create an ``IfcAxis1Placement`` from a point and an axis direction.
+
+    Used for revolution axes in ``IfcRevolvedAreaSolid``.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    point : :class:`Point`, optional
+        Location of the axis.  Defaults to ``[0, 0, 0]``.
+    direction : :class:`Vector`, optional
+        Axis direction.  Defaults to ``[0, 0, 1]`` (Z-axis).
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+        An ``IfcAxis1Placement`` entity.
+    """
+    pt = model.create("IfcCartesianPoint", Coordinates=point or [0.0, 0.0, 0.0])
+    d = model.create("IfcDirection", DirectionRatios=direction or [0.0, 0.0, 1.0])
+    return model.create("IfcAxis1Placement", Location=pt, Axis=d)
+
+
 def frame_to_ifc_axis2_placement_3d(model: Model, frame: Frame) -> Base:
     return create_IfcAxis2Placement3D(model, point=frame.point, dir1=frame.zaxis, dir2=frame.xaxis)
 

@@ -49,3 +49,43 @@ def mesh_to_IfcFaceBasedSurfaceModel(model: Model, mesh: Mesh) -> Base:
     ifc_face_based_surface_model = model.create("IfcFaceBasedSurfaceModel", FbsmFaces=[face_set])
 
     return ifc_face_based_surface_model
+
+
+def mesh_to_IfcTriangulatedFaceSet(model: Model, mesh: Mesh) -> Base:
+    """Convert a COMPAS mesh to an IFC TriangulatedFaceSet.
+
+    All non-triangular faces are fan-triangulated (vertex 0 to each pair of
+    consecutive vertices).  The resulting face set uses IFC4 indexed storage
+    with shared coordinates.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    mesh : :class:`Mesh`
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+        An ``IfcTriangulatedFaceSet`` entity.
+    """
+    keys = sorted(mesh.vertices())
+    key_index = {k: i for i, k in enumerate(keys)}
+
+    vertices = []
+    for key in keys:
+        coords = mesh.vertex_coordinates(key)
+        vertices.append((float(coords[0]), float(coords[1]), float(coords[2])))
+
+    triangles = []
+    for fkey in mesh.faces():
+        face_verts = [key_index[v] + 1 for v in mesh.face_vertices(fkey)]
+        # Fan triangulation for n-gons
+        for i in range(1, len(face_verts) - 1):
+            triangles.append((face_verts[0], face_verts[i], face_verts[i + 1]))
+
+    return model.create(
+        "IfcTriangulatedFaceSet",
+        Coordinates=model.create("IfcCartesianPointList3D", CoordList=vertices),
+        CoordIndex=triangles,
+        Closed=mesh.is_closed(),
+    )

@@ -26,6 +26,8 @@ from compas_ifc.conversions.frame import IfcAxis2Placement3D_to_frame
 from compas_ifc.conversions.primitives import IfcCartesianPoint_to_point
 from compas_ifc.conversions.primitives import IfcDirection_to_vector
 from compas_ifc.representations import Extrusion
+from compas_ifc.representations import Pipe
+from compas_ifc.representations import Revolution
 
 
 # ==========================================================================
@@ -125,6 +127,10 @@ def read_representation_item(item):
         return read_IfcPolygonalFaceSet(item)
     elif type_name == "IfcTriangulatedFaceSet":
         return read_IfcTriangulatedFaceSet(item)
+    elif type_name == "IfcRevolvedAreaSolid":
+        return read_IfcRevolvedAreaSolid(item)
+    elif type_name == "IfcSweptDiskSolid":
+        return read_IfcSweptDiskSolid(item)
     elif type_name == "IfcMappedItem":
         return read_IfcMappedItem(item)
     else:
@@ -161,6 +167,81 @@ def read_IfcExtrudedAreaSolid(eas):
         frame = Frame.worldXY()
 
     return Extrusion(profile=profile, direction=direction, depth=depth, frame=frame)
+
+
+# ==========================================================================
+# Revolution (IfcRevolvedAreaSolid)
+# ==========================================================================
+
+
+def read_IfcRevolvedAreaSolid(ras):
+    """Parse an IfcRevolvedAreaSolid into a :class:`Revolution`.
+
+    Parameters
+    ----------
+    ras : :class:`~compas_ifc.entities.base.Base`
+        Wrapped ``IfcRevolvedAreaSolid``.
+
+    Returns
+    -------
+    :class:`Revolution` | None
+    """
+    profile = read_profile(ras.SweptArea)
+    if profile is None:
+        return None
+
+    # Revolution axis (IfcAxis1Placement → point + direction)
+    axis_point = IfcCartesianPoint_to_point(ras.Axis.Location)
+    if ras.Axis.Axis:
+        axis_direction = IfcDirection_to_vector(ras.Axis.Axis)
+    else:
+        axis_direction = Vector.Zaxis()
+
+    angle = float(ras.Angle)  # IFC stores angle in degrees
+
+    if ras.Position:
+        frame = IfcAxis2Placement3D_to_frame(ras.Position)
+    else:
+        frame = Frame.worldXY()
+
+    return Revolution(
+        profile=profile,
+        axis_point=axis_point,
+        axis_direction=axis_direction,
+        angle=angle,
+        frame=frame,
+    )
+
+
+# ==========================================================================
+# Pipe (IfcSweptDiskSolid)
+# ==========================================================================
+
+
+def read_IfcSweptDiskSolid(sds):
+    """Parse an IfcSweptDiskSolid into a :class:`Pipe`.
+
+    Parameters
+    ----------
+    sds : :class:`~compas_ifc.entities.base.Base`
+        Wrapped ``IfcSweptDiskSolid``.
+
+    Returns
+    -------
+    :class:`Pipe` | None
+    """
+    directrix = read_curve_to_polyline(sds.Directrix)
+    if directrix is None:
+        return None
+
+    radius = float(sds.Radius)
+    inner_radius = float(sds.InnerRadius) if sds.InnerRadius else None
+
+    return Pipe(
+        directrix=directrix,
+        radius=radius,
+        inner_radius=inner_radius,
+    )
 
 
 # ==========================================================================
