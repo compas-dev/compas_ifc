@@ -25,6 +25,7 @@ from compas_ifc.conversions.frame import IfcAxis2Placement2D_to_frame
 from compas_ifc.conversions.frame import IfcAxis2Placement3D_to_frame
 from compas_ifc.conversions.primitives import IfcCartesianPoint_to_point
 from compas_ifc.conversions.primitives import IfcDirection_to_vector
+from compas_ifc.representations import ClippedExtrusion
 from compas_ifc.representations import Extrusion
 from compas_ifc.representations import Pipe
 from compas_ifc.representations import Revolution
@@ -133,6 +134,8 @@ def read_representation_item(item):
         return read_IfcSweptDiskSolid(item)
     elif type_name == "IfcMappedItem":
         return read_IfcMappedItem(item)
+    elif type_name in ("IfcBooleanClippingResult", "IfcBooleanResult"):
+        return read_IfcBooleanClippingResult(item)
     else:
         return None
 
@@ -993,6 +996,93 @@ def read_IfcRightCircularCylinder(cylinder):
     """
     frame = IfcAxis2Placement3D_to_frame(cylinder.Position)
     return Cylinder(radius=float(cylinder.Radius), height=float(cylinder.Height), frame=frame)
+
+
+# ==========================================================================
+# Boolean clipping
+# ==========================================================================
+
+
+def read_IfcBooleanClippingResult(bcr):
+    """Parse an IfcBooleanClippingResult chain into a :class:`ClippedExtrusion`.
+
+    Recursively walks the ``FirstOperand`` chain to find the leaf
+    ``IfcExtrudedAreaSolid``, collecting ``IfcHalfSpaceSolid`` clipping
+    planes from each ``SecondOperand`` along the way.
+
+    Returns ``None`` if the leaf is not an extrusion or if any
+    ``SecondOperand`` is not a half-space, causing the caller to
+    fall back to the visual geometry.
+
+    Parameters
+    ----------
+    bcr : :class:`~compas_ifc.entities.base.Base`
+        Wrapped ``IfcBooleanClippingResult`` or ``IfcBooleanResult``.
+
+    Returns
+    -------
+    :class:`ClippedExtrusion` | None
+    """
+    clipping_planes = []
+
+    # Walk the recursive chain
+    current = bcr
+    while current.is_a() in ("IfcBooleanClippingResult", "IfcBooleanResult"):
+        # Collect clipping plane from SecondOperand
+        second = current.SecondOperand
+        plane_data = _read_half_space(second)
+        if plane_data is None:
+            return None  # unsupported second operand -> fallback
+        clipping_planes.append(plane_data)
+
+        # Descend into FirstOperand
+        current = current.FirstOperand
+
+    # The leaf must be an IfcExtrudedAreaSolid
+    if current.is_a() != "IfcExtrudedAreaSolid":
+        return None  # non-extrusion leaf -> fallback
+
+    extrusion = read_IfcExtrudedAreaSolid(current)
+    if extrusion is None:
+        return None
+
+    return ClippedExtrusion(
+        extrusion=extrusion,
+        clipping_planes=clipping_planes,
+    )
+
+
+def _read_half_space(item):
+    """Read an IfcHalfSpaceSolid into ``(Plane, agreement_flag)``.
+
+    Also handles ``IfcPolygonalBoundedHalfSpace`` (ignores the
+    boundary polygon, keeps just the plane -- the boundary is a
+    precision optimisation, not essential for parametric data).
+
+    Parameters
+    ----------
+    item : :class:`~compas_ifc.entities.base.Base`
+        Wrapped ``IfcHalfSpaceSolid`` or ``IfcPolygonalBoundedHalfSpace``.
+
+    Returns
+    -------
+    tuple[:class:`Plane`, bool] | None
+        ``(plane, agreement_flag)`` or ``None`` for unsupported types.
+    """
+    from compas.geometry import Plane
+
+    type_name = item.is_a()
+    if type_name not in ("IfcHalfSpaceSolid", "IfcPolygonalBoundedHalfSpace"):
+        return None
+
+    # Read the IfcPlane.Position (IfcAxis2Placement3D) -> Frame -> Plane
+    # We use the frame approach instead of IfcPlane_to_plane because
+    # the .P derived attribute is not available through the Base wrapper.
+    surface = item.BaseSurface
+    frame = IfcAxis2Placement3D_to_frame(surface.Position)
+    plane = Plane(frame.point, frame.zaxis)
+    agreement = bool(item.AgreementFlag)
+    return (plane, agreement)
 
 
 # ==========================================================================

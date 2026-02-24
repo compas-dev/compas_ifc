@@ -29,6 +29,7 @@ from compas_ifc.conversions.shapes import cylinder_to_IfcRightCircularCylinder
 from compas_ifc.conversions.shapes import sphere_to_IfcSphere
 from compas_ifc.entities.extensions import IfcProduct
 from compas_ifc.model import Model
+from compas_ifc.representations import ClippedExtrusion
 from compas_ifc.representations import Extrusion
 from compas_ifc.representations import Pipe
 from compas_ifc.representations import Revolution
@@ -110,6 +111,10 @@ def _geometry_to_ifc_items(model: Model, representation):
         of IFC representation items and *representation_type* is the IFC
         representation type string (e.g. ``"SweptSolid"``, ``"CSG"``).
     """
+    if isinstance(representation, ClippedExtrusion):
+        ifc_boolean = clipped_extrusion_to_IfcBooleanClippingResult(model, representation)
+        return [ifc_boolean], "Clipping"
+
     if isinstance(representation, Extrusion):
         ifc_extruded = extrusion_to_IfcExtrudedAreaSolid(model, representation)
         return [ifc_extruded], "SweptSolid"
@@ -421,6 +426,46 @@ def extrusion_to_IfcExtrudedAreaSolid(model: Model, extrusion: Extrusion):
         ExtrudedDirection=direction,
         Depth=float(extrusion.depth),
     )
+
+
+def clipped_extrusion_to_IfcBooleanClippingResult(model: Model, clipped: ClippedExtrusion):
+    """Convert a :class:`ClippedExtrusion` to an ``IfcBooleanClippingResult`` chain.
+
+    Builds the recursive chain from inside out: the leaf is an
+    ``IfcExtrudedAreaSolid``, and each clipping plane wraps it in an
+    ``IfcBooleanClippingResult`` with ``Operator=DIFFERENCE``.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    clipped : :class:`ClippedExtrusion`
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+    """
+    from compas_ifc.conversions.primitives import frame_to_IfcPlane
+
+    # Build the leaf extrusion
+    current = extrusion_to_IfcExtrudedAreaSolid(model, clipped.extrusion)
+
+    # Wrap in clipping results (reversed so innermost clip first)
+    for plane, agreement in reversed(clipped.clipping_planes):
+        frame = Frame.from_plane(plane)
+        ifc_plane = frame_to_IfcPlane(model, frame)
+        half_space = model.create(
+            "IfcHalfSpaceSolid",
+            BaseSurface=ifc_plane,
+            AgreementFlag=agreement,
+        )
+        current = model.create(
+            "IfcBooleanClippingResult",
+            Operator="DIFFERENCE",
+            FirstOperand=current,
+            SecondOperand=half_space,
+        )
+
+    return current
 
 
 def _profile_to_ifc(model, profile):

@@ -97,8 +97,10 @@ check("Geometries parsed >= 1400", geom_count >= 1400, f"{geom_count}")
 check("Parse errors <= 10", parse_errors <= 10, f"{parse_errors} errors")
 check("Extrusion is dominant", type_counts.get("Extrusion", 0) >= 1000,
       f"{type_counts.get('Extrusion', 0)} extrusions")
-check("TessellatedBrep present", type_counts.get("TessellatedBrep", 0) >= 300,
+check("TessellatedBrep present", type_counts.get("TessellatedBrep", 0) >= 200,
       f"{type_counts.get('TessellatedBrep', 0)} breps")
+check("ClippedExtrusion present", type_counts.get("ClippedExtrusion", 0) >= 120,
+      f"{type_counts.get('ClippedExtrusion', 0)} clipped extrusions")
 
 # ==================================================================
 # 2. Extrusion parametric data
@@ -373,7 +375,9 @@ print(f"  TessellatedBrep fallbacks: {bool_fallback_ok}")
 print()
 
 check("Boolean entities present", len(bool_clip) >= 180, f"{len(bool_clip)} boolean clips")
-check("TessellatedBrep fallback works", bool_fallback_ok >= 300,
+# With ClippedExtrusion support, most booleans parse parametrically;
+# only non-half-space booleans and non-extrusion leaves remain as TessellatedBrep.
+check("TessellatedBrep fallback works", bool_fallback_ok >= 200,
       f"{bool_fallback_ok} fallbacks")
 
 # ==================================================================
