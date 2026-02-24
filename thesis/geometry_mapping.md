@@ -1,6 +1,6 @@
 # Bidirectional Geometry Mapping: COMPAS ↔ IFC
 
-> **Date:** 2026-02-24 (updated after Phase 2 implementation)
+> **Date:** 2026-02-24 (updated after Phase 3 implementation)
 > **COMPAS version:** 2.15.0
 > **IFC schema:** IFC4
 > **Purpose:** Define every mapping between COMPAS geometry types and IFC entities, for both reading and writing.
@@ -233,9 +233,9 @@ These are used inside `IfcAdvancedBrep` and are fully handled by `brep.py`.
 |---|---|---|---|---|
 | `IfcShapeRepresentation` | Groups geometry items with context | ✅ | ✅ | `representation.py` |
 | `IfcProductDefinitionShape` | Assigns representations to products | ✅ | ✅ | |
-| `IfcRepresentationMap` | Defines reusable geometry template | ❌ | ❌ | Needed for instancing |
-| `IfcMappedItem` | Instance of mapped representation | ❌ | ✅ | `reading.py`: unwraps inner items + applies combined transform |
-| `IfcCartesianTransformationOperator3D` | Transform for mapped items | ❌ | ✅ | `reading.py`: `_cartesian_transform_operator_to_transformation` |
+| `IfcRepresentationMap` | Defines reusable geometry template | ✅ | ✅ | `representation.py`: `_create_representation_map` — auto-created on shared geometry |
+| `IfcMappedItem` | Instance of mapped representation | ✅ | ✅ | Write: `_assign_mapped_body`. Read: `read_IfcMappedItem` with template caching |
+| `IfcCartesianTransformationOperator3D` | Transform for mapped items | ✅ | ✅ | Write: `transformation_to_IfcCartesianTransformationOperator3D`. Read: `_cartesian_transform_operator_to_transformation` |
 
 ---
 
@@ -282,12 +282,12 @@ These are used inside `IfcAdvancedBrep` and are fully handled by `brep.py`.
 | **Profiles (write)** | 14 | 3 | 0 | 11 |
 | **Profiles (read)** | 7 | 5 | 0 | 2 |
 | **Topology (B-Rep)** | 11 | 8 | 0 | 3 |
-| **Containers/Instancing** | 5 | 4 | 0 | 1 |
+| **Containers/Instancing** | 5 | 5 | 0 | 0 |
 | **Non-Body Reps** | 8 | 3 | 1 | 4 |
 | **Placements** | 5 | 3 | 0 | 2 |
-| **TOTAL** | **126** | **55** | **13** | **58** |
+| **TOTAL** | **126** | **56** | **13** | **57** |
 
-Phase 1 added 27 new read implementations (40% coverage). Phase 2 added 4 more (Polyline/Polygon write + Axis read/write), bringing total to 44% coverage. Remaining 🔄 entries (IfcBooleanClippingResult, etc.) fall back to `visual_geometry`.
+Phase 1 added 27 new read implementations (40% coverage). Phase 2 added 4 more (Polyline/Polygon write + Axis read/write). Phase 3 completed instancing (IfcRepresentationMap + IfcMappedItem + IfcCartesianTransformationOperator3D write), bringing total to 44% coverage. Remaining 🔄 entries (IfcBooleanClippingResult, etc.) fall back to `visual_geometry`.
 
 ---
 
@@ -339,17 +339,29 @@ Duplex results: 65/295 products have axis representations
 Round-trip verified: write axis → save IFC → reload → read axis back
 ```
 
-### Phase 3: Instancing
+### Phase 3: Instancing ✅ COMPLETE
 
 ```
-Write:  Shared geometry detection → IfcRepresentationMap + IfcMappedItem
-Read:   IfcMappedItem → geometry + transform (preserve instancing)
+Write:  Shared geometry detection -> IfcRepresentationMap + IfcMappedItem  ✅
+Read:   IfcMappedItem -> geometry + transform (with template caching)      ✅
 
-Requires implementing:
-  1. IfcRepresentationMap creation
-  2. IfcMappedItem creation
-  3. IfcCartesianTransformationOperator3D writer
-  4. Shared geometry detection in export pipeline
+Implemented:
+  1. IfcRepresentationMap creation (_create_representation_map)              ✅
+  2. IfcMappedItem creation (_assign_mapped_body)                           ✅
+  3. IfcCartesianTransformationOperator3D writer                            ✅
+  4. Shared geometry detection in assign_body_representation                ✅
+  5. Read-side template caching (_MAPPED_GEOMETRY_CACHE)                    ✅
+
+Write behaviour:
+  - 1st use of geometry object: direct IfcShapeRepresentation
+  - 2nd use: creates IfcRepresentationMap from 1st entity's inner rep,
+    assigns IfcMappedItem to this entity
+  - 3rd+ use: reuses map, creates new IfcMappedItem
+
+Duplex model: 60 IfcRepresentationMap, 167 IfcMappedItem
+  - 47 maps have >1 instance (shared geometry)
+  - All 99 products with mapped reps parse correctly
+Round-trip verified: write 5 shared columns -> save -> reload -> 1 map + 4 items
 ```
 
 ### Phase 4: CSG Round-Trip ✅ COMPLETE

@@ -989,12 +989,16 @@ def read_IfcTriangulatedFaceSet(tfs):
 # Mapped item
 # ==========================================================================
 
+_MAPPED_GEOMETRY_CACHE = {}  # IfcRepresentationMap entity id -> parsed template geometry
+
 
 def read_IfcMappedItem(mapped_item):
-    """Unwrap an IfcMappedItem and return the first parsed inner geometry.
+    """Unwrap an IfcMappedItem and return the parsed inner geometry.
 
-    Resolves the mapping origin and target transforms, applies them to
-    a copy of the inner geometry, and returns the result.
+    Template geometry is cached by ``IfcRepresentationMap`` entity id so that
+    multiple instances sharing the same map parse the inner geometry only once.
+    Each call returns a *copy* of the template with the per-instance transform
+    applied.
 
     Parameters
     ----------
@@ -1006,24 +1010,35 @@ def read_IfcMappedItem(mapped_item):
     """
     source = mapped_item.MappingSource
     target = mapped_item.MappingTarget
+    map_id = source.entity.id()
 
-    # Parse inner representation items
-    inner_rep = source.MappedRepresentation
-    for item in inner_rep.Items:
-        try:
-            geom = read_representation_item(item)
-            if geom is not None:
-                # Apply the combined transform
-                T = _mapped_item_transformation(source.MappingOrigin, target)
-                if T is not None:
-                    geom_copy = geom.copy() if hasattr(geom, "copy") else geom
-                    geom_copy.transform(T)
-                    return geom_copy
-                return geom
-        except Exception:
-            continue
+    # Look up or parse the template geometry (once per IfcRepresentationMap)
+    if map_id in _MAPPED_GEOMETRY_CACHE:
+        geom = _MAPPED_GEOMETRY_CACHE[map_id]
+    else:
+        inner_rep = source.MappedRepresentation
+        geom = None
+        for item in inner_rep.Items:
+            try:
+                geom = read_representation_item(item)
+                if geom is not None:
+                    break
+            except Exception:
+                continue
+        _MAPPED_GEOMETRY_CACHE[map_id] = geom
 
-    return None
+    if geom is None:
+        return None
+
+    # Always copy since the template is shared across instances
+    geom_copy = geom.copy() if hasattr(geom, "copy") else geom
+
+    # Apply the per-instance transform
+    T = _mapped_item_transformation(source.MappingOrigin, target)
+    if T is not None:
+        geom_copy.transform(T)
+
+    return geom_copy
 
 
 def _mapped_item_transformation(mapping_origin, mapping_target):

@@ -13,6 +13,7 @@ from compas.geometry import Shape
 from compas.geometry import Sphere
 
 from compas.geometry import Circle
+from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Polygon
 from compas.geometry import Polyline
@@ -28,26 +29,87 @@ from compas_ifc.model import Model
 from compas_ifc.representations import Extrusion
 
 REPRESENTATION_CACHE = {}
+SHAPE_REP_CACHE = {}
+REPRESENTATION_MAP_CACHE = {}
 
 
 def assign_body_representation(entity: IfcProduct, representation: Union[Shape, Mesh, Brep]):
-    """
-    Assign a representation to an entity.
-    """
+    """Assign a body representation to an entity.
 
+    When the same geometry Python object (same ``id()``) is assigned to
+    multiple entities, proper IFC instancing is used automatically:
+
+    - **1st use**: creates a direct ``IfcShapeRepresentation`` with the
+      geometry items and stores the inner shape rep for potential reuse.
+    - **2nd use**: promotes the geometry to an instanced representation by
+      creating an ``IfcRepresentationMap`` from the stored inner shape rep,
+      then assigns an ``IfcMappedItem`` to this entity.
+    - **3rd+ use**: reuses the existing map and creates a new
+      ``IfcMappedItem`` for each additional entity.
+
+    Parameters
+    ----------
+    entity : :class:`IfcProduct`
+    representation : :class:`Shape` | :class:`Mesh` | :class:`Brep` | :class:`Extrusion`
+    """
     model: Model = entity.model
+    geom_id = id(representation)
 
-    if id(representation) in REPRESENTATION_CACHE:
-        entity.Representation = REPRESENTATION_CACHE[id(representation)]
+    if geom_id in REPRESENTATION_MAP_CACHE:
+        # 3rd+ use: reuse existing map -> new MappedItem
+        _assign_mapped_body(model, entity, REPRESENTATION_MAP_CACHE[geom_id])
         return
 
-    # Convert COMPAS geometries to IFC corresponding representation
+    if geom_id in SHAPE_REP_CACHE:
+        # 2nd use: promote to instanced representation
+        inner_rep = SHAPE_REP_CACHE[geom_id]
+        rep_map = _create_representation_map(model, inner_rep)
+        REPRESENTATION_MAP_CACHE[geom_id] = rep_map
+        _assign_mapped_body(model, entity, rep_map)
+        return
+
+    # 1st use: direct representation (no map overhead for single-use geometry)
+    items, representation_type = _geometry_to_ifc_items(model, representation)
+
+    ifc_shape_representation = model.create(
+        "IfcShapeRepresentation",
+        ContextOfItems=model.file.default_body_context,
+        RepresentationIdentifier="Body",
+        RepresentationType=representation_type,
+        Items=items,
+    )
+
+    SHAPE_REP_CACHE[geom_id] = ifc_shape_representation
+
+    ifc_product_definition_shape = model.create(
+        "IfcProductDefinitionShape",
+        Representations=[ifc_shape_representation],
+    )
+
+    entity.Representation = ifc_product_definition_shape
+    REPRESENTATION_CACHE[geom_id] = ifc_product_definition_shape
+
+
+def _geometry_to_ifc_items(model: Model, representation):
+    """Convert a COMPAS geometry object to IFC representation items.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    representation : :class:`Shape` | :class:`Mesh` | :class:`Brep` | :class:`Extrusion`
+
+    Returns
+    -------
+    tuple[list, str]
+        A tuple of ``(items, representation_type)`` where *items* is a list
+        of IFC representation items and *representation_type* is the IFC
+        representation type string (e.g. ``"SweptSolid"``, ``"CSG"``).
+    """
     if isinstance(representation, Extrusion):
         ifc_extruded = extrusion_to_IfcExtrudedAreaSolid(model, representation)
-        items = [ifc_extruded]
-        representation_type = "SweptSolid"
+        return [ifc_extruded], "SweptSolid"
 
-    elif isinstance(representation, Shape):
+    if isinstance(representation, Shape):
         if isinstance(representation, Box):
             ifc_csg_primitive3d = box_to_IfcBlock(model, representation)
         elif isinstance(representation, Sphere):
@@ -60,55 +122,22 @@ def assign_body_representation(entity: IfcProduct, representation: Union[Shape, 
             raise NotImplementedError(f"Conversion of {type(representation)} to IFC not implemented.")
 
         ifc_csg_solid = model.create("IfcCsgSolid", TreeRootExpression=ifc_csg_primitive3d)
+        return [ifc_csg_solid], "CSG"
 
-        items = [ifc_csg_solid]
-        representation_type = "CSG"
-
-    elif isinstance(representation, Mesh):
+    if isinstance(representation, Mesh):
         ifc_representation = mesh_to_IfcFaceBasedSurfaceModel(model, representation)
-        representation_type = "SurfaceModel"
-        items = [ifc_representation]
+        return [ifc_representation], "SurfaceModel"
 
-    elif isinstance(representation, Brep):
+    if isinstance(representation, Brep):
         if model.file.use_occ:
             items = brep_to_IfcAdvancedBrep(model, representation)
-            representation_type = "SolidModel"
+            return items, "SolidModel"
         else:
             mesh, _ = representation.to_tesselation()
             ifc_representation = mesh_to_IfcFaceBasedSurfaceModel(model, mesh)
-            representation_type = "SurfaceModel"
-            items = [ifc_representation]
+            return [ifc_representation], "SurfaceModel"
 
-    else:
-        raise NotImplementedError(f"Conversion of {type(representation)} to IFC not implemented.")
-
-    # QUESTION: When using OCCBrep from Extrusion, can we still keep the extrusion data?
-
-    ifc_shape_representation = model.create(
-        "IfcShapeRepresentation",
-        ContextOfItems=model.file.default_body_context,
-        RepresentationIdentifier="Body",
-        RepresentationType=representation_type,
-        Items=items,
-    )
-
-    ifc_product_definition_shape = model.create(
-        "IfcProductDefinitionShape",
-        Representations=[ifc_shape_representation],
-    )
-
-    entity.Representation = ifc_product_definition_shape
-    REPRESENTATION_CACHE[id(representation)] = ifc_product_definition_shape
-
-    # TODO: should not overwrite all property sets here
-    # TODO: alternative 1: restructure the metadata, remove duplicated info like vertices
-    # TODO: alternative 2: save data as compact json string
-    # entity.property_sets = {
-    #     "Pset_COMPAS": {
-    #         "representation_id": ifc_product_definition_shape.id(),
-    #         "compas_data": json.loads(representation.to_jsonstring()),
-    #     }
-    # }
+    raise NotImplementedError(f"Conversion of {type(representation)} to IFC not implemented.")
 
 
 def read_representation(model: Model, entity: IfcProduct):
@@ -120,6 +149,116 @@ def read_representation(model: Model, entity: IfcProduct):
     from compas_ifc.conversions.reading import read_body_representation
 
     return read_body_representation(entity)
+
+
+# ==========================================================================
+# Instancing helpers
+# ==========================================================================
+
+
+def _create_representation_map(model: Model, inner_shape_rep):
+    """Create an ``IfcRepresentationMap`` wrapping an inner ``IfcShapeRepresentation``.
+
+    The mapping origin is set to the world origin (identity placement).
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    inner_shape_rep : :class:`~compas_ifc.entities.base.Base`
+        The ``IfcShapeRepresentation`` containing the actual geometry items.
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+        The ``IfcRepresentationMap``.
+    """
+    from compas_ifc.conversions.frame import create_IfcAxis2Placement3D
+
+    origin = create_IfcAxis2Placement3D(model)
+    return model.create(
+        "IfcRepresentationMap",
+        MappingOrigin=origin,
+        MappedRepresentation=inner_shape_rep,
+    )
+
+
+def _create_identity_transform_operator(model: Model):
+    """Create an identity ``IfcCartesianTransformationOperator3D``.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+    """
+    return model.create(
+        "IfcCartesianTransformationOperator3D",
+        Axis1=model.create("IfcDirection", DirectionRatios=(1.0, 0.0, 0.0)),
+        Axis2=model.create("IfcDirection", DirectionRatios=(0.0, 1.0, 0.0)),
+        LocalOrigin=model.create("IfcCartesianPoint", Coordinates=(0.0, 0.0, 0.0)),
+        Scale=1.0,
+        Axis3=model.create("IfcDirection", DirectionRatios=(0.0, 0.0, 1.0)),
+    )
+
+
+def _assign_mapped_body(model: Model, entity: IfcProduct, rep_map):
+    """Create an ``IfcMappedItem`` referencing a shared map and assign to entity.
+
+    Creates the full chain: ``IfcMappedItem`` -> ``IfcShapeRepresentation``
+    (type ``"MappedRepresentation"``) -> ``IfcProductDefinitionShape``.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    entity : :class:`IfcProduct`
+    rep_map : :class:`~compas_ifc.entities.base.Base`
+        The ``IfcRepresentationMap`` to reference.
+    """
+    target = _create_identity_transform_operator(model)
+    mapped_item = model.create(
+        "IfcMappedItem",
+        MappingSource=rep_map,
+        MappingTarget=target,
+    )
+
+    outer_rep = model.create(
+        "IfcShapeRepresentation",
+        ContextOfItems=model.file.default_body_context,
+        RepresentationIdentifier="Body",
+        RepresentationType="MappedRepresentation",
+        Items=[mapped_item],
+    )
+
+    pds = model.create(
+        "IfcProductDefinitionShape",
+        Representations=[outer_rep],
+    )
+    entity.Representation = pds
+
+
+def transformation_to_IfcCartesianTransformationOperator3D(model: Model, transformation):
+    """Convert a :class:`Transformation` to an ``IfcCartesianTransformationOperator3D``.
+
+    Parameters
+    ----------
+    model : :class:`Model`
+    transformation : :class:`~compas.geometry.Transformation`
+
+    Returns
+    -------
+    :class:`~compas_ifc.entities.base.Base`
+    """
+    frame = Frame.from_transformation(transformation)
+    return model.create(
+        "IfcCartesianTransformationOperator3D",
+        Axis1=model.create("IfcDirection", DirectionRatios=(float(frame.xaxis.x), float(frame.xaxis.y), float(frame.xaxis.z))),
+        Axis2=model.create("IfcDirection", DirectionRatios=(float(frame.yaxis.x), float(frame.yaxis.y), float(frame.yaxis.z))),
+        LocalOrigin=model.create("IfcCartesianPoint", Coordinates=(float(frame.point.x), float(frame.point.y), float(frame.point.z))),
+        Scale=1.0,
+        Axis3=model.create("IfcDirection", DirectionRatios=(float(frame.zaxis.x), float(frame.zaxis.y), float(frame.zaxis.z))),
+    )
 
 
 # ==========================================================================

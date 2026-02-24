@@ -812,7 +812,9 @@ class IFCFile(object):
             self.create_relationship(parent, entity)
 
         if geometry:
-            # TODO: Deal with instancing
+            # Instancing is handled automatically by assign_body_representation:
+            # when the same geometry object is assigned to multiple entities,
+            # it creates IfcRepresentationMap + IfcMappedItem for the 2nd+ use.
             entity.geometry = geometry
 
         if frame:
