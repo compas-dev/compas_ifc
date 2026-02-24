@@ -101,6 +101,66 @@ class IfcProduct(IfcProduct):
         # TODO: delete existing representation
 
     @property
+    def volume(self):
+        """Volume of this element's geometry.
+
+        Tries the parametric geometry's ``volume()`` method first.
+        Falls back to ``visual_geometry.volume`` for types that
+        cannot compute volume parametrically (e.g. ClippedExtrusion,
+        BooleanResult).
+
+        Returns
+        -------
+        float or None
+        """
+        geom = self.geometry
+        if geom is not None:
+            v = getattr(geom, "volume", None)
+            if v is not None:
+                if callable(v):
+                    v = v()
+                if v is not None:
+                    return v
+        # Fallback to tessellated geometry
+        vg = self.visual_geometry
+        if vg is not None:
+            v = getattr(vg, "volume", None)
+            if v is not None:
+                return v
+        return None
+
+    @property
+    def surface_area(self):
+        """Surface area of this element's geometry.
+
+        Tries the parametric geometry's ``surface_area()`` method first.
+        Falls back to ``visual_geometry.surface_area`` for types that
+        cannot compute surface area parametrically.
+
+        Returns
+        -------
+        float or None
+        """
+        geom = self.geometry
+        if geom is not None:
+            sa = getattr(geom, "surface_area", None)
+            if sa is None:
+                # COMPAS shapes use `.area` instead of `.surface_area`
+                sa = getattr(geom, "area", None)
+            if sa is not None:
+                if callable(sa):
+                    sa = sa()
+                if sa is not None:
+                    return sa
+        # Fallback to tessellated geometry
+        vg = self.visual_geometry
+        if vg is not None:
+            sa = getattr(vg, "surface_area", None)
+            if sa is not None:
+                return sa
+        return None
+
+    @property
     def axis(self):
         """The axis (centerline) representation of the product.
 

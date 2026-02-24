@@ -104,6 +104,35 @@ class ClippedExtrusion(Geometry):
         )
 
     # ------------------------------------------------------------------
+    # Geometric properties
+    # ------------------------------------------------------------------
+
+    def volume(self):
+        """Volume of the clipped extrusion.
+
+        .. note::
+
+            Returns ``None`` because exact volume requires boolean
+            clipping operations that cannot be computed parametrically.
+            Use ``element.visual_geometry.volume`` for accurate results
+            via the ifcopenshell tessellated geometry, or use the
+            element-level ``element.volume`` property which falls back
+            to the tessellated geometry automatically.
+        """
+        return None
+
+    def surface_area(self):
+        """Surface area of the clipped extrusion.
+
+        .. note::
+
+            Returns ``None`` because exact surface area requires
+            boolean clipping operations.  See :meth:`volume` for
+            how to obtain accurate results.
+        """
+        return None
+
+    # ------------------------------------------------------------------
     # Mesh generation
     # ------------------------------------------------------------------
 

@@ -79,6 +79,58 @@ class Pipe(Geometry):
         )
 
     # ------------------------------------------------------------------
+    # Geometric properties
+    # ------------------------------------------------------------------
+
+    def volume(self):
+        """Compute the volume of the swept disk solid.
+
+        ``V = pi * r^2 * L``  for solid pipes, or
+        ``V = pi * (r^2 - r_inner^2) * L``  for hollow pipes,
+
+        where *L* is the total arc length of the directrix.
+
+        .. note::
+
+            Exact for straight directrix segments.  For curved paths
+            this is an approximation that is accurate when the
+            curvature radius is much larger than the pipe radius.
+
+        Returns
+        -------
+        float
+        """
+        length = self.directrix.length
+        outer = math.pi * self.radius ** 2 * length
+        if self.inner_radius is not None:
+            inner = math.pi * self.inner_radius ** 2 * length
+            return outer - inner
+        return outer
+
+    def surface_area(self, n=16):
+        """Approximate surface area from mesh discretisation.
+
+        Parameters
+        ----------
+        n : int
+            Number of vertices per circular cross-section ring.
+
+        Returns
+        -------
+        float
+        """
+        from compas.geometry import area_polygon
+
+        vertices, faces = self.to_vertices_and_faces(n=n)
+        if not vertices:
+            return 0.0
+        total = 0.0
+        for face in faces:
+            face_pts = [vertices[i] for i in face]
+            total += area_polygon(face_pts)
+        return total
+
+    # ------------------------------------------------------------------
     # Mesh generation
     # ------------------------------------------------------------------
 

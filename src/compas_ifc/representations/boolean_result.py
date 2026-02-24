@@ -94,6 +94,35 @@ class BooleanResult(Geometry):
         )
 
     # ------------------------------------------------------------------
+    # Geometric properties
+    # ------------------------------------------------------------------
+
+    def volume(self):
+        """Volume of the boolean result.
+
+        .. note::
+
+            Returns ``None`` because exact volume requires CSG boolean
+            operations that cannot be computed parametrically.
+            Use ``element.visual_geometry.volume`` for accurate results
+            via the ifcopenshell tessellated geometry, or use the
+            element-level ``element.volume`` property which falls back
+            to the tessellated geometry automatically.
+        """
+        return None
+
+    def surface_area(self):
+        """Surface area of the boolean result.
+
+        .. note::
+
+            Returns ``None`` because exact surface area requires CSG
+            boolean operations.  See :meth:`volume` for how to obtain
+            accurate results.
+        """
+        return None
+
+    # ------------------------------------------------------------------
     # Tree traversal helpers
     # ------------------------------------------------------------------
 

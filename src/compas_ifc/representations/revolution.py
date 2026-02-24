@@ -110,6 +110,117 @@ class Revolution(Geometry):
         )
 
     # ------------------------------------------------------------------
+    # Geometric properties
+    # ------------------------------------------------------------------
+
+    def _profile_area(self):
+        """Compute the area of the profile cross-section.
+
+        Returns
+        -------
+        float
+        """
+        if isinstance(self.profile, Polygon):
+            return self.profile.area
+        elif isinstance(self.profile, Circle):
+            return self.profile.area
+        elif isinstance(self.profile, tuple):
+            outer_area = self.profile[0].area
+            void_area = sum(v.area for v in self.profile[1])
+            return outer_area - void_area
+        return 0.0
+
+    def _profile_centroid(self):
+        """Compute the centroid of the profile cross-section.
+
+        Returns
+        -------
+        list[float]
+            ``[x, y, z]`` coordinates of the centroid.
+        """
+        from compas.geometry import centroid_polygon
+
+        if isinstance(self.profile, Polygon):
+            return centroid_polygon(self.profile.points)
+        elif isinstance(self.profile, Circle):
+            p = self.profile.frame.point if hasattr(self.profile, "frame") else Point(0, 0, 0)
+            return [p.x, p.y, p.z]
+        elif isinstance(self.profile, tuple):
+            # Use outer polygon centroid as approximation
+            return centroid_polygon(self.profile[0].points)
+        return [0, 0, 0]
+
+    def _distance_to_axis(self, point):
+        """Distance from a 3D point to the revolution axis line.
+
+        Parameters
+        ----------
+        point : list[float] or :class:`Point`
+            ``[x, y, z]`` coordinates.
+
+        Returns
+        -------
+        float
+        """
+        # Axis line: axis_point + t * axis_direction
+        px, py, pz = float(point[0]), float(point[1]), float(point[2])
+        ax, ay, az = float(self.axis_point.x), float(self.axis_point.y), float(self.axis_point.z)
+        dx, dy, dz = float(self.axis_direction.x), float(self.axis_direction.y), float(self.axis_direction.z)
+
+        # Vector from axis_point to point
+        vx, vy, vz = px - ax, py - ay, pz - az
+
+        # Cross product v x d
+        cx = vy * dz - vz * dy
+        cy = vz * dx - vx * dz
+        cz = vx * dy - vy * dx
+
+        return math.sqrt(cx * cx + cy * cy + cz * cz)
+
+    def volume(self):
+        """Compute the volume via Pappus's centroid theorem.
+
+        ``V = 2 * pi * R * A * (angle / 360)``
+
+        where *R* is the distance from the profile centroid to the
+        revolution axis and *A* is the profile area.
+
+        Returns
+        -------
+        float
+        """
+        area = self._profile_area()
+        centroid = self._profile_centroid()
+        R = self._distance_to_axis(centroid)
+        angle_fraction = self.angle / 360.0
+        return 2 * math.pi * R * area * angle_fraction
+
+    def surface_area(self, n_profile=16, n_angle=64):
+        """Approximate surface area from mesh discretisation.
+
+        Parameters
+        ----------
+        n_profile : int
+            Number of sample points for circular profiles.
+        n_angle : int
+            Number of angular steps (higher = more accurate).
+
+        Returns
+        -------
+        float
+        """
+        from compas.geometry import area_polygon
+
+        vertices, faces = self.to_vertices_and_faces(n_profile=n_profile, n_angle=n_angle)
+        if not vertices:
+            return 0.0
+        total = 0.0
+        for face in faces:
+            face_pts = [vertices[i] for i in face]
+            total += area_polygon(face_pts)
+        return total
+
+    # ------------------------------------------------------------------
     # Mesh generation
     # ------------------------------------------------------------------
 

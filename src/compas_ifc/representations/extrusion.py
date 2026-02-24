@@ -108,6 +108,71 @@ class Extrusion(Geometry):
         )
 
     # ------------------------------------------------------------------
+    # Geometric properties
+    # ------------------------------------------------------------------
+
+    def _profile_area(self):
+        """Compute the area of the profile cross-section.
+
+        Returns
+        -------
+        float
+            Area of the profile.  For profiles with voids, returns the
+            outer area minus the sum of void areas.
+        """
+        if isinstance(self.profile, Polygon):
+            return self.profile.area
+        elif isinstance(self.profile, Circle):
+            return self.profile.area
+        elif isinstance(self.profile, tuple):
+            outer_area = self.profile[0].area
+            void_area = sum(v.area for v in self.profile[1])
+            return outer_area - void_area
+        return 0.0
+
+    def _profile_perimeter(self):
+        """Compute the perimeter of the profile cross-section.
+
+        Returns
+        -------
+        float
+            Perimeter of the profile.  For profiles with voids, returns
+            the outer perimeter plus the sum of void perimeters (all
+            boundaries contribute to the side surface).
+        """
+        if isinstance(self.profile, Polygon):
+            return self.profile.length
+        elif isinstance(self.profile, Circle):
+            return self.profile.circumference
+        elif isinstance(self.profile, tuple):
+            outer_perimeter = self.profile[0].length
+            void_perimeters = sum(v.length for v in self.profile[1])
+            return outer_perimeter + void_perimeters
+        return 0.0
+
+    def volume(self):
+        """Compute the exact volume of the extrusion.
+
+        ``V = profile_area * depth``
+
+        Returns
+        -------
+        float
+        """
+        return self._profile_area() * self.depth
+
+    def surface_area(self):
+        """Compute the exact surface area of the extrusion.
+
+        ``A = 2 * profile_area + perimeter * depth``
+
+        Returns
+        -------
+        float
+        """
+        return 2 * self._profile_area() + self._profile_perimeter() * self.depth
+
+    # ------------------------------------------------------------------
     # Mesh generation
     # ------------------------------------------------------------------
 
