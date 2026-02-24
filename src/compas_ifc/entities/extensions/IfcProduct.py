@@ -57,8 +57,10 @@ class IfcProduct(IfcProduct):
                     # NOTE: When using OCC, the geometry is pre-transformed to the frame of the entity.
                     # We need to re-transform the geometry back to its original location.
                     # This is not necessary when using TessellatedBrep.
-                    T = self.frame.to_transformation()
-                    self._visual_geometry.transform(T.inverse())
+                    frame = self.frame
+                    if frame is not None:
+                        T = frame.to_transformation()
+                        self._visual_geometry.transform(T.inverse())
         return self._visual_geometry
 
     @visual_geometry.setter
