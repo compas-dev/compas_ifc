@@ -181,8 +181,8 @@ clip2_ext = Extrusion(
     depth=3.0,
     frame=Frame(Point(10, 40, 0), Vector.Xaxis(), Vector.Yaxis()),
 )
-clip2_p1 = Plane(Point(0.5, 0.15, 2.5), Vector(-0.707, 0, 0.707))
-clip2_p2 = Plane(Point(5.5, 0.15, 2.5), Vector(0.866, 0, 0.5))
+clip2_p1 = Plane(Point(1.0, 0.15, 2.5), Vector(0, 0, 1))
+clip2_p2 = Plane(Point(5.0, 0.15, 0.5), Vector(0, 0, -1))
 clip_double = ClippedExtrusion(extrusion=clip2_ext, clipping_planes=[(clip2_p1, True), (clip2_p2, False)])
 model.create_wall(name="Clip_Double", geometry=clip_double, parent=storey)
 print("  A13 Clip_Double       ClippedExtrusion (2 clips)")
@@ -342,6 +342,7 @@ print()
 # ------------------------------------------------------------------
 
 parsed_geoms = {}  # name -> geom
+parsed_elems = {}  # name -> elem (for element-level volume/SA checks)
 for elem in model2.building_elements:
     name = elem.name or ""
     if not name:
@@ -351,6 +352,7 @@ for elem in model2.building_elements:
     except (AttributeError, Exception):
         geom = None
     parsed_geoms[name] = geom
+    parsed_elems[name] = elem
 
 # ------------------------------------------------------------------
 # Verification checks
@@ -610,6 +612,118 @@ for label, actual, expected, op in count_checks:
     check(f"Count {label} {op} {expected}", ok, f"{actual}")
     print(f"    {label:30s} {actual:3d} {op} {expected:3d}  {'PASS' if ok else 'FAIL'}")
 
+print()
+
+# ------------------------------------------------------------------
+# Volume and surface area verification
+# ------------------------------------------------------------------
+
+import math
+
+print("  VOLUME & SURFACE AREA:")
+print("  " + "-" * 66)
+print(f"  {'ID':<5} {'Name':<20} {'Volume':<30} {'Status'}")
+print("  " + "-" * 66)
+
+# Expected volumes for each element (computed from creation parameters)
+expected_volumes = {
+    "Ext_Polygon": 6.0 * 0.3 * 3.0,  # 5.4
+    "Ext_Circle": math.pi * 0.5**2 * 2.0,  # ~1.5708
+    "Ext_Voids": (4.0 - 0.8 * 0.8) * 0.3,  # (4.0 - 0.64) * 0.3 = 1.008
+    "Pipe_Solid": math.pi * 0.15**2 * Pipe(directrix=Polyline([Point(0, 0, 0), Point(2, 0, 0), Point(2, 3, 1)]), radius=0.15).directrix.length,
+    "Pipe_Hollow": math.pi * (0.25**2 - 0.10**2) * Pipe(directrix=Polyline([Point(0, 0, 0), Point(0, 4, 0), Point(0, 4, 2)]), radius=0.25).directrix.length,
+    "CSG_Box": 1.0 * 2.0 * 3.0,  # 6.0
+    "CSG_Sphere": 4.0 / 3.0 * math.pi * 1.5**3,  # ~14.137
+    "CSG_Cone": math.pi * 1.0**2 * 2.5 / 3,  # ~2.618
+    "CSG_Cylinder": math.pi * 0.4**2 * 3.0,  # ~1.508
+    "Mesh_Quad": None,  # polyhedron — just check > 0
+}
+
+# Elements where volume is checked via element-level fallback (visual_geometry)
+FALLBACK_NAMES = ["Clip_Single", "Clip_Double", "Bool_Diff", "Bool_Union", "Bool_Inter", "Bool_Nested", "Bool_HalfSpace"]
+# Instanced elements
+INSTANCE_NAMES = ["Instance_1", "Instance_2", "Instance_3"]
+INSTANCE_VOL = math.pi * 0.2**2 * 3.5
+
+vol_id = 0
+for name, expected in expected_volumes.items():
+    vol_id += 1
+    elem = parsed_elems.get(name)
+    if elem is None:
+        check(f"{name} volume", False, "element missing")
+        print(f"  {'V'+str(vol_id):<5} {name:<20} {'MISSING':<30} FAIL")
+        continue
+    v = elem.volume
+    if expected is not None:
+        ok = v is not None and v > 0 and abs(v - expected) / expected < 0.01
+        check(f"{name} volume", ok, f"{v:.4f} vs {expected:.4f}" if v else "None")
+        status = "PASS" if ok else "FAIL"
+        print(f"  {'V'+str(vol_id):<5} {name:<20} {f'{v:.4f} (exp {expected:.4f})':<30} {status}")
+    else:
+        ok = v is not None and v > 0
+        check(f"{name} volume > 0", ok, f"{v}")
+        status = "PASS" if ok else "FAIL"
+        print(f"  {'V'+str(vol_id):<5} {name:<20} {f'{v:.4f}':<30} {status}" if v else f"  {'V'+str(vol_id):<5} {name:<20} {'None':<30} {status}")
+
+# ClippedExtrusion and BooleanResult: check element-level volume > 0 (via visual_geometry)
+for name in FALLBACK_NAMES:
+    vol_id += 1
+    elem = parsed_elems.get(name)
+    if elem is None:
+        check(f"{name} volume", False, "element missing")
+        print(f"  {'V'+str(vol_id):<5} {name:<20} {'MISSING':<30} FAIL")
+        continue
+    v = elem.volume
+    ok = v is not None and v > 0
+    check(f"{name} elem.volume > 0", ok, f"{v:.4f}" if v else "None")
+    status = "PASS" if ok else "FAIL"
+    src = "parametric" if (parsed_geoms.get(name) is not None and hasattr(parsed_geoms[name], 'volume') and callable(getattr(parsed_geoms[name], 'volume', None)) and parsed_geoms[name].volume() is not None) else "visual_geom"
+    print(f"  {'V'+str(vol_id):<5} {name:<20} {f'{v:.4f} ({src})':<30} {status}" if v else f"  {'V'+str(vol_id):<5} {name:<20} {'None':<30} {status}")
+
+# Instanced elements
+for name in INSTANCE_NAMES:
+    vol_id += 1
+    elem = parsed_elems.get(name)
+    if elem is None:
+        check(f"{name} volume", False, "element missing")
+        print(f"  {'V'+str(vol_id):<5} {name:<20} {'MISSING':<30} FAIL")
+        continue
+    v = elem.volume
+    ok = v is not None and v > 0 and abs(v - INSTANCE_VOL) / INSTANCE_VOL < 0.01
+    check(f"{name} volume", ok, f"{v:.4f} vs {INSTANCE_VOL:.4f}" if v else "None")
+    status = "PASS" if ok else "FAIL"
+    print(f"  {'V'+str(vol_id):<5} {name:<20} {f'{v:.4f} (exp {INSTANCE_VOL:.4f})':<30} {status}")
+
+# Surface area spot-checks
+print()
+print("  SURFACE AREA SPOT-CHECKS:")
+sa_checks = {
+    "Ext_Polygon": 2 * (6.0 * 0.3) + 2 * (6.0 + 0.3) * 3.0,  # 41.4
+    "CSG_Box": 2 * (1.0 * 2.0 + 2.0 * 3.0 + 1.0 * 3.0),  # 22.0
+    "CSG_Sphere": 4 * math.pi * 1.5**2,  # ~28.274
+}
+for name, expected_sa in sa_checks.items():
+    elem = parsed_elems.get(name)
+    if elem is None:
+        check(f"{name} surface_area", False, "element missing")
+        continue
+    sa = elem.surface_area
+    ok = sa is not None and sa > 0 and abs(sa - expected_sa) / expected_sa < 0.01
+    check(f"{name} surface_area", ok, f"{sa:.4f} vs {expected_sa:.4f}" if sa else "None")
+    status = "PASS" if ok else "FAIL"
+    print(f"    {name:<20} SA={sa:.4f} (exp {expected_sa:.4f})  {status}" if sa else f"    {name:<20} SA=None  {status}")
+
+# All elements should have positive surface area via element-level API
+all_sa_ok = True
+sa_fail_names = []
+for name, elem in parsed_elems.items():
+    sa = elem.surface_area
+    if sa is None or sa <= 0:
+        all_sa_ok = False
+        sa_fail_names.append(name)
+check("All elements: surface_area > 0", all_sa_ok, ", ".join(sa_fail_names) if sa_fail_names else "")
+
+print("  " + "-" * 66)
 print()
 
 # ==================================================================

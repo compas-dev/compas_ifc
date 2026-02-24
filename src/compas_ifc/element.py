@@ -188,6 +188,38 @@ class GenericElement(Element):
             self._ifc_entity.geometry = geometry
 
     @property
+    def volume(self):
+        """Volume of this element's geometry.
+
+        Delegates to the underlying IFC entity's ``volume`` property,
+        which tries the parametric geometry's ``volume()`` method first,
+        then falls back to ``visual_geometry.volume`` (tessellated brep).
+
+        Returns
+        -------
+        float or None
+        """
+        if self._ifc_entity is not None:
+            return self._ifc_entity.volume
+        return None
+
+    @property
+    def surface_area(self):
+        """Surface area of this element's geometry.
+
+        Delegates to the underlying IFC entity's ``surface_area`` property,
+        which tries the parametric geometry first, then falls back to
+        ``visual_geometry.surface_area`` (tessellated brep).
+
+        Returns
+        -------
+        float or None
+        """
+        if self._ifc_entity is not None:
+            return self._ifc_entity.surface_area
+        return None
+
+    @property
     def transformation(self):
         return self._transformation
 

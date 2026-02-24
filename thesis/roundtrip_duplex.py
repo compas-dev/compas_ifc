@@ -73,6 +73,19 @@ def compare_extrusion(original, reloaded, name):
                      len(original.profile[1]) == len(reloaded.profile[1]),
                      f"{len(original.profile[1])} vs {len(reloaded.profile[1])}"):
             ok = False
+    # Volume and surface area preservation
+    orig_vol = original.volume()
+    reload_vol = reloaded.volume()
+    if orig_vol > 0 and reload_vol > 0:
+        if not check(f"{name} volume", abs(orig_vol - reload_vol) / orig_vol < TOL,
+                     f"{orig_vol:.6f} vs {reload_vol:.6f}"):
+            ok = False
+    orig_sa = original.surface_area()
+    reload_sa = reloaded.surface_area()
+    if orig_sa > 0 and reload_sa > 0:
+        if not check(f"{name} surface_area", abs(orig_sa - reload_sa) / orig_sa < TOL,
+                     f"{orig_sa:.6f} vs {reload_sa:.6f}"):
+            ok = False
     return ok
 
 
@@ -118,6 +131,20 @@ def compare_mesh(original, reloaded, name):
                  original.number_of_faces() == reloaded.number_of_faces(),
                  f"{original.number_of_faces()} vs {reloaded.number_of_faces()}"):
         ok = False
+    # Surface area comparison
+    orig_area = original.area()
+    reload_area = reloaded.area()
+    if orig_area > 0 and reload_area > 0:
+        if not check(f"{name} area", abs(orig_area - reload_area) / orig_area < TOL,
+                     f"{orig_area:.6f} vs {reload_area:.6f}"):
+            ok = False
+    # Volume comparison (only for closed meshes)
+    orig_vol = original.volume()
+    reload_vol = reloaded.volume()
+    if orig_vol is not None and reload_vol is not None and orig_vol > 0:
+        if not check(f"{name} volume", abs(orig_vol - reload_vol) / orig_vol < TOL,
+                     f"{orig_vol:.6f} vs {reload_vol:.6f}"):
+            ok = False
     return ok
 
 
@@ -156,7 +183,7 @@ for elem in model.building_elements:
 
     if tn not in elements_by_type:
         elements_by_type[tn] = []
-    elements_by_type[tn].append((elem.name or f"unnamed_{geom_count}", geom))
+    elements_by_type[tn].append((elem.name or f"unnamed_{geom_count}", geom, elem))
 
 # ------------------------------------------------------------------
 # Geometry distribution table
@@ -201,7 +228,7 @@ depth_range = [float("inf"), 0.0]
 profile_types = {}
 ext_count = 0
 
-for _, geom in elements_by_type.get("Extrusion", []):
+for _, geom, _ in elements_by_type.get("Extrusion", []):
     ext_count += 1
 
     if geom.depth <= 0:
@@ -260,14 +287,14 @@ samples = {}  # name -> (type_name, original_geom)
 for tname in ROUNDTRIP_TYPES:
     entries = elements_by_type.get(tname, [])
     selected = entries[:MAX_SAMPLES]
-    for i, (ename, geom) in enumerate(selected):
+    for i, (ename, geom, elem) in enumerate(selected):
         key = f"RT_{tname}_{i:03d}"
-        samples[key] = (tname, geom)
+        samples[key] = (tname, geom, elem)
 
 print(f"\n  Samples selected for write round-trip:")
 for tname in ROUNDTRIP_TYPES:
     total = len(elements_by_type.get(tname, []))
-    sampled = sum(1 for _, (t, _) in samples.items() if t == tname)
+    sampled = sum(1 for _, (t, _, _e) in samples.items() if t == tname)
     if total > 0:
         print(f"    {tname:<25s} {sampled:3d} / {total:3d}")
 
@@ -280,7 +307,7 @@ else:
     new_model = BuildingInformationModel.template(schema="IFC4", unit="m")
     new_storey = new_model.storeys[0]
 
-    for key, (tname, geom) in samples.items():
+    for key, (tname, geom, _elem) in samples.items():
         new_model.create_element(name=key, geometry=geom, parent=new_storey)
 
     os.makedirs("temp", exist_ok=True)
@@ -292,7 +319,7 @@ else:
     print("  Reloading and comparing...\n")
     reloaded_model = BuildingInformationModel(rt_path)
 
-    reloaded_geoms = {}
+    reloaded_data = {}
     for elem in reloaded_model.building_elements:
         name = elem.name or ""
         if name.startswith("RT_"):
@@ -300,19 +327,25 @@ else:
                 geom = elem.geometry
             except (AttributeError, Exception):
                 geom = None
-            reloaded_geoms[name] = geom
+            reloaded_data[name] = (geom, elem)
 
     # Compare each sample
     match_count = 0
     mismatch_count = 0
     missing_count = 0
 
-    for key, (tname, original) in sorted(samples.items()):
-        reloaded = reloaded_geoms.get(key)
+    for key, (tname, original, orig_elem) in sorted(samples.items()):
+        entry = reloaded_data.get(key)
 
-        if reloaded is None:
+        if entry is None:
             missing_count += 1
             check(f"{key} reloaded", False, "missing")
+            continue
+
+        reloaded, reload_elem = entry
+        if reloaded is None:
+            missing_count += 1
+            check(f"{key} reloaded", False, "geom is None")
             continue
 
         reloaded_type = type(reloaded).__name__
@@ -342,6 +375,23 @@ else:
         else:
             check(f"{key} type", type_ok, f"{tname} -> {reloaded_type}")
 
+        # Element-level volume/SA comparison (works for ALL types via visual_geometry fallback)
+        # Looser tolerance for types using tessellated visual_geometry (ClippedExtrusion, BooleanResult)
+        # because tessellation may differ between IFC schemas (e.g. IFC2X3 → IFC4 round-trip)
+        ELEM_TOL = 0.10  # 10% tolerance for cross-schema tessellation differences
+        orig_vol = orig_elem.volume
+        reload_vol = reload_elem.volume
+        if orig_vol is not None and reload_vol is not None and orig_vol > 0:
+            if not check(f"{key} elem.volume", abs(orig_vol - reload_vol) / orig_vol < ELEM_TOL,
+                         f"{orig_vol:.4f} vs {reload_vol:.4f}"):
+                ok = False
+        orig_sa = orig_elem.surface_area
+        reload_sa = reload_elem.surface_area
+        if orig_sa is not None and reload_sa is not None and orig_sa > 0:
+            if not check(f"{key} elem.surface_area", abs(orig_sa - reload_sa) / orig_sa < ELEM_TOL,
+                         f"{orig_sa:.4f} vs {reload_sa:.4f}"):
+                ok = False
+
         if ok:
             match_count += 1
         else:
@@ -354,6 +404,69 @@ else:
 
     check("Write RT: no missing elements", missing_count == 0, f"{missing_count}")
     check("Write RT: no mismatches", mismatch_count == 0, f"{mismatch_count}")
+
+# ==================================================================
+# PART 3: VOLUME & SURFACE AREA (all geometry types)
+# ==================================================================
+
+print()
+print("=" * 70)
+print("PART 3: VOLUME & SURFACE AREA (element-level, all types)")
+print("=" * 70)
+print()
+print("  Uses element.volume / element.surface_area which falls back to")
+print("  visual_geometry (tessellated brep) when parametric returns None.")
+print()
+
+ALL_GEOM_TYPES = ["Extrusion", "ClippedExtrusion", "BooleanResult", "Mesh", "TessellatedBrep"]
+
+for type_name in ALL_GEOM_TYPES:
+    entries = elements_by_type.get(type_name, [])
+    if not entries:
+        continue
+
+    total = len(entries)
+    vol_positive = 0
+    sa_positive = 0
+    vol_none = 0
+    sa_none = 0
+    vol_values = []
+
+    for _, _geom, elem in entries:
+        v = elem.volume
+        if v is not None and v > 0:
+            vol_positive += 1
+            vol_values.append(v)
+        else:
+            vol_none += 1
+        sa = elem.surface_area
+        if sa is not None and sa > 0:
+            sa_positive += 1
+        else:
+            sa_none += 1
+
+    print(f"  {type_name} ({total} elements):")
+    print(f"    volume > 0:        {vol_positive}")
+    if vol_values:
+        print(f"    volume range:      {min(vol_values):.6f} - {max(vol_values):.6f}")
+        print(f"    volume mean:       {sum(vol_values)/len(vol_values):.6f}")
+    if vol_none > 0:
+        print(f"    volume None/zero:  {vol_none}")
+    print(f"    surface_area > 0:  {sa_positive}")
+    if sa_none > 0:
+        print(f"    surface_area None: {sa_none}")
+    print()
+
+    # Mesh elements may be open surfaces (windows, doors) without enclosed volume
+    if type_name == "Mesh":
+        check(f"Vol/SA: {type_name} some elem.volume > 0", vol_positive > 0 or total == 0,
+              f"{vol_positive}/{total}")
+    else:
+        check(f"Vol/SA: all {type_name} elem.volume > 0", vol_positive == total,
+              f"{vol_positive}/{total}")
+    check(f"Vol/SA: all {type_name} elem.surface_area > 0", sa_positive == total,
+          f"{sa_positive}/{total}")
+
 
 # ==================================================================
 # SUMMARY
