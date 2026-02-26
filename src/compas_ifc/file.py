@@ -390,6 +390,8 @@ class IFCFile(object):
         exported = {}
 
         def export_entity(entity: Union[Base, Any], file: IFCFile):
+            if isinstance(entity, (list, tuple)):
+                return [export_entity(a, file) for a in entity]
             if not isinstance(entity, Base):
                 return entity
 

@@ -145,6 +145,8 @@ class Base(Data):
                 return value.entity
             elif isinstance(value, TypeDefinition):
                 return value.entity
+            elif isinstance(value, (list, tuple)):
+                return [prepare_value(v) for v in value]
             else:
                 return value
 
