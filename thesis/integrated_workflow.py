@@ -3,8 +3,8 @@
 
 Demonstrates that all front-end model capabilities compose in a single workflow:
 
-    custom element class → template model → validation enforcement →
-    array creation → graph edges → save/reload → granular extract
+    custom element class -> template model -> validation enforcement ->
+    array creation -> columns -> graph edges -> save/reload -> granular extract
 
 Uses ``temp/devday/rfs.stp`` as the funicular slab unit geometry.
 """
@@ -15,6 +15,7 @@ import ifcopenshell.guid
 from pydantic import BaseModel
 from pydantic import Field
 
+from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Transformation
@@ -25,6 +26,7 @@ from compas_ifc.bim import BuildingInformationModel
 from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
 from compas_ifc.element import GenericElement
 from compas_ifc.validation import Specification
+from compas_ifc.validation import validate_element
 from compas_ifc.validation import validate_model
 
 # ===========================================================================
@@ -48,7 +50,8 @@ def check(label, condition, detail=""):
 
 
 GRID_SIZE = 3
-SPACING = 6.5  # metres (slab footprint is ~6.36 x 6.21 m)
+COLUMN_SECTION = 0.3  # metres
+COLUMN_HEIGHT = 3.0  # metres
 
 
 # ===========================================================================
@@ -79,7 +82,7 @@ class FunicularSlabUnit(GenericElement):
 
     @classmethod
     def _load_geometry(cls):
-        """Load, scale (mm → m), and cache the BRep geometry."""
+        """Load, scale (mm -> m), and cache the BRep geometry."""
         if cls._cached_brep is None:
             cls._cached_brep = OCCBrep.from_step(cls.STEP_PATH).scaled(cls.STEP_SCALE)
         return cls._cached_brep
@@ -150,9 +153,15 @@ brep = FunicularSlabUnit._load_geometry()
 check("Class: geometry volume > 0", brep.volume > 0, f"{brep.volume:.4f}")
 check("Class: geometry area > 0", brep.area > 0, f"{brep.area:.4f}")
 
+# Derive slab footprint from BRep bounding box for grid spacing
+slab_bb = brep.aabb
+SPACING_X = slab_bb.xsize
+SPACING_Y = slab_bb.ysize
+
 print(f"\n  Geometry: {FunicularSlabUnit.STEP_PATH}")
 print(f"  Volume:  {brep.volume:.4f} m3")
 print(f"  Area:    {brep.area:.4f} m2")
+print(f"  Footprint: {SPACING_X:.2f} x {SPACING_Y:.2f} m")
 print(f"  Schema:  {list(FunicularSlabUnit.Schema.model_fields.keys())}")
 
 # -----------------------------------------------------------------------
@@ -167,9 +176,6 @@ spec = FunicularSlabUnit.specification()
 model.specifications = [spec]
 storey = model.storeys[0]
 
-# Enforcement: validate_element detects non-conforming properties
-from compas_ifc.validation import validate_element
-
 bad = FunicularSlabUnit(name="bad_unit", span_capacity_m=-5.0)
 bad_results = validate_element(bad, [spec])
 check("Enforce: non-conforming detected", any(r.status == "fail" for r in bad_results), "negative span")
@@ -182,33 +188,70 @@ print(f"\n  Specification: {spec.name}")
 print(f"  Applies to: {spec.ifc_types}")
 
 # -----------------------------------------------------------------------
-# PART 3: Array Creation
+# PART 3: Array Creation (slabs + columns)
 # -----------------------------------------------------------------------
 print("\n" + "=" * 70)
-print(f"PART 3: ARRAY CREATION ({GRID_SIZE}x{GRID_SIZE} grid)")
+print(f"PART 3: ARRAY CREATION ({GRID_SIZE}x{GRID_SIZE} slabs + columns)")
 print("=" * 70)
 
+# --- Slabs: 3x3 grid, touching ---
 units = []
 for i in range(GRID_SIZE):
     for j in range(GRID_SIZE):
         u = FunicularSlabUnit(
             name=f"FSU_{i}_{j}",
-            frame=Frame(Point(i * SPACING, j * SPACING, 0), Vector.Xaxis(), Vector.Yaxis()),
+            frame=Frame(Point(i * SPACING_X, j * SPACING_Y, 0), Vector.Xaxis(), Vector.Yaxis()),
         )
         model.add_element(u, parent=storey)
         units.append(u)
 
-expected = GRID_SIZE**2
-check("Array: element count", len(units) == expected, f"{len(units)}")
+expected_slabs = GRID_SIZE**2
+check("Array: slab count", len(units) == expected_slabs, f"{len(units)}")
 
-children = [e for e in storey.children if e.ifc_type == "IfcSlab"]
-check("Array: all under storey", len(children) == expected, f"{len(children)}")
+slab_children = [e for e in storey.children if e.ifc_type == "IfcSlab"]
+check("Array: slabs under storey", len(slab_children) == expected_slabs, f"{len(slab_children)}")
 
+# Disable spec enforcement for columns (not IfcSlab, so they'd pass anyway)
 vresults = validate_model(model, [spec])
-check("Array: all pass validation", all(r.status == "pass" for r in vresults), f"{sum(r.status == 'pass' for r in vresults)}/{len(vresults)}")
+check("Array: all slabs pass validation", all(r.status == "pass" for r in vresults), f"{sum(r.status == 'pass' for r in vresults)}/{len(vresults)}")
 
-print(f"\n  Grid: {GRID_SIZE}x{GRID_SIZE} = {expected} elements")
-print(f"  Spacing: {SPACING} m")
+# --- Columns: at grid intersection nodes ---
+# For a 3x3 slab grid, column nodes form a 4x4 grid at slab corners.
+# Each slab is centred at its frame origin, so corners are at +/- half_x, half_y.
+half_x = SPACING_X / 2
+half_y = SPACING_Y / 2
+slab_z_max = max(p.z for p in brep.points)  # slab top
+column_box = Box(COLUMN_SECTION, COLUMN_SECTION, COLUMN_HEIGHT).to_mesh()
+import math
+
+cos45 = math.cos(math.radians(45))
+sin45 = math.sin(math.radians(45))
+col_xaxis = Vector(cos45, sin45, 0)
+col_yaxis = Vector(-sin45, cos45, 0)
+
+columns = []
+for ci in range(GRID_SIZE + 1):
+    for cj in range(GRID_SIZE + 1):
+        cx = ci * SPACING_X - half_x
+        cy = cj * SPACING_Y - half_y
+        cz = slab_z_max - COLUMN_HEIGHT / 2  # column top meets slab top
+        col = model.create_element(
+            ifc_type="IfcColumn",
+            name=f"COL_{ci}_{cj}",
+            geometry=column_box,
+            frame=Frame(Point(cx, cy, cz), col_xaxis, col_yaxis),
+            parent=storey,
+        )
+        columns.append(col)
+
+expected_cols = (GRID_SIZE + 1) ** 2
+check("Array: column count", len(columns) == expected_cols, f"{len(columns)}")
+
+expected_total = expected_slabs + expected_cols
+
+print(f"\n  Slabs:   {GRID_SIZE}x{GRID_SIZE} = {expected_slabs}, spacing {SPACING_X:.2f} x {SPACING_Y:.2f} m")
+print(f"  Columns: {GRID_SIZE+1}x{GRID_SIZE+1} = {expected_cols}, section {COLUMN_SECTION} m, height {COLUMN_HEIGHT} m")
+print(f"  Total building elements: {expected_total}")
 
 # -----------------------------------------------------------------------
 # PART 4: Graph Edges (structural adjacency)
@@ -256,7 +299,9 @@ model.save(out_path)
 model2 = BuildingInformationModel(out_path, rectify_placements=True, load_geometries=False)
 
 slabs2 = [e for e in model2.building_elements if e.ifc_type == "IfcSlab"]
-check("Reload: slab count", len(slabs2) == expected, f"{len(slabs2)} vs {expected}")
+cols2 = [e for e in model2.building_elements if e.ifc_type == "IfcColumn"]
+check("Reload: slab count", len(slabs2) == expected_slabs, f"{len(slabs2)} vs {expected_slabs}")
+check("Reload: column count", len(cols2) == expected_cols, f"{len(cols2)} vs {expected_cols}")
 
 # Properties round-trip
 sample = slabs2[0]
@@ -266,9 +311,10 @@ check("Reload: properties survive", "span_capacity_m" in sample_props, str(list(
 # Graph edges
 check("Reload: graph edges", model2.graph.number_of_edges() >= expected_edges, f"{model2.graph.number_of_edges()}")
 
-# Transform alignment
+# Transform alignment (check all building elements)
 misaligned = 0
-for elem in slabs2:
+checked = 0
+for elem in list(slabs2) + list(cols2):
     if elem._ifc_entity and elem._ifc_entity.ObjectPlacement:
         ifc_t = IfcLocalPlacement_to_transformation(elem._ifc_entity.ObjectPlacement)
         model_t = elem.modeltransformation
@@ -277,10 +323,11 @@ for elem in slabs2:
         dist = sum((a - b) ** 2 for a, b in zip(ifc_pos, model_pos)) ** 0.5
         if dist > 0.001:
             misaligned += 1
-check("Reload: transforms aligned", misaligned == 0, f"{misaligned} of {len(slabs2)}")
+        checked += 1
+check("Reload: transforms aligned", misaligned == 0, f"{misaligned} of {checked}")
 
 print(f"\n  Saved to: {out_path}")
-print(f"  Reloaded slabs: {len(slabs2)}")
+print(f"  Reloaded: {len(slabs2)} slabs, {len(cols2)} columns")
 print(f"  Graph edges: {model2.graph.number_of_edges()}")
 print(f"  Misaligned: {misaligned}")
 
@@ -300,12 +347,14 @@ has_storey = len(sub.storeys) >= 1
 check("Extract: spatial scaffolding", has_project and has_storey)
 
 extract_slabs = [e for e in sub.building_elements if e.ifc_type == "IfcSlab"]
-check("Extract: slab count", len(extract_slabs) == expected, f"{len(extract_slabs)} vs {expected}")
+extract_cols = [e for e in sub.building_elements if e.ifc_type == "IfcColumn"]
+check("Extract: slab count", len(extract_slabs) == expected_slabs, f"{len(extract_slabs)} vs {expected_slabs}")
+check("Extract: column count", len(extract_cols) == expected_cols, f"{len(extract_cols)} vs {expected_cols}")
 
 check("Extract: graph edges", sub.graph.number_of_edges() >= expected_edges, f"{sub.graph.number_of_edges()}")
 
 print(f"\n  Extracted to: {extract_path}")
-print(f"  Slabs: {len(extract_slabs)}")
+print(f"  Slabs: {len(extract_slabs)}, Columns: {len(extract_cols)}")
 print(f"  Graph edges: {sub.graph.number_of_edges()}")
 
 # -----------------------------------------------------------------------
