@@ -19,6 +19,8 @@ print("\n=== 2. Verify placement alignment ===")
 misaligned = 0
 total_with_placement = 0
 for element in model.elements():
+    if element.treenode is None:
+        continue
     ifc = element.ifc_entity
     if not hasattr(ifc, "ObjectPlacement") or not ifc.ObjectPlacement:
         continue
@@ -63,6 +65,8 @@ print(f"Elements: {len(list(model3.elements()))}")
 # Count how many would need rectification
 would_rectify = 0
 for element in model3.elements():
+    if element.treenode is None:
+        continue
     ifc = element.ifc_entity
     if not hasattr(ifc, "ObjectPlacement") or not ifc.ObjectPlacement:
         continue
