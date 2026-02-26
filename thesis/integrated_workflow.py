@@ -11,13 +11,13 @@ Uses ``temp/devday/rfs.stp`` as the funicular slab unit geometry.
 
 import sys
 
-import ifcopenshell.guid
 from pydantic import BaseModel
 from pydantic import Field
 
-from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Point
+from compas.geometry import Polygon
+from compas.geometry import Rotation
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas_occ.brep import OCCBrep
@@ -221,25 +221,30 @@ check("Array: all slabs pass validation", all(r.status == "pass" for r in vresul
 half_x = SPACING_X / 2
 half_y = SPACING_Y / 2
 slab_z_max = max(p.z for p in brep.points)  # slab top
-column_box = Box(COLUMN_SECTION, COLUMN_SECTION, COLUMN_HEIGHT).to_mesh()
+
 import math
 
-cos45 = math.cos(math.radians(45))
-sin45 = math.sin(math.radians(45))
-col_xaxis = Vector(cos45, sin45, 0)
-col_yaxis = Vector(-sin45, cos45, 0)
+R45 = Rotation.from_axis_and_angle(Vector.Zaxis(), math.radians(45))
+
+from compas_ifc.representations import Extrusion
+
+s = COLUMN_SECTION / 2
+col_profile = Polygon([Point(-s, -s, 0), Point(s, -s, 0), Point(s, s, 0), Point(-s, s, 0)])
+col_extrusion = Extrusion(profile=col_profile, direction=Vector(0, 0, 1), depth=COLUMN_HEIGHT)
 
 columns = []
 for ci in range(GRID_SIZE + 1):
     for cj in range(GRID_SIZE + 1):
         cx = ci * SPACING_X - half_x
         cy = cj * SPACING_Y - half_y
-        cz = slab_z_max - COLUMN_HEIGHT / 2  # column top meets slab top
+        cz = slab_z_max - COLUMN_HEIGHT  # extrusion base; top at slab_z_max
+        col_frame = Frame(Point(cx, cy, cz), Vector.Xaxis(), Vector.Yaxis())
+        col_frame.transform(R45)
         col = model.create_element(
             ifc_type="IfcColumn",
             name=f"COL_{ci}_{cj}",
-            geometry=column_box,
-            frame=Frame(Point(cx, cy, cz), col_xaxis, col_yaxis),
+            geometry=col_extrusion,
+            frame=col_frame,
             parent=storey,
         )
         columns.append(col)
@@ -254,36 +259,19 @@ print(f"  Columns: {GRID_SIZE+1}x{GRID_SIZE+1} = {expected_cols}, section {COLUM
 print(f"  Total building elements: {expected_total}")
 
 # -----------------------------------------------------------------------
-# PART 4: Graph Edges (structural adjacency)
+# PART 4: Graph Edges (structural adjacency via compute_connections)
 # -----------------------------------------------------------------------
 print("\n" + "=" * 70)
-print("PART 4: GRAPH EDGES (structural adjacency)")
+print("PART 4: GRAPH EDGES (compute_connections)")
 print("=" * 70)
 
-edge_count = 0
-for i in range(GRID_SIZE):
-    for j in range(GRID_SIZE):
-        idx = i * GRID_SIZE + j
-        for di, dj in [(0, 1), (1, 0)]:
-            ni, nj = i + di, j + dj
-            if ni < GRID_SIZE and nj < GRID_SIZE:
-                nidx = ni * GRID_SIZE + nj
-                edge = model.add_interaction(units[idx], units[nidx])
-                model.graph.edge_attribute(edge, "relationships", [{"category": "connection", "source": "adjacency"}])
-                # Create IFC relationship for round-trip persistence
-                model._file._file.create_entity(
-                    "IfcRelConnectsElements",
-                    GlobalId=ifcopenshell.guid.new(),
-                    RelatingElement=units[idx]._ifc_entity.entity,
-                    RelatedElement=units[nidx]._ifc_entity.entity,
-                )
-                edge_count += 1
+edge_count = model.compute_connections(element_types=["IfcSlab"])
 
 expected_edges = 2 * GRID_SIZE * (GRID_SIZE - 1)
 check("Graph: edge count", edge_count == expected_edges, f"{edge_count} == {expected_edges}")
 check("Graph: stored in model", model.graph.number_of_edges() >= expected_edges, f"{model.graph.number_of_edges()}")
 
-print(f"\n  Adjacency edges: {edge_count}")
+print(f"\n  Computed connections: {edge_count}")
 print(f"  Graph edges: {model.graph.number_of_edges()}")
 
 # -----------------------------------------------------------------------

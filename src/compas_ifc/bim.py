@@ -1182,6 +1182,7 @@ class BuildingInformationModel(Model):
         tolerance: float = 1e-3,
         minimum_area: float = 1e-2,
         element_types: list = None,
+        create_ifc_relations: bool = True,
     ):
         """Detect geometric contacts between building elements and add them as connection edges.
 
@@ -1204,6 +1205,9 @@ class BuildingInformationModel(Model):
             IFC type names to include (e.g. ``["IfcWall", "IfcWallStandardCase",
             "IfcSlab"]``).  If ``None``, all non-spatial elements with geometry
             are considered.
+        create_ifc_relations : bool, optional
+            If ``True`` (default), also create ``IfcRelConnectsElements`` entities
+            in the IFC file so that discovered connections persist on save/reload.
 
         Returns
         -------
@@ -1300,6 +1304,17 @@ class BuildingInformationModel(Model):
                     self.graph.add_edge(node_a, node_b, relationships=[record], contacts=contacts)
 
                 new_connections += 1
+
+                # persist as IFC relationship
+                if create_ifc_relations and element._ifc_entity and neighbour._ifc_entity:
+                    import ifcopenshell.guid
+
+                    self._file._file.create_entity(
+                        "IfcRelConnectsElements",
+                        GlobalId=ifcopenshell.guid.new(),
+                        RelatingElement=element._ifc_entity.entity,
+                        RelatedElement=neighbour._ifc_entity.entity,
+                    )
 
         return new_connections
 
