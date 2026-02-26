@@ -188,6 +188,21 @@ class GenericElement(Element):
             self._ifc_entity.geometry = geometry
 
     @property
+    def visual_geometry(self):
+        """The tessellated visual geometry of the element.
+
+        Produced by ifcopenshell's geometry iterator, suitable for display.
+        Unlike ``geometry``, this always returns a viewer-compatible type
+        (``TessellatedBrep`` or ``OCCBrep``), never a parametric shape.
+        """
+        if self._ifc_entity is not None:
+            try:
+                return self._ifc_entity.visual_geometry
+            except AttributeError:
+                return None
+        return None
+
+    @property
     def volume(self):
         """Volume of this element's geometry.
 

@@ -478,6 +478,7 @@ class BuildingInformationModel(Model):
         self._rectify_verbose = rectify_verbose
         self._void_fill_log = []  # buffered void/fill chain messages
         self._rectify_log = []  # buffered rectification messages
+        self._rectify_patterns = {}  # (elem_type, old_parent_type, new_parent_type) -> {"count": int, "example": str}
 
         # Recursively load children of the project
         self._load_children(
@@ -499,10 +500,18 @@ class BuildingInformationModel(Model):
         elif rectify_placements and self._rectified_count > 0:
             print(f"Rectified {self._rectified_count} IFC placements to align with spatial hierarchy.")
 
+        # Store public rectification stats: pattern frequencies and void/fill chain info
+        self.rectification_stats = {
+            "rectified_count": self._rectified_count,
+            "void_fill_chains": len(self._void_fill_log),
+            "patterns": {k: v for k, v in self._rectify_patterns.items()},
+        }
+
         del self._rectified_count
         del self._rectify_verbose
         del self._void_fill_log
         del self._rectify_log
+        del self._rectify_patterns
         del self._void_map
         del self._fill_map
         del self._fillers_to_skip
@@ -623,12 +632,11 @@ class BuildingInformationModel(Model):
                 filler_labels.append(f"{filler_elem.ifc_type} '{filler_elem.name}'")
 
             # Log the full chain: host -> opening [-> filler ...]
-            if getattr(self, "_rectify_verbose", False):
-                opening_label = f"{opening_elem.ifc_type} '{opening_elem.name}'"
-                chain = f"{host_label} -> {opening_label}"
-                for fl in filler_labels:
-                    chain += f" -> {fl}"
-                self._void_fill_log.append(chain)
+            opening_label = f"{opening_elem.ifc_type} '{opening_elem.name}'"
+            chain = f"{host_label} -> {opening_label}"
+            for fl in filler_labels:
+                chain += f" -> {fl}"
+            self._void_fill_log.append(chain)
 
     def _rectify_ifc_placement(self, element, parent_element, local_transform):
         """Rewrite an element's IfcLocalPlacement to use the spatial parent's placement.
@@ -661,6 +669,20 @@ class BuildingInformationModel(Model):
         current_parent_placement = current_placement.PlacementRelTo
         if current_parent_placement is expected_parent_placement:
             return
+
+        # Collect structured pattern data
+        old_parent_type = self._placement_owner_type(current_parent_placement)
+        new_parent_type = self._placement_owner_type(expected_parent_placement)
+        pattern_key = (element.ifc_type, old_parent_type, new_parent_type)
+        if hasattr(self, "_rectify_patterns"):
+            entry = self._rectify_patterns.get(pattern_key)
+            if entry is None:
+                self._rectify_patterns[pattern_key] = {
+                    "count": 1,
+                    "example": f"{element.ifc_type} '{element.name}'",
+                }
+            else:
+                entry["count"] += 1
 
         # Buffer verbose detail before rewriting
         if getattr(self, "_rectify_verbose", False):
@@ -720,6 +742,34 @@ class BuildingInformationModel(Model):
         except Exception:
             eid = "?"
         return f"IfcLocalPlacement (#{eid})"
+
+    @staticmethod
+    def _placement_owner_type(placement):
+        """Return the IFC type of the product that owns an IfcLocalPlacement.
+
+        Parameters
+        ----------
+        placement : Base or None
+            An ``IfcLocalPlacement`` entity.
+
+        Returns
+        -------
+        str
+
+        """
+        if placement is None:
+            return "<World>"
+
+        raw = getattr(placement, "entity", None) or getattr(placement, "_entity", placement)
+        try:
+            places_object = raw.PlacesObject if hasattr(raw, "PlacesObject") else None
+            if places_object:
+                owners = list(places_object) if hasattr(places_object, "__iter__") else [places_object]
+                if owners:
+                    return owners[0].is_a()
+        except Exception:
+            pass
+        return "<Unknown>"
 
     # ==========================================================================
     # Interaction Graph (non-spatial IFC relationships)
@@ -1558,19 +1608,21 @@ class BuildingInformationModel(Model):
             label = f"[{element.ifc_type}] {element.name}"
             obj = None
 
-            if element.geometry is not None and element.ifc_type != "IfcSpace":
+            visual = element.visual_geometry
+            skip_visual = element.ifc_type in ("IfcSpace", "IfcOpeningElement")
+            if visual is not None and not skip_visual:
                 style_kwargs = element.style or {}
                 obj = viewer.scene.add(
-                    element.geometry,
+                    visual,
                     name=label,
                     parent=parent,
                     hide_coplanaredges=True,
                     **style_kwargs,
                 )
-                obj.transformation = element.modeltransformation
             else:
                 obj = viewer.scene.add_group(name=label, parent=parent)
 
+            obj.transformation = element.transformation
             obj.attributes["element"] = element
 
             for child in element.children:
@@ -1651,21 +1703,23 @@ class BuildingInformationModel(Model):
         def _add_element(element, parent=None):
             label = f"[{element.ifc_type}] {element.name}"
             obj = None
-            has_geometry = element.geometry is not None and element.ifc_type != "IfcSpace"
+            visual = element.visual_geometry
+            skip_visual = element.ifc_type in ("IfcSpace", "IfcOpeningElement")
+            has_geometry = visual is not None and not skip_visual
 
             if has_geometry:
                 style_kwargs = element.style or {}
                 obj = viewer.scene.add(
-                    element.geometry,
+                    visual,
                     name=label,
                     parent=parent,
                     hide_coplanaredges=True,
                     **style_kwargs,
                 )
-                obj.transformation = element.modeltransformation
             else:
                 obj = viewer.scene.add_group(name=label, parent=parent)
 
+            obj.transformation = element.transformation
             obj.attributes["element"] = element
             if element.global_id:
                 gid_to_obj[element.global_id] = obj
