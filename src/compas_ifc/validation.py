@@ -167,8 +167,17 @@ class Specification:
         Human-readable name for this specification.
     ifc_types : list[str]
         IFC class names this specification applies to (e.g. ``["IfcWall"]``).
-    required_psets : dict[str, type[BaseModel]]
-        Mapping of property-set name to Pydantic schema class.
+    required_psets : dict[str, type[BaseModel]] or type[BaseModel]
+        Either a mapping of property-set name to Pydantic schema class, or a
+        single Pydantic model whose field names are pset names and field types
+        are per-pset schemas::
+
+            class MySpec(BaseModel):
+                Pset_SlabCommon: SlabCommonSchema
+                Pset_EnvironmentalImpactIndicators: EnvSchema
+
+            spec = Specification(..., required_psets=MySpec)
+
     description : str, optional
         Longer description of the requirement.
 
@@ -176,8 +185,20 @@ class Specification:
 
     name: str
     ifc_types: list
-    required_psets: dict
+    required_psets: object
     description: str = ""
+
+    def resolved_psets(self):
+        """Return ``required_psets`` as a ``dict[str, type[BaseModel]]``.
+
+        If ``required_psets`` is already a dict it is returned as-is.
+        If it is a ``BaseModel`` subclass, its fields are decomposed into
+        ``{field_name: field_type}`` pairs.
+        """
+        if isinstance(self.required_psets, dict):
+            return self.required_psets
+        # BaseModel subclass — decompose fields
+        return {name: info.annotation for name, info in self.required_psets.model_fields.items()}
 
 
 @dataclass
@@ -240,7 +261,7 @@ def validate_element(element, specifications):
         missing = []
         errors = []
 
-        for pset_name, schema_cls in spec.required_psets.items():
+        for pset_name, schema_cls in spec.resolved_psets().items():
             pset_data = props.get(pset_name)
             if pset_data is None or not isinstance(pset_data, dict):
                 missing.append(pset_name)
