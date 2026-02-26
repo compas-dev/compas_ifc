@@ -272,8 +272,6 @@ print("=" * 70)
 print("6. INTERACTION GRAPH")
 print("=" * 70)
 
-voids = model.voids
-fills = model.fills
 connections = model.connections
 
 # MEP relationships
@@ -281,15 +279,12 @@ port_connections = model.get_interactions_by_category("port_connection")
 port_elements = model.get_interactions_by_category("port_element")
 services = model.get_interactions_by_category("services")
 
-print(f"  Voids:            {len(voids)}")
-print(f"  Fills:            {len(fills)}")
 print(f"  Connections:      {len(connections)}")
 print(f"  Port connections: {len(port_connections)}")
 print(f"  Port-element:     {len(port_elements)}")
 print(f"  Services:         {len(services)}")
 print()
 
-check("Voids >= 380", len(voids) >= 380, f"{len(voids)} voids")
 check("Connections >= 80", len(connections) >= 80, f"{len(connections)} connections")
 check("MEP port connections present", len(port_connections) >= 200,
       f"{len(port_connections)} port connections")

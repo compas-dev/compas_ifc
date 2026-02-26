@@ -50,7 +50,7 @@ class BuildingInformationModel(Model):
     """
 
     RELATIONSHIP_GROUPS = {
-        "topology": {"void", "fill", "connection", "space_boundary", "covering", "interference", "projection"},
+        "topology": {"connection", "space_boundary", "covering", "interference", "projection"},
         "structural": {"structural"},
         "mep": {"port_connection", "port_element", "flow_control", "services", "spatial_reference"},
     }
@@ -451,9 +451,33 @@ class BuildingInformationModel(Model):
         # Store project-level info on the model
         self.name = getattr(ifc_project, "Name", None) or self.name
 
-        # Track rectification stats
+        # Pre-scan void/fill relationships for tree nesting
+        self._void_map = {}  # host entity id -> list of opening entities
+        self._fill_map = {}  # opening entity id -> list of filler entities
+        self._fillers_to_skip = set()  # entity ids of fillers with void/fill path
+
+        try:
+            for rel in self._file.get_entities_by_type("IfcRelVoidsElement"):
+                host_id = rel.RelatingBuildingElement.entity.id()
+                opening = rel.RelatedOpeningElement
+                self._void_map.setdefault(host_id, []).append(opening)
+        except RuntimeError:
+            pass
+
+        try:
+            for rel in self._file.get_entities_by_type("IfcRelFillsElement"):
+                opening_id = rel.RelatingOpeningElement.entity.id()
+                filler = rel.RelatedBuildingElement
+                self._fill_map.setdefault(opening_id, []).append(filler)
+                self._fillers_to_skip.add(filler.entity.id())
+        except RuntimeError:
+            pass
+
+        # Track rectification stats and verbose logs
         self._rectified_count = 0
         self._rectify_verbose = rectify_verbose
+        self._void_fill_log = []  # buffered void/fill chain messages
+        self._rectify_log = []  # buffered rectification messages
 
         # Recursively load children of the project
         self._load_children(
@@ -463,11 +487,25 @@ class BuildingInformationModel(Model):
             rectify_placements=rectify_placements,
         )
 
-        if rectify_placements and self._rectified_count > 0:
+        if rectify_verbose and self._void_fill_log:
+            print(f"Nested {len(self._void_fill_log)} void/fill chains into the spatial tree:")
+            for msg in self._void_fill_log:
+                print(f"  {msg}")
+
+        if rectify_verbose and self._rectify_log:
+            print(f"Rectified {self._rectified_count} IFC placements to align with spatial hierarchy:")
+            for msg in self._rectify_log:
+                print(f"  {msg}")
+        elif rectify_placements and self._rectified_count > 0:
             print(f"Rectified {self._rectified_count} IFC placements to align with spatial hierarchy.")
 
         del self._rectified_count
         del self._rectify_verbose
+        del self._void_fill_log
+        del self._rectify_log
+        del self._void_map
+        del self._fill_map
+        del self._fillers_to_skip
 
         # Populate interaction graph with non-spatial relationships
         self._load_relationships_into_graph()
@@ -488,6 +526,13 @@ class BuildingInformationModel(Model):
 
         """
         for child_entity in ifc_entity.children:
+            # Skip fillers that will be injected under their opening
+            if child_entity.entity.id() in self._fillers_to_skip:
+                elem = GenericElement.from_ifc_entity(child_entity, file=self._file)
+                if hasattr(elem, "_global_transform"):
+                    del elem._global_transform
+                continue
+
             element = GenericElement.from_ifc_entity(child_entity, file=self._file)
 
             # Rectify: compute local transform relative to spatial parent
@@ -509,6 +554,81 @@ class BuildingInformationModel(Model):
 
             # Recurse into children
             self._load_children(child_entity, element, global_transform, rectify_placements)
+
+            # Inject void/fill children (opening -> filler) under this element
+            self._inject_void_fill_children(element, global_transform, rectify_placements)
+
+    def _inject_void_fill_children(self, host_element, host_global_transform, rectify_placements):
+        """Inject opening and filler elements as tree children of their host.
+
+        For each ``IfcRelVoidsElement`` that references the host, the opening
+        element is added as a child of the host.  For each
+        ``IfcRelFillsElement`` that references the opening, the filler
+        (door/window) is added as a child of the opening.
+
+        Parameters
+        ----------
+        host_element : GenericElement
+            The element that may be voided (e.g. a wall).
+        host_global_transform : Transformation
+            The global transformation of the host element.
+        rectify_placements : bool
+            Whether to rewrite IFC placements in the file.
+
+        """
+        if not hasattr(host_element, "_ifc_entity") or host_element._ifc_entity is None:
+            return
+
+        host_id = host_element._ifc_entity.entity.id()
+        openings = self._void_map.get(host_id)
+        if not openings:
+            return
+
+        host_label = f"{host_element.ifc_type} '{host_element.name}'"
+
+        for opening_entity in openings:
+            opening_elem = GenericElement.from_ifc_entity(opening_entity, file=self._file)
+
+            opening_global = getattr(opening_elem, "_global_transform", Transformation())
+            opening_local = host_global_transform.inverse() * opening_global
+            opening_elem.transformation = opening_local
+
+            if rectify_placements and opening_elem._ifc_entity is not None:
+                if hasattr(opening_elem._ifc_entity, "ObjectPlacement") and opening_elem._ifc_entity.ObjectPlacement:
+                    self._rectify_ifc_placement(opening_elem, host_element, opening_local)
+
+            if hasattr(opening_elem, "_global_transform"):
+                del opening_elem._global_transform
+
+            self.add_element(opening_elem, parent=host_element)
+
+            # Add fillers (doors/windows) under this opening
+            filler_labels = []
+            fillers = self._fill_map.get(opening_entity.entity.id(), [])
+            for filler_entity in fillers:
+                filler_elem = GenericElement.from_ifc_entity(filler_entity, file=self._file)
+
+                filler_global = getattr(filler_elem, "_global_transform", Transformation())
+                filler_local = opening_global.inverse() * filler_global
+                filler_elem.transformation = filler_local
+
+                if rectify_placements and filler_elem._ifc_entity is not None:
+                    if hasattr(filler_elem._ifc_entity, "ObjectPlacement") and filler_elem._ifc_entity.ObjectPlacement:
+                        self._rectify_ifc_placement(filler_elem, opening_elem, filler_local)
+
+                if hasattr(filler_elem, "_global_transform"):
+                    del filler_elem._global_transform
+
+                self.add_element(filler_elem, parent=opening_elem)
+                filler_labels.append(f"{filler_elem.ifc_type} '{filler_elem.name}'")
+
+            # Log the full chain: host -> opening [-> filler ...]
+            if getattr(self, "_rectify_verbose", False):
+                opening_label = f"{opening_elem.ifc_type} '{opening_elem.name}'"
+                chain = f"{host_label} -> {opening_label}"
+                for fl in filler_labels:
+                    chain += f" -> {fl}"
+                self._void_fill_log.append(chain)
 
     def _rectify_ifc_placement(self, element, parent_element, local_transform):
         """Rewrite an element's IfcLocalPlacement to use the spatial parent's placement.
@@ -542,12 +662,12 @@ class BuildingInformationModel(Model):
         if current_parent_placement is expected_parent_placement:
             return
 
-        # Log verbose detail before rewriting
+        # Buffer verbose detail before rewriting
         if getattr(self, "_rectify_verbose", False):
             old_label = self._placement_owner_label(current_parent_placement)
             new_label = self._placement_owner_label(expected_parent_placement)
             elem_label = f"{element.ifc_type} '{element.name}'"
-            print(f"  {elem_label}: PlacementRelTo {old_label} -> {new_label}")
+            self._rectify_log.append(f"{elem_label}: PlacementRelTo {old_label} -> {new_label}")
 
         # Rewrite: set RelativePlacement to the rectified local frame
         local_frame = Frame.from_transformation(local_transform)
@@ -648,8 +768,6 @@ class BuildingInformationModel(Model):
 
         **Topology** (element-to-element physical connections):
 
-            ``void`` — IfcRelVoidsElement (wall/slab → opening)
-            ``fill`` — IfcRelFillsElement (opening → door/window)
             ``connection`` — IfcRelConnectsPathElements, IfcRelConnectsElements
             ``space_boundary`` — IfcRelSpaceBoundary (space → bounding element)
             ``covering`` — IfcRelCoversBldgElements, IfcRelCoversSpaces
@@ -673,8 +791,11 @@ class BuildingInformationModel(Model):
         intentionally excluded — they are accessible via the underlying
         ``_ifc_entity``.
 
-        Entities not already in the spatial tree (e.g. ``IfcOpeningElement``)
-        are added as graph-only nodes.
+        Entities not already in the spatial tree are added as graph-only nodes.
+
+        Void (``IfcRelVoidsElement``) and fill (``IfcRelFillsElement``)
+        relationships are expressed in the spatial tree (host -> opening ->
+        filler) and are therefore not duplicated as graph edges.
         """
         entity_lookup = self._build_entity_lookup()
         stats = {}
@@ -726,42 +847,10 @@ class BuildingInformationModel(Model):
         # ==================================================================
         # GROUP 1: Topology
         # ==================================================================
+        # Note: void (IfcRelVoidsElement) and fill (IfcRelFillsElement)
+        # are captured in the spatial tree, not as graph edges.
 
-        # --- A. IfcRelVoidsElement → "void" ---
-        for rel in _by_type("IfcRelVoidsElement"):
-            host = rel.RelatingBuildingElement
-            opening = rel.RelatedOpeningElement
-
-            host_elem = entity_lookup.get(host.entity.id())
-            if host_elem is None:
-                continue
-
-            # Create graph-only element for the opening
-            opening_id = opening.entity.id()
-            opening_elem = entity_lookup.get(opening_id)
-            if opening_elem is None:
-                opening_elem = GenericElement.from_ifc_entity(opening, file=self._file)
-                host_global = getattr(host_elem, "_global_transform", None)
-                if host_global is None and host_elem.transformation is not None:
-                    host_global = host_elem.modeltransformation
-                if host_global is None:
-                    host_global = Transformation()
-                opening_global = getattr(opening_elem, "_global_transform", Transformation())
-                opening_elem.transformation = host_global.inverse() * opening_global
-                if hasattr(opening_elem, "_global_transform"):
-                    del opening_elem._global_transform
-                self._add_graph_only_element(opening_elem)
-                entity_lookup[opening_id] = opening_elem
-
-            _add_edge(host_elem, opening_elem, "void")
-
-        # --- B. IfcRelFillsElement → "fill" ---
-        for rel in _by_type("IfcRelFillsElement"):
-            opening_elem = entity_lookup.get(rel.RelatingOpeningElement.entity.id())
-            filler_elem = entity_lookup.get(rel.RelatedBuildingElement.entity.id())
-            _add_edge(opening_elem, filler_elem, "fill")
-
-        # --- C. IfcRelConnectsPathElements → "connection" ---
+        # --- A. IfcRelConnectsPathElements → "connection" ---
         for rel in _by_type("IfcRelConnectsPathElements"):
             elem_a = entity_lookup.get(rel.RelatingElement.entity.id())
             elem_b = entity_lookup.get(rel.RelatedElement.entity.id())
@@ -913,8 +1002,7 @@ class BuildingInformationModel(Model):
         Parameters
         ----------
         category : str
-            The category string (e.g. ``"connection"``, ``"void"``, ``"fill"``,
-            ``"space_boundary"``).
+            The category string (e.g. ``"connection"``, ``"space_boundary"``).
 
         Returns
         -------
@@ -955,16 +1043,6 @@ class BuildingInformationModel(Model):
     def connections(self) -> list:
         """All wall-to-wall connection edges (from ``IfcRelConnectsPathElements``)."""
         return self.get_interactions_by_category("connection")
-
-    @property
-    def voids(self) -> list:
-        """All void/opening edges (from ``IfcRelVoidsElement``)."""
-        return self.get_interactions_by_category("void")
-
-    @property
-    def fills(self) -> list:
-        """All fill edges (from ``IfcRelFillsElement``)."""
-        return self.get_interactions_by_category("fill")
 
     @property
     def space_boundaries(self) -> list:
@@ -1343,10 +1421,10 @@ class BuildingInformationModel(Model):
         IfcBuildingStorey) are included automatically so the extracted file is
         a valid, self-contained IFC file.
 
-        Non-spatial IFC relationships (connections, voids, fills, space
-        boundaries) are preserved when both endpoints of the relationship are
-        in the exported set. This ensures the interaction graph is maintained
-        in the extracted model.
+        Non-spatial IFC relationships (connections, space boundaries) are
+        preserved when both endpoints of the relationship are in the exported
+        set. This ensures the interaction graph is maintained in the extracted
+        model.
 
         Parameters
         ----------
@@ -1366,8 +1444,8 @@ class BuildingInformationModel(Model):
         export_types : bool, optional
             Whether to export type definitions (IfcRelDefinesByType). Default True.
         export_relationships : bool, optional
-            Whether to export non-spatial relationships (connections, voids,
-            fills, space boundaries) where both endpoints are in the exported
+            Whether to export non-spatial relationships (connections, space
+            boundaries) where both endpoints are in the exported
             set. Default True.
 
         Returns

@@ -247,13 +247,9 @@ print("=" * 70)
 print("6. INTERACTION GRAPH")
 print("=" * 70)
 
-voids = model.voids
-fills = model.fills
 connections = model.connections
 space_boundaries = model.space_boundaries
 
-print(f"  Voids:            {len(voids)}")
-print(f"  Fills:            {len(fills)}")
 print(f"  Connections:      {len(connections)}")
 print(f"  Space boundaries: {len(space_boundaries)}")
 print()

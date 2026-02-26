@@ -10,6 +10,7 @@ os.makedirs("temp", exist_ok=True)
 # ========================================
 print("=== 1. Import Duplex with rectification (verbose) ===")
 model = BuildingInformationModel(filepath="data/Duplex_A_20110907.ifc", load_geometries=False, rectify_verbose=True)
+# model = BuildingInformationModel(filepath="temp/1072_HiLo_Model-Architecture.ifc", load_geometries=False, rectify_verbose=True)
 print(f"Elements: {len(list(model.elements()))}")
 
 # ========================================

@@ -1,4 +1,4 @@
-"""Test interaction graph: populate with non-spatial IFC relationships."""
+"""Test interaction graph and void/fill tree hierarchy."""
 
 from compas_ifc.bim import BuildingInformationModel
 
@@ -15,16 +15,12 @@ print("\n=== 1. Graph edge counts ===")
 total_edges = len(list(model.graph.edges()))
 print(f"Total graph edges: {total_edges}")
 print(f"  Connections: {len(model.connections)}")
-print(f"  Voids: {len(model.voids)}")
-print(f"  Fills: {len(model.fills)}")
 print(f"  Space boundaries: {len(model.space_boundaries)}")
 
 # ========================================
-# 2. Verify opening elements are graph-only
+# 2. Verify opening elements are in the tree
 # ========================================
-print("\n=== 2. Opening elements (graph-only) ===")
-# model.elements() includes ALL registered elements (tree + graph-only).
-# To check tree-only, walk the tree directly.
+print("\n=== 2. Opening elements (tree) ===")
 all_elements = list(model.elements())
 
 def _tree_elements(model):
@@ -47,24 +43,32 @@ print(f"Graph nodes: {graph_nodes}")
 print(f"Expected: {len(all_elements)}")
 
 # ========================================
-# 3. Walk a void→fill chain
+# 3. Walk void->fill chains in the tree
 # ========================================
-print("\n=== 3. Walk void→fill chain ===")
-void_edges = model.voids
-if void_edges:
-    # Pick first void edge
-    edge = void_edges[0]
-    host, opening = model.edge_elements(edge)
-    print(f"Void edge: {host.ifc_type} '{host.name}' -> {opening.ifc_type} '{opening.name}'")
+print("\n=== 3. Void/fill chains in tree ===")
+void_count = 0
+fill_count = 0
+for elem in all_elements:
+    if elem.ifc_type == "IfcOpeningElement":
+        parent = elem.parent
+        void_count += 1
+        fillers = [c for c in elem.children if c.ifc_type not in ("IfcOpeningElement",)]
+        fill_count += len(fillers)
 
-    # Find the fill edge for this opening
-    fill_edges = model.fills
-    for fe in fill_edges:
-        fe_opening, fe_filler = model.edge_elements(fe)
-        if fe_opening is opening:
-            print(f"Fill edge: {fe_opening.ifc_type} '{fe_opening.name}' -> {fe_filler.ifc_type} '{fe_filler.name}'")
-            print(f"Full chain: {host.ifc_type} -> {opening.ifc_type} -> {fe_filler.ifc_type}")
-            break
+print(f"Void links (host -> opening): {void_count}")
+print(f"Fill links (opening -> filler): {fill_count}")
+
+# Show first few chains
+chains_shown = 0
+for elem in all_elements:
+    if elem.ifc_type == "IfcOpeningElement" and chains_shown < 3:
+        parent = elem.parent
+        fillers = elem.children
+        chain = f"  {parent.ifc_type} '{parent.name}' -> {elem.ifc_type} '{elem.name}'"
+        for f in fillers:
+            chain += f" -> {f.ifc_type} '{f.name}'"
+        print(chain)
+        chains_shown += 1
 
 # ========================================
 # 4. Connection edges detail
@@ -89,19 +93,15 @@ print("\n=== 6. Small file test ===")
 model2 = BuildingInformationModel(filepath="data/wall-with-opening-and-window.ifc", load_geometries=False)
 print(f"Tree elements: {len(list(model2.elements()))}")
 print(f"Graph edges: {len(list(model2.graph.edges()))}")
-print(f"  Voids: {len(model2.voids)}")
-print(f"  Fills: {len(model2.fills)}")
 print(f"  Connections: {len(model2.connections)}")
 
-if model2.voids:
-    edge = model2.voids[0]
-    host, opening = model2.edge_elements(edge)
-    print(f"Void: {host.ifc_type} '{host.name}' -> {opening.ifc_type} '{opening.name}'")
-
-if model2.fills:
-    edge = model2.fills[0]
-    opening, filler = model2.edge_elements(edge)
-    print(f"Fill: {opening.ifc_type} '{opening.name}' -> {filler.ifc_type} '{filler.name}'")
+# Walk the void/fill chain in tree
+for elem in model2.elements():
+    if elem.ifc_type == "IfcOpeningElement":
+        parent = elem.parent
+        print(f"Void: {parent.ifc_type} '{parent.name}' -> {elem.ifc_type} '{elem.name}'")
+        for filler in elem.children:
+            print(f"Fill: {elem.ifc_type} '{elem.name}' -> {filler.ifc_type} '{filler.name}'")
 
 # ========================================
 # 7. Group-level queries
@@ -115,8 +115,6 @@ for group_name in model.RELATIONSHIP_GROUPS:
 topology_edges = model.get_interactions_by_group("topology")
 category_sum = (
     len(model.connections)
-    + len(model.voids)
-    + len(model.fills)
     + len(model.space_boundaries)
     + len(model.get_interactions_by_category("covering"))
     + len(model.get_interactions_by_category("interference"))

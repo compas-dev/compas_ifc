@@ -81,7 +81,5 @@ for w in ex_walls[:3]:
 # ========================================
 print("\n=== 4. Graph in extracted model ===")
 print(f"Connection edges: {len(extracted.connections)}")
-print(f"Void edges: {len(extracted.voids)}")
-print(f"Fill edges: {len(extracted.fills)}")
 
 print("\nDone!")
