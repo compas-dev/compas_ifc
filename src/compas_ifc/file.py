@@ -776,7 +776,7 @@ class IFCFile(object):
 
         return count
 
-    def create(self, cls=None, parent=None, geometry=None, frame=None, properties=None, **kwargs) -> Base:
+    def _create(self, cls=None, parent=None, geometry=None, frame=None, properties=None, **kwargs) -> Base:
         """
         Create an entity in this model.
 
@@ -941,7 +941,7 @@ class IFCFile(object):
         entity = self._file.create_entity(cls_name, **camel_case_kwargs)
         return self.from_entity(entity)
 
-    def create_value(self, value):
+    def _create_value(self, value):
         """
         Create corresponding IfcValue from a Python value.
         """
@@ -977,11 +977,11 @@ class IFCFile(object):
             if self.default_project.UnitsInContext:
                 self._default_units = self.default_project.UnitsInContext
             else:
-                length_unit = self.create("IfcUnit", UnitType="LENGTHUNIT", Prefix="MILLI", Name="METRE")
-                area_unit = self.create("IfcUnit", UnitType="AREAUNIT", Prefix="MILLI", Name="SQUARE_METRE")
-                volume_unit = self.create("IfcUnit", UnitType="VOLUMEUNIT", Prefix="MILLI", Name="CUBIC_METRE")
-                plane_angle_unit = self.create("IfcUnit", UnitType="PLANEANGLEUNIT", Name="RADIAN")
-                unit_assignment = self.create("IfcUnitAssignment", Units=[length_unit, area_unit, volume_unit, plane_angle_unit])
+                length_unit = self._create("IfcUnit", UnitType="LENGTHUNIT", Prefix="MILLI", Name="METRE")
+                area_unit = self._create("IfcUnit", UnitType="AREAUNIT", Prefix="MILLI", Name="SQUARE_METRE")
+                volume_unit = self._create("IfcUnit", UnitType="VOLUMEUNIT", Prefix="MILLI", Name="CUBIC_METRE")
+                plane_angle_unit = self._create("IfcUnit", UnitType="PLANEANGLEUNIT", Name="RADIAN")
+                unit_assignment = self._create("IfcUnitAssignment", Units=[length_unit, area_unit, volume_unit, plane_angle_unit])
                 self.default_project.UnitsInContext = unit_assignment
                 self._default_units = unit_assignment
         return self._default_units

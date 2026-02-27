@@ -44,7 +44,7 @@ class IfcObject(IfcObject):
                 self.psetsmap[id(pset)] = ifc_property_set
                 # TODO: remove unused psets
 
-            self.file.create(
+            self.file._create(
                 "IfcRelDefinesByProperties",
                 OwnerHistory=self.file.default_owner_history,
                 RelatingPropertyDefinition=ifc_property_set,

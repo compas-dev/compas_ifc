@@ -665,3 +665,255 @@ class InteractionMixin:
                     )
 
         return new_collisions
+
+    # ==========================================================================
+    # Collision visualisation
+    # ==========================================================================
+
+    def show_collisions(
+        self,
+        tolerance: float = 1e-6,
+        min_depth: float = 1e-4,
+        element_types: list = None,
+    ):
+        """Show the model with an interactive collision list in compas_viewer.
+
+        Runs collision detection (if not already done), then opens a viewer
+        with all building elements and a sidebar panel listing every collision
+        pair.  Selecting a pair highlights the two colliding elements in red
+        and dims everything else.
+
+        Parameters
+        ----------
+        tolerance : float, optional
+            Tolerance for the collision detection.
+        min_depth : float, optional
+            Minimum penetration depth.
+        element_types : list[str], optional
+            IFC type names to include in collision detection.
+
+        """
+        try:
+            from compas_viewer import Viewer
+            from compas_viewer.components import Treeform
+        except ImportError:
+            raise ImportError("The show_collisions method requires compas_viewer to be installed.")
+
+        from compas.colors import Color
+
+        # ---- run collision detection if needed --------------------------------
+        if not self.interferences:
+            print("Running collision detection...")
+            n = self.compute_collisions(tolerance=tolerance, element_types=element_types)
+            print(f"Found {n} collisions.")
+
+        if not self.interferences:
+            print("No collisions to display.")
+
+        # ---- set up viewer ----------------------------------------------------
+        viewer = Viewer()
+        viewer.ui.sidebar.show_objectsetting = False
+
+        if self.unit:
+            viewer.unit = self.unit
+
+        # Map global_id → scene object for fast lookup
+        gid_to_obj = {}
+        original_colors = {}  # gid → facecolor or facecolors (depending on object type)
+        geometry_gids = set()  # gids that have actual geometry (not groups)
+
+        def _add_element(element, parent=None):
+            label = f"[{element.ifc_type}] {element.name}"
+            obj = None
+            visual = element._visual_geometry
+            skip_visual = element.ifc_type in ("IfcSpace", "IfcOpeningElement")
+            has_geometry = visual is not None and not skip_visual
+
+            if has_geometry:
+                style_kwargs = element._resolve_style() or {}
+                obj = viewer.scene.add(
+                    visual,
+                    name=label,
+                    parent=parent,
+                    hide_coplanaredges=True,
+                    **style_kwargs,
+                )
+            else:
+                obj = viewer.scene.add_group(name=label, parent=parent)
+
+            obj.transformation = element.transformation
+            obj.attributes["element"] = element
+            if element.global_id:
+                gid_to_obj[element.global_id] = obj
+                if has_geometry:
+                    geometry_gids.add(element.global_id)
+                    # TessellatedBrepObject uses facecolors (list), others use facecolor
+                    if hasattr(obj, "facecolors"):
+                        original_colors[element.global_id] = list(obj.facecolors)
+                    else:
+                        original_colors[element.global_id] = obj.facecolor
+
+            for child in element.children:
+                _add_element(child, parent=obj)
+
+        for node in self.tree.root.children:
+            _add_element(node.element)
+
+        # ---- build collision list data ----------------------------------------
+        collision_data = []
+        for edge in self.interferences:
+            a, b = self._edge_elements(edge)
+            pts = self.graph.edge_attribute(edge, "penetrating_points") or []
+            collision_data.append(
+                {
+                    "a_gid": a.global_id,
+                    "b_gid": b.global_id,
+                    "a_label": f"[{a.ifc_type}] {a.name}",
+                    "b_label": f"[{b.ifc_type}] {b.name}",
+                    "count": len(pts),
+                }
+            )
+
+        # ---- property treeform (top) ------------------------------------------
+        info_treeform = Treeform()
+        viewer.ui.sidebar.add(info_treeform)
+
+        # ---- collision list treeform (bottom) ---------------------------------
+        collision_tree_data = {}
+        for i, c in enumerate(collision_data):
+            collision_tree_data[f"Collision {i + 1}"] = {
+                "Element A": c["a_label"],
+                "Element B": c["b_label"],
+                "Penetrating points": str(c["count"]),
+            }
+
+        if not collision_tree_data:
+            collision_tree_data["No collisions detected"] = ""
+
+        collision_treeform = Treeform()
+        collision_treeform.update_from_dict(collision_tree_data)
+        viewer.ui.sidebar.add(collision_treeform)
+
+        # ---- highlight state --------------------------------------------------
+        COLOR_A = Color(1.0, 0.15, 0.15)  # red
+        COLOR_B = Color(0.15, 0.8, 0.15)  # green
+
+        active_pair = [None]  # mutable container for closure
+        dirty_gids = set()  # gids whose colors have been modified
+
+        def _set_color(obj, color):
+            """Set face color on any scene object type."""
+            if hasattr(obj, "facecolors"):
+                obj.facecolors = [color] * len(obj.facecolors)
+            else:
+                obj.facecolor = color
+
+        def _restore_color(gid):
+            """Restore original color for a geometry object."""
+            obj = gid_to_obj[gid]
+            orig = original_colors[gid]
+            if hasattr(obj, "facecolors"):
+                obj.facecolors = list(orig)
+            else:
+                obj.facecolor = orig
+
+        def _show_all():
+            """Show all geometry objects and restore original colours."""
+            for gid in geometry_gids:
+                obj = gid_to_obj[gid]
+                obj.show = True
+                if gid in dirty_gids:
+                    _restore_color(gid)
+                    obj.update(update_data=True)
+            dirty_gids.clear()
+
+        def _isolate_pair(gid_a, gid_b):
+            """Show colliding pair (red + green); hide all other geometry objects."""
+            # Restore any previously colored objects before coloring new ones
+            for gid in list(dirty_gids):
+                if gid != gid_a and gid != gid_b:
+                    _restore_color(gid)
+                    gid_to_obj[gid].update(update_data=True)
+                    dirty_gids.discard(gid)
+
+            for gid in geometry_gids:
+                obj = gid_to_obj[gid]
+                if gid == gid_a:
+                    obj.show = True
+                    _set_color(obj, COLOR_A)
+                    obj.update(update_data=True)
+                    dirty_gids.add(gid)
+                elif gid == gid_b:
+                    obj.show = True
+                    _set_color(obj, COLOR_B)
+                    obj.update(update_data=True)
+                    dirty_gids.add(gid)
+                else:
+                    obj.show = False
+
+        def on_collision_selected(node):
+            """Handle collision list item selection."""
+            # Walk up to the top-level node (e.g. "Collision 3").
+            top = node
+            while top.parent and not top.parent.is_root:
+                top = top.parent
+
+            name = top.name
+            if not name.startswith("Collision "):
+                if active_pair[0] is not None:
+                    _show_all()
+                    active_pair[0] = None
+                    viewer.renderer.update()
+                return
+
+            idx = int(name.split()[-1]) - 1
+            if idx < 0 or idx >= len(collision_data):
+                return
+
+            c = collision_data[idx]
+
+            # Toggle: clicking same pair again restores the view
+            if active_pair[0] == idx:
+                _show_all()
+                active_pair[0] = None
+                info_treeform.update_from_dict({})
+            else:
+                _isolate_pair(c["a_gid"], c["b_gid"])
+                active_pair[0] = idx
+
+                info_treeform.update_from_dict(
+                    {
+                        "Collision": {
+                            "Element A": c["a_label"],
+                            "Element B": c["b_label"],
+                            "Penetrating points": str(c["count"]),
+                        },
+                    }
+                )
+
+            viewer.renderer.update()
+
+        collision_treeform.action = on_collision_selected
+
+        # ---- scene tree click: also update info panel -------------------------
+        def on_scene_selected(form, node):
+            element = node.attributes.get("element")
+            if element:
+                info = {
+                    "Type": element.ifc_type,
+                    "Name": element.name,
+                    "GlobalId": element.global_id or "",
+                }
+                info.update(element.properties)
+                info_treeform.update_from_dict(info)
+
+            # Restore view when clicking the scene tree
+            if active_pair[0] is not None:
+                _show_all()
+                active_pair[0] = None
+                viewer.renderer.update()
+
+        viewer.ui.sidebar.sceneform.action = on_scene_selected
+
+        print(f"Showing {len(collision_data)} collision(s) in viewer.")
+        viewer.show()
