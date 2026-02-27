@@ -267,7 +267,7 @@ print("=" * 70)
 
 # Pick the first storey with the most building elements
 target_storey = max(storeys, key=lambda s: len(s.children))
-original_count = len([c for c in target_storey.children if not c.is_spatial])
+original_count = len([c for c in target_storey.children if not c._is_spatial])
 
 print(f"  Extracting storey: {target_storey.name} ({original_count} elements)")
 

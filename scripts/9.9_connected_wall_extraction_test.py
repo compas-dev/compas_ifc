@@ -74,7 +74,7 @@ print("\nLinked info check:")
 for w in ex_walls[:3]:
     print(f"  {w.name}")
     print(f"    Properties: {bool(w.properties)}")
-    print(f"    Style: {bool(w.style)}")
+    print(f"    Style: {bool(w._resolve_style())}")
 
 # ========================================
 # 4. Verify graph in extracted model

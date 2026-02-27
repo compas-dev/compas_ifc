@@ -43,14 +43,6 @@ class GenericElement(Element):
 
     """
 
-    @property
-    def __data__(self) -> dict:
-        data = super().__data__
-        data["ifc_type"] = self.ifc_type
-        data["global_id"] = self._global_id
-        data["properties"] = self._properties
-        return data
-
     def __init__(
         self,
         ifc_type: str = "IfcGenericElementProxy",
@@ -135,21 +127,7 @@ class GenericElement(Element):
                     setattr(self._ifc_entity, attr, value[attr])
 
     @property
-    def style(self) -> dict:
-        """Visual style attributes (color, transparency) from the IFC entity."""
-        if self._style is None:
-            if self._ifc_entity is not None:
-                self._style = self._ifc_entity.style
-            else:
-                self._style = {}
-        return self._style
-
-    @style.setter
-    def style(self, value: dict) -> None:
-        self._style = value
-
-    @property
-    def is_spatial(self) -> bool:
+    def _is_spatial(self) -> bool:
         """Whether this element is a spatial container (site, building, storey, space)."""
         spatial_types = {"IfcSite", "IfcBuilding", "IfcBuildingStorey", "IfcSpace", "IfcFacility", "IfcFacilityPart"}
         return self.ifc_type in spatial_types
@@ -180,7 +158,7 @@ class GenericElement(Element):
             self._ifc_entity.geometry = geometry
 
     @property
-    def visual_geometry(self):
+    def _visual_geometry(self):
         """The tessellated visual geometry of the element.
 
         Produced by ifcopenshell's geometry iterator, suitable for display.
@@ -241,16 +219,6 @@ class GenericElement(Element):
         return None
 
     @property
-    def frame(self):
-        """The local coordinate frame of the element from IFC placement."""
-        if self._ifc_entity is not None:
-            try:
-                return self._ifc_entity.frame
-            except AttributeError:
-                return None
-        return None
-
-    @property
     def transformation(self):
         return self._transformation
 
@@ -263,7 +231,7 @@ class GenericElement(Element):
             frame = Frame.from_transformation(transformation)
             self._ifc_entity.frame = frame
 
-    def to_dict(self) -> dict:
+    def _to_dict(self) -> dict:
         """Return a dictionary representation of the underlying IFC entity attributes.
 
         Delegates to the IFC entity's ``to_dict()`` method which returns
@@ -274,15 +242,21 @@ class GenericElement(Element):
         return {"ifc_type": self.ifc_type, "name": self.name}
 
     def show(self):
-        """Show this element's geometry in compas_viewer."""
-        if self._ifc_entity is not None:
-            self._ifc_entity.show()
-        else:
-            raise ValueError("Element has no IFC entity to visualise.")
+        """Show this element and its children in compas_viewer."""
+        self.model.show(elements=self)
 
     # ==========================================================================
     # Internal helpers
     # ==========================================================================
+
+    def _resolve_style(self) -> dict:
+        """Lazy-load and return visual style attributes (color, transparency) from the IFC entity."""
+        if self._style is None:
+            if self._ifc_entity is not None:
+                self._style = self._ifc_entity.style
+            else:
+                self._style = {}
+        return self._style
 
     def _load_properties(self) -> dict:
         """Merge IFC schema attributes and property sets into a unified dict."""
@@ -393,8 +367,6 @@ class GenericElement(Element):
         list[Contact]
 
         """
-        from compas_model.algorithms.contacts import brep_brep_contacts
-
         from compas_ifc.algorithms.contacts import fast_mesh_mesh_contacts
         from compas_ifc.brep.tessellatedbrep import TessellatedBrep
 
@@ -412,6 +384,10 @@ class GenericElement(Element):
         if isinstance(a, Mesh) and isinstance(b, Mesh):
             return fast_mesh_mesh_contacts(a, b, tolerance=tolerance, minimum_area=minimum_area, contacttype=contacttype)
         elif isinstance(a, Brep) and isinstance(b, Brep):
+            try:
+                from compas_model.algorithms.contacts import brep_brep_contacts
+            except ImportError:
+                return []
             return brep_brep_contacts(a, b, tolerance=tolerance, minimum_area=minimum_area, contacttype=contacttype)
 
         return []
@@ -464,7 +440,7 @@ class GenericElement(Element):
     # ==========================================================================
 
     @classmethod
-    def from_ifc_entity(cls, ifc_entity, file=None) -> "GenericElement":
+    def _from_ifc_entity(cls, ifc_entity) -> "GenericElement":
         """Create a GenericElement from a raw IFC entity.
 
         This computes the **global** transformation from the IFC placement chain.
@@ -475,8 +451,6 @@ class GenericElement(Element):
         ----------
         ifc_entity : :class:`compas_ifc.entities.base.Base`
             The wrapped IFC entity.
-        file : :class:`compas_ifc.file.IFCFile`, optional
-            The IFC file (for geometry pre-loading).
 
         Returns
         -------

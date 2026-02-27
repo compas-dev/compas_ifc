@@ -87,7 +87,7 @@ print("=" * 60)
 element = next(e for e in products if isinstance(e.geometry, Extrusion))
 print(f"\n  Entity: {element.ifc_type} '{element.name}'")
 print(f"  .geometry       -> {type(element.geometry).__name__}")
-print(f"  .visual_geometry -> {type(element.visual_geometry).__name__}")
+print(f"  ._visual_geometry -> {type(element._visual_geometry).__name__}")
 
 # ------------------------------------------------------------------
 # 4. Extrusion.to_mesh()

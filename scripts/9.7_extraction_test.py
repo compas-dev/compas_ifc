@@ -42,7 +42,7 @@ props_count = sum(1 for e in extracted_elements if e.properties)
 print(f"Elements with properties: {props_count}")
 
 # Verify styles preservation
-style_count = sum(1 for e in extracted_elements if e.style)
+style_count = sum(1 for e in extracted_elements if e._resolve_style())
 print(f"Elements with styles: {style_count}")
 
 # ========================================
@@ -56,7 +56,7 @@ if wall:
     print(f"Extracting: {wall.ifc_type} '{wall.name}'")
     print(f"  Geometry: {wall.geometry is not None}")
     print(f"  Properties: {bool(wall.properties)}")
-    print(f"  Style: {bool(wall.style)}")
+    print(f"  Style: {bool(wall._resolve_style())}")
 
     extracted_wall_model = model.extract(wall, path="temp/extracted_wall.ifc")
     extracted_wall_model.print_hierarchy()
@@ -68,7 +68,7 @@ if wall:
         print(f"  {w.name}")
         print(f"    Geometry: {w.geometry is not None}")
         print(f"    Properties: {bool(w.properties)}")
-        print(f"    Style: {bool(w.style)}")
+        print(f"    Style: {bool(w._resolve_style())}")
 
 # ========================================
 # 3. Extract multiple elements

@@ -20,7 +20,7 @@ for i, element in enumerate(elements):
 print("\nSpatial elements")
 print("=" * 53 + "\n")
 
-spatial_elements = [e for e in model.elements() if e.is_spatial]
+spatial_elements = [e for e in model.elements() if e._is_spatial]
 print("Total number of spatial elements: ", len(spatial_elements))
 for element in spatial_elements:
     print(element)

@@ -198,7 +198,7 @@ class BuildingInformationModel(Model):
     @property
     def building_elements(self) -> list[GenericElement]:
         """All non-spatial building elements (walls, slabs, beams, etc.)."""
-        return [e for e in self.elements() if not e.is_spatial]
+        return [e for e in self.elements() if not e._is_spatial]
 
     # ==========================================================================
     # Element add / remove (bi-directional sync)
@@ -551,12 +551,12 @@ class BuildingInformationModel(Model):
         for child_entity in ifc_entity.children:
             # Skip fillers that will be injected under their opening
             if child_entity.entity.id() in self._fillers_to_skip:
-                elem = GenericElement.from_ifc_entity(child_entity, file=self._file)
+                elem = GenericElement._from_ifc_entity(child_entity)
                 if hasattr(elem, "_global_transform"):
                     del elem._global_transform
                 continue
 
-            element = GenericElement.from_ifc_entity(child_entity, file=self._file)
+            element = GenericElement._from_ifc_entity(child_entity)
 
             # Rectify: compute local transform relative to spatial parent
             global_transform = getattr(element, "_global_transform", Transformation())
@@ -610,7 +610,7 @@ class BuildingInformationModel(Model):
         host_label = f"{host_element.ifc_type} '{host_element.name}'"
 
         for opening_entity in openings:
-            opening_elem = GenericElement.from_ifc_entity(opening_entity, file=self._file)
+            opening_elem = GenericElement._from_ifc_entity(opening_entity)
 
             opening_global = getattr(opening_elem, "_global_transform", Transformation())
             opening_local = host_global_transform.inverse() * opening_global
@@ -629,7 +629,7 @@ class BuildingInformationModel(Model):
             filler_labels = []
             fillers = self._fill_map.get(opening_entity.entity.id(), [])
             for filler_entity in fillers:
-                filler_elem = GenericElement.from_ifc_entity(filler_entity, file=self._file)
+                filler_elem = GenericElement._from_ifc_entity(filler_entity)
 
                 filler_global = getattr(filler_elem, "_global_transform", Transformation())
                 filler_local = opening_global.inverse() * filler_global
@@ -881,7 +881,7 @@ class BuildingInformationModel(Model):
             eid = ifc_entity.entity.id()
             elem = entity_lookup.get(eid)
             if elem is None:
-                elem = GenericElement.from_ifc_entity(ifc_entity, file=self._file)
+                elem = GenericElement._from_ifc_entity(ifc_entity)
                 if hasattr(elem, "_global_transform"):
                     del elem._global_transform
                 self._add_graph_only_element(elem)
@@ -1235,7 +1235,7 @@ class BuildingInformationModel(Model):
         # ---- collect candidates ------------------------------------------------
         candidates = []
         for e in self.elements():
-            if e.is_spatial or e.geometry is None or e.treenode is None:
+            if e._is_spatial or e.geometry is None or e.treenode is None:
                 continue
             if element_types is not None and e.ifc_type not in element_types:
                 continue
@@ -1373,7 +1373,7 @@ class BuildingInformationModel(Model):
         # ---- collect candidates ------------------------------------------------
         candidates = []
         for e in self.elements():
-            if e.is_spatial or e.geometry is None or e.treenode is None:
+            if e._is_spatial or e.geometry is None or e.treenode is None:
                 continue
             if element_types is not None and e.ifc_type not in element_types:
                 continue
@@ -1634,11 +1634,15 @@ class BuildingInformationModel(Model):
         for node in self.tree.root.children:
             _print_node(node.element, 1, max_depth)
 
-    def show(self):
-        """Show the model in compas_viewer.
+    def show(self, elements=None):
+        """Show the model (or specific elements and their children) in compas_viewer.
 
-        Directly adds element geometries to the viewer scene, bypassing the
-        compas_model scene object pipeline to avoid unnecessary data copies.
+        Parameters
+        ----------
+        elements : :class:`GenericElement` or list[:class:`GenericElement`], optional
+            One or more elements to show. Each element and its children are
+            included. If ``None``, the entire model is shown.
+
         """
         try:
             from compas_viewer import Viewer
@@ -1652,14 +1656,14 @@ class BuildingInformationModel(Model):
         if self.unit:
             viewer.unit = self.unit
 
-        def _add_element(element, parent=None):
-            label = f"[{element.ifc_type}] {element.name}"
+        def _add_element(elem, parent=None):
+            label = f"[{elem.ifc_type}] {elem.name}"
             obj = None
 
-            visual = element.visual_geometry
-            skip_visual = element.ifc_type in ("IfcSpace", "IfcOpeningElement")
+            visual = elem._visual_geometry
+            skip_visual = elem.ifc_type in ("IfcSpace", "IfcOpeningElement")
             if visual is not None and not skip_visual:
-                style_kwargs = element.style or {}
+                style_kwargs = elem._resolve_style() or {}
                 obj = viewer.scene.add(
                     visual,
                     name=label,
@@ -1670,27 +1674,33 @@ class BuildingInformationModel(Model):
             else:
                 obj = viewer.scene.add_group(name=label, parent=parent)
 
-            obj.transformation = element.transformation
-            obj.attributes["element"] = element
+            obj.transformation = elem.transformation
+            obj.attributes["element"] = elem
 
-            for child in element.children:
+            for child in elem.children:
                 _add_element(child, parent=obj)
 
-        for node in self.tree.root.children:
-            _add_element(node.element)
+        if elements is not None:
+            if not isinstance(elements, (list, tuple)):
+                elements = [elements]
+            for elem in elements:
+                _add_element(elem)
+        else:
+            for node in self.tree.root.children:
+                _add_element(node.element)
 
         treeform = Treeform()
         viewer.ui.sidebar.add(treeform)
 
         def update_treeform(form, node):
-            element = node.attributes.get("element")
-            if element:
+            elem = node.attributes.get("element")
+            if elem:
                 info = {
-                    "Type": element.ifc_type,
-                    "Name": element.name,
-                    "GlobalId": element.global_id or "",
+                    "Type": elem.ifc_type,
+                    "Name": elem.name,
+                    "GlobalId": elem.global_id or "",
                 }
-                info.update(element.properties)
+                info.update(elem.properties)
                 treeform.update_from_dict(info)
 
         viewer.ui.sidebar.sceneform.action = update_treeform
@@ -1751,12 +1761,12 @@ class BuildingInformationModel(Model):
         def _add_element(element, parent=None):
             label = f"[{element.ifc_type}] {element.name}"
             obj = None
-            visual = element.visual_geometry
+            visual = element._visual_geometry
             skip_visual = element.ifc_type in ("IfcSpace", "IfcOpeningElement")
             has_geometry = visual is not None and not skip_visual
 
             if has_geometry:
-                style_kwargs = element.style or {}
+                style_kwargs = element._resolve_style() or {}
                 obj = viewer.scene.add(
                     visual,
                     name=label,
