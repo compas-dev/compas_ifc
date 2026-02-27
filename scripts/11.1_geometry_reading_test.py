@@ -10,7 +10,7 @@ The ``visual_geometry`` property still provides the ifcopenshell-
 evaluated tessellation for display purposes.
 """
 
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 from compas_ifc.representations import Extrusion
 from compas.geometry import Box, Sphere, Cone, Cylinder, Polygon, Circle
 from compas.datastructures import Mesh
@@ -19,15 +19,15 @@ from compas.datastructures import Mesh
 # 1. Read Duplex model and inspect parsed geometry types
 # ------------------------------------------------------------------
 
-model = Model("data/Duplex_A_20110907.ifc")
+model = BuildingInformationModel("data/Duplex_A_20110907.ifc")
 
-products = model.get_entities_by_type("IfcProduct")
+products = model.get_elements_by_type("IfcProduct")
 
 type_counts = {}
 total = 0
 
-for entity in products:
-    geom = entity.geometry
+for element in products:
+    geom = element.geometry
     if geom is None:
         continue
     total += 1
@@ -51,11 +51,9 @@ print("Example Extrusions")
 print("=" * 60)
 
 shown = 0
-for entity in products:
-    geom = entity.geometry
+for element in products:
+    geom = element.geometry
     if isinstance(geom, Extrusion):
-        name = getattr(entity, "Name", "") or ""
-        ifc_type = entity.is_a()
         profile = geom.profile
 
         if isinstance(profile, Polygon):
@@ -68,7 +66,7 @@ for entity in products:
         else:
             profile_desc = type(profile).__name__
 
-        print(f"\n  {ifc_type} '{name}'")
+        print(f"\n  {element.ifc_type} '{element.name}'")
         print(f"    Profile:   {profile_desc}")
         print(f"    Direction: {geom.direction}")
         print(f"    Depth:     {geom.depth:.3f}")
@@ -86,10 +84,10 @@ print("\n" + "=" * 60)
 print("Visual geometry vs parsed geometry")
 print("=" * 60)
 
-entity = next(e for e in products if isinstance(e.geometry, Extrusion))
-print(f"\n  Entity: {entity.is_a()} '{getattr(entity, 'Name', '')}'")
-print(f"  .geometry       -> {type(entity.geometry).__name__}")
-print(f"  .visual_geometry -> {type(entity.visual_geometry).__name__}")
+element = next(e for e in products if isinstance(e.geometry, Extrusion))
+print(f"\n  Entity: {element.ifc_type} '{element.name}'")
+print(f"  .geometry       -> {type(element.geometry).__name__}")
+print(f"  .visual_geometry -> {type(element.visual_geometry).__name__}")
 
 # ------------------------------------------------------------------
 # 4. Extrusion.to_mesh()
@@ -99,6 +97,6 @@ print("\n" + "=" * 60)
 print("Extrusion.to_mesh()")
 print("=" * 60)
 
-mesh = entity.geometry.to_mesh()
+mesh = element.geometry.to_mesh()
 print(f"\n  Vertices: {mesh.number_of_vertices()}")
 print(f"  Faces:    {mesh.number_of_faces()}")

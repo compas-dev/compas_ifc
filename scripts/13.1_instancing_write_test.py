@@ -16,14 +16,14 @@ import os
 
 from compas.geometry import Box, Cylinder, Frame, Point, Vector
 from compas.datastructures import Mesh
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 
 # ------------------------------------------------------------------
 # Create model
 # ------------------------------------------------------------------
 
-model = Model.template(schema="IFC4", unit="m")
-storey = model.building_storeys[0]
+model = BuildingInformationModel.template(schema="IFC4", unit="m")
+storey = model.storeys[0]
 
 # ------------------------------------------------------------------
 # Shared geometry: 5 columns with the same Cylinder
@@ -33,12 +33,12 @@ column_geom = Cylinder(0.15, 3.0)  # single Python object
 
 for i in range(5):
     frame = Frame(Point(i * 2.0, 0.0, 0.0), Vector.Xaxis(), Vector.Yaxis())
-    model.create(
-        "IfcColumn",
+    model.create_element(
+        ifc_type="IfcColumn",
         geometry=column_geom,
         frame=frame,
         parent=storey,
-        Name=f"Column_{i}",
+        name=f"Column_{i}",
     )
 
 # ------------------------------------------------------------------
@@ -49,12 +49,12 @@ beam_geom = Box(4.0, 0.2, 0.3)  # single Python object
 
 for i in range(3):
     frame = Frame(Point(0.0, i * 3.0, 3.0), Vector.Xaxis(), Vector.Yaxis())
-    model.create(
-        "IfcBeam",
+    model.create_element(
+        ifc_type="IfcBeam",
         geometry=beam_geom,
         frame=frame,
         parent=storey,
-        Name=f"Beam_{i}",
+        name=f"Beam_{i}",
     )
 
 # ------------------------------------------------------------------
@@ -63,12 +63,12 @@ for i in range(3):
 
 slab_geom = Mesh.from_meshgrid(10, 5, 10, 5)  # unique object
 
-model.create(
-    "IfcSlab",
+model.create_element(
+    ifc_type="IfcSlab",
     geometry=slab_geom,
     frame=Frame.worldXY(),
     parent=storey,
-    Name="Slab_0",
+    name="Slab_0",
 )
 
 # ------------------------------------------------------------------
@@ -89,11 +89,11 @@ print("=" * 60)
 print("Verification: Reload and check instancing")
 print("=" * 60)
 
-model2 = Model(output_path)
+model2 = BuildingInformationModel(output_path)
 
 # Count IFC entities
-rep_maps = model2.get_entities_by_type("IfcRepresentationMap")
-mapped_items = model2.get_entities_by_type("IfcMappedItem")
+rep_maps = model2._file.get_entities_by_type("IfcRepresentationMap")
+mapped_items = model2._file.get_entities_by_type("IfcMappedItem")
 
 print(f"IfcRepresentationMap count: {len(rep_maps)}")
 print(f"IfcMappedItem count:        {len(mapped_items)}")
@@ -111,18 +111,14 @@ for i, rm in enumerate(rep_maps):
 
 print()
 
-# Verify all products have geometry
-products = model2.get_entities_by_type("IfcProduct")
+# Verify all building elements have geometry
 geom_count = 0
-for entity in products:
-    if entity.is_a("IfcSpace") or entity.is_a("IfcSite") or entity.is_a("IfcBuilding") or entity.is_a("IfcBuildingStorey"):
-        continue
-    geom = entity.geometry
+for element in model2.building_elements:
+    geom = element.geometry
     if geom is not None:
         geom_count += 1
-    name = getattr(entity, "Name", "") or ""
     status = "OK" if geom is not None else "MISSING"
-    print(f"  [{entity.is_a()}] {name}: geometry={status}")
+    print(f"  [{element.ifc_type}] {element.name}: geometry={status}")
 
 print()
 

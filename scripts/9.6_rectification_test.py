@@ -22,7 +22,7 @@ total_with_placement = 0
 for element in model.elements():
     if element.treenode is None:
         continue
-    ifc = element.ifc_entity
+    ifc = element._ifc_entity
     if not hasattr(ifc, "ObjectPlacement") or not ifc.ObjectPlacement:
         continue
     total_with_placement += 1
@@ -32,7 +32,7 @@ for element in model.elements():
     if parent_elem is None:
         expected = None
     else:
-        parent_ifc = parent_elem.ifc_entity
+        parent_ifc = parent_elem._ifc_entity
         expected = getattr(parent_ifc, "ObjectPlacement", None) if parent_ifc else None
 
     actual = placement.PlacementRelTo
@@ -68,7 +68,7 @@ would_rectify = 0
 for element in model3.elements():
     if element.treenode is None:
         continue
-    ifc = element.ifc_entity
+    ifc = element._ifc_entity
     if not hasattr(ifc, "ObjectPlacement") or not ifc.ObjectPlacement:
         continue
     placement = ifc.ObjectPlacement
@@ -76,7 +76,7 @@ for element in model3.elements():
     if parent_elem is None:
         expected = None
     else:
-        parent_ifc = parent_elem.ifc_entity
+        parent_ifc = parent_elem._ifc_entity
         expected = getattr(parent_ifc, "ObjectPlacement", None) if parent_ifc else None
     if placement.PlacementRelTo is not expected:
         would_rectify += 1

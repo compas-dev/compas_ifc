@@ -84,7 +84,7 @@ def assign_body_representation(entity: IfcProduct, representation: Union[Shape, 
 
     ifc_shape_representation = model.create(
         "IfcShapeRepresentation",
-        ContextOfItems=model.file.default_body_context,
+        ContextOfItems=model._file.default_body_context,
         RepresentationIdentifier="Body",
         RepresentationType=representation_type,
         Items=items,
@@ -167,7 +167,7 @@ def _geometry_to_ifc_items(model: BuildingInformationModel, representation):
         return [ifc_representation], "Tessellation"
 
     if isinstance(representation, Brep):
-        if model.file.use_occ:
+        if model._file.use_occ:
             items = brep_to_IfcAdvancedBrep(model, representation)
             return items, "SolidModel"
         else:
@@ -263,7 +263,7 @@ def _assign_mapped_body(model: BuildingInformationModel, entity: IfcProduct, rep
 
     outer_rep = model.create(
         "IfcShapeRepresentation",
-        ContextOfItems=model.file.default_body_context,
+        ContextOfItems=model._file.default_body_context,
         RepresentationIdentifier="Body",
         RepresentationType="MappedRepresentation",
         Items=[mapped_item],
@@ -331,7 +331,7 @@ def assign_axis_representation(entity: IfcProduct, curve):
 
     ifc_shape_representation = model.create(
         "IfcShapeRepresentation",
-        ContextOfItems=model.file.default_axis_context,
+        ContextOfItems=model._file.default_axis_context,
         RepresentationIdentifier="Axis",
         RepresentationType="Curve2D",
         Items=[ifc_polyline],

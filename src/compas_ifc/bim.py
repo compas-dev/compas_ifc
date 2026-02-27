@@ -88,13 +88,8 @@ class BuildingInformationModel(Model):
             self._load_from_ifc(rectify_placements=rectify_placements, rectify_verbose=rectify_verbose)
 
     # ==========================================================================
-    # IFCFile compatibility — conversion functions call entity.model.create()
+    # IFC entity creation — conversion functions call model.create()
     # ==========================================================================
-
-    @property
-    def file(self):
-        """The underlying IFCFile, needed by conversion functions."""
-        return self._file
 
     def create(self, cls=None, parent=None, geometry=None, frame=None, properties=None, **kwargs):
         """Create an IFC entity. Delegates to IFCFile.create().
@@ -111,6 +106,19 @@ class BuildingInformationModel(Model):
     # ==========================================================================
     # User-facing properties
     # ==========================================================================
+
+    @property
+    def project(self):
+        """The underlying IfcProject entity (read-only escape hatch).
+
+        Returns the Base-wrapped ``IfcProject`` entity, providing access to
+        project-level attributes (``Name``, ``Description``, ``sites``,
+        ``buildings``, ``contexts``, ``units``, ``north``, ``frame``, etc.).
+
+        Returns ``None`` if no IfcProject exists in the file.
+        """
+        projects = self._file.get_entities_by_type("IfcProject")
+        return projects[0] if projects else None
 
     @property
     def schema_name(self) -> str:
@@ -155,8 +163,18 @@ class BuildingInformationModel(Model):
         return self._elements_by_global_id.get(global_id)
 
     def get_elements_by_type(self, ifc_type: str) -> list[GenericElement]:
-        """Find all elements of a given IFC type (e.g. "IfcWall")."""
-        return [e for e in self.elements() if e.ifc_type == ifc_type]
+        """Find all elements of a given IFC type (e.g. "IfcWall").
+
+        Supports IFC class hierarchy matching: querying ``"IfcProduct"`` will
+        match ``IfcWall``, ``IfcBeam``, ``IfcColumn``, etc.
+        """
+        results = []
+        for e in self.elements():
+            if e.ifc_type == ifc_type:
+                results.append(e)
+            elif e._ifc_entity is not None and e._ifc_entity.is_a(ifc_type):
+                results.append(e)
+        return results
 
     def get_elements_by_name(self, name: str) -> list[GenericElement]:
         """Find all elements with a given name."""
@@ -1449,6 +1467,28 @@ class BuildingInformationModel(Model):
         in sync with the model tree. This simply writes the file.
         """
         self._file.save(path)
+
+    def export(self, path: str, elements):
+        """Export selected elements to a new IFC file.
+
+        Wraps :meth:`IFCFile.export` for convenience. The exported file
+        includes spatial ancestor containers automatically.
+
+        Parameters
+        ----------
+        path : str
+            Output IFC file path.
+        elements : list[GenericElement]
+            Elements to export. Their underlying IFC entities are collected.
+
+        """
+        ifc_entities = []
+        for e in elements if isinstance(elements, (list, tuple)) else [elements]:
+            if hasattr(e, "_ifc_entity") and e._ifc_entity is not None:
+                ifc_entities.append(e._ifc_entity)
+            elif hasattr(e, "entity"):
+                ifc_entities.append(e)
+        self._file.export(path, ifc_entities)
 
     def to_ifc(self, path: str, schema: str = None):
         """Export the model to an IFC file.

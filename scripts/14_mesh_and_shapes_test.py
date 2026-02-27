@@ -17,14 +17,14 @@ import os
 from compas.datastructures import Mesh
 from compas.geometry import Capsule, Frame, Point, Torus, Vector
 
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 
 # ------------------------------------------------------------------
 # Create model
 # ------------------------------------------------------------------
 
-model = Model.template(schema="IFC4", unit="m")
-storey = model.building_storeys[0]
+model = BuildingInformationModel.template(schema="IFC4", unit="m")
+storey = model.storeys[0]
 
 # ------------------------------------------------------------------
 # 1. Mesh (IfcPolygonalFaceSet -- new default)
@@ -32,12 +32,12 @@ storey = model.building_storeys[0]
 
 mesh = Mesh.from_meshgrid(4, 3, 4, 3)
 
-model.create(
-    "IfcBuildingElementProxy",
+model.create_element(
+    ifc_type="IfcBuildingElementProxy",
     geometry=mesh,
     frame=Frame(Point(0, 0, 0), Vector.Xaxis(), Vector.Yaxis()),
     parent=storey,
-    Name="Mesh_PolygonalFaceSet",
+    name="Mesh_PolygonalFaceSet",
 )
 
 # ------------------------------------------------------------------
@@ -46,12 +46,12 @@ model.create(
 
 torus = Torus(radius_axis=2.0, radius_pipe=0.5)
 
-model.create(
-    "IfcBuildingElementProxy",
+model.create_element(
+    ifc_type="IfcBuildingElementProxy",
     geometry=torus,
     frame=Frame(Point(8, 0, 2), Vector.Xaxis(), Vector.Yaxis()),
     parent=storey,
-    Name="Torus_BRep",
+    name="Torus_BRep",
 )
 
 # ------------------------------------------------------------------
@@ -60,12 +60,12 @@ model.create(
 
 capsule = Capsule(radius=0.5, height=3.0)
 
-model.create(
-    "IfcBuildingElementProxy",
+model.create_element(
+    ifc_type="IfcBuildingElementProxy",
     geometry=capsule,
     frame=Frame(Point(14, 0, 0), Vector.Xaxis(), Vector.Yaxis()),
     parent=storey,
-    Name="Capsule_BRep",
+    name="Capsule_BRep",
 )
 
 # ------------------------------------------------------------------
@@ -86,25 +86,20 @@ print("=" * 60)
 print("Verification: Reload and check geometry")
 print("=" * 60)
 
-model2 = Model(output_path)
+model2 = BuildingInformationModel(output_path)
 
-products = model2.get_entities_by_type("IfcProduct")
 results = {}
 
-for entity in products:
-    if entity.is_a("IfcSite") or entity.is_a("IfcBuilding") or entity.is_a("IfcBuildingStorey"):
-        continue
-
-    name = getattr(entity, "Name", "") or ""
-    geom = entity.geometry
+for element in model2.building_elements:
+    geom = element.geometry
 
     if geom is not None:
         gtype = type(geom).__name__
-        results[name] = ("OK", gtype)
-        print(f"  [{entity.is_a()}] {name}: geometry={gtype} OK")
+        results[element.name] = ("OK", gtype)
+        print(f"  [{element.ifc_type}] {element.name}: geometry={gtype} OK")
     else:
-        results[name] = ("MISSING", "None")
-        print(f"  [{entity.is_a()}] {name}: geometry=MISSING")
+        results[element.name] = ("MISSING", "None")
+        print(f"  [{element.ifc_type}] {element.name}: geometry=MISSING")
 
 print()
 
@@ -112,8 +107,8 @@ print()
 # Check IFC entity types in saved file
 # ------------------------------------------------------------------
 
-pfs_entities = model2.get_entities_by_type("IfcPolygonalFaceSet")
-brep_entities = model2.get_entities_by_type("IfcAdvancedBrep")
+pfs_entities = model2._file.get_entities_by_type("IfcPolygonalFaceSet")
+brep_entities = model2._file.get_entities_by_type("IfcAdvancedBrep")
 print(f"IfcPolygonalFaceSet entities: {len(pfs_entities)}")
 print(f"IfcAdvancedBrep entities:     {len(brep_entities)}")
 

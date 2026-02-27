@@ -6,7 +6,7 @@
 from compas_rhino.objects import get_objects
 from compas_rhino.objects import get_object_layers
 from compas_rhino.conversions import brepobject_to_compas
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 from compas.datastructures import Mesh
 import re
 
@@ -30,9 +30,9 @@ layer_info = get_object_layers(objs)
 
 entities = {}
 
-model = Model()
-model.create_default_project()
+model = BuildingInformationModel()
 model.unit = "m"
+project = model.project
 
 for obj, layers in zip(objs, layer_info):
     compas_brep = brepobject_to_compas(obj)
@@ -51,8 +51,8 @@ for obj, layers in zip(objs, layer_info):
             name, ifc_type = parse_string(layer)
 
             if ifc_type == "IfcProject":
-                model.project.Name = name
-                entities[layer] = model.project
+                project.Name = name
+                entities[layer] = project
             elif name is None:
                 model.create(ifc_type, name=name, geometry=mesh, parent=entities[parent_layer])
             else:
@@ -61,7 +61,7 @@ for obj, layers in zip(objs, layer_info):
         parent_layer = layer
 
 
-model.print_spatial_hierarchy(max_depth=10)
+model.print_hierarchy(max_depth=10)
 
 # Change the path to the desired output location
 model.save("D:/Github/compas_ifc/temp/Rhino/rhino.ifc")

@@ -1,10 +1,10 @@
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 
-model = Model("data/wall-with-opening-and-window.ifc")
-model.print_summary()
+model = BuildingInformationModel(filepath="data/wall-with-opening-and-window.ifc")
+model.print_hierarchy()
 
 unit = model.unit
 
-element = model.get_entities_by_type("IfcWindow")[0]
-print("Volume:", element.geometry.volume, unit + "³")
-print("Surface Area:", element.geometry.surface_area, unit + "²")
+element = model.get_elements_by_type("IfcWindow")[0]
+print("Volume:", element.volume, unit + "³")
+print("Surface Area:", element.surface_area, unit + "²")

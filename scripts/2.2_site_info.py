@@ -1,9 +1,10 @@
 from pprint import pprint
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 
-model = Model("data/wall-with-opening-and-window.ifc")
+model = BuildingInformationModel("data/wall-with-opening-and-window.ifc")
 
-site = model.project.sites[0]
+project = model.project
+site = project.sites[0]
 
 # =============================================================================
 # Info

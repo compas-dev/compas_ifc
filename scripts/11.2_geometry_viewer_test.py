@@ -19,7 +19,7 @@ so the viewer can render them at the correct world position.
 from compas.colors import Color
 from compas.geometry import Box, Sphere, Cone, Cylinder, Transformation
 from compas.datastructures import Mesh
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 from compas_ifc.representations import Extrusion
 from compas_ifc.brep import TessellatedBrep
 
@@ -85,8 +85,8 @@ def geometry_to_viewable(geom):
 # Load model
 # ------------------------------------------------------------------
 
-model = Model("data/Duplex_A_20110907.ifc")
-products = model.get_entities_by_type("IfcProduct")
+model = BuildingInformationModel("data/Duplex_A_20110907.ifc")
+products = model.get_elements_by_type("IfcProduct")
 
 # ------------------------------------------------------------------
 # Build viewer
@@ -109,11 +109,11 @@ for key, (label, _color) in GROUP_INFO.items():
 type_counts = {}
 total = 0
 
-for entity in products:
-    if entity.is_a("IfcSpace"):
+for element in products:
+    if element.ifc_type == "IfcSpace":
         continue
 
-    geom = entity.geometry
+    geom = element.geometry
     if geom is None:
         continue
 
@@ -128,7 +128,7 @@ for entity in products:
 
     _, color = GROUP_INFO[group_key]
     parent_group = groups[group_key]
-    name = f"[{entity.is_a()}] {getattr(entity, 'Name', '') or ''}"
+    name = f"[{element.ifc_type}] {element.name}"
 
     try:
         obj = viewer.scene.add(
@@ -139,7 +139,7 @@ for entity in products:
             hide_coplanaredges=True,
         )
         # Compose: entity placement (world) * extrusion sub-placement (local)
-        T_entity = Transformation.from_frame(entity.frame) if entity.frame else Transformation()
+        T_entity = Transformation.from_frame(element.frame) if element.frame else Transformation()
         obj.transformation = T_entity * T_local
     except Exception as e:
         print(f"  WARNING: Could not add {name}: {e}")

@@ -166,14 +166,7 @@ axis_count = 0
 axis_types = {}
 
 for elem in model.building_elements:
-    ifc = elem.ifc_entity
-    if ifc is None:
-        continue
-    # Not all IFC types have axis — guard against AttributeError
-    try:
-        axis = ifc.axis
-    except AttributeError:
-        continue
+    axis = elem.axis
     if axis is None:
         continue
     axis_count += 1
@@ -194,8 +187,8 @@ print("=" * 70)
 print("4. INSTANCING")
 print("=" * 70)
 
-rep_maps = model.file.get_entities_by_type("IfcRepresentationMap")
-mapped_items = model.file.get_entities_by_type("IfcMappedItem")
+rep_maps = model._file.get_entities_by_type("IfcRepresentationMap")
+mapped_items = model._file.get_entities_by_type("IfcMappedItem")
 
 print(f"  IfcRepresentationMap: {len(rep_maps)}")
 print(f"  IfcMappedItem:        {len(mapped_items)}")
@@ -204,10 +197,10 @@ print(f"  IfcMappedItem:        {len(mapped_items)}")
 mapped_ok = 0
 mapped_fail = 0
 for elem in model.building_elements:
-    if elem.ifc_entity is None:
+    if elem._ifc_entity is None:
         continue
     try:
-        rep = elem.ifc_entity.Representation
+        rep = elem._ifc_entity.Representation
     except AttributeError:
         continue
     if rep is None:
@@ -346,8 +339,8 @@ print("8. BOOLEAN CLIPPING (CSG)")
 print("=" * 70)
 
 try:
-    bool_clip = model.file.get_entities_by_type("IfcBooleanClippingResult")
-    bool_result = model.file.get_entities_by_type("IfcBooleanResult")
+    bool_clip = model._file.get_entities_by_type("IfcBooleanClippingResult")
+    bool_result = model._file.get_entities_by_type("IfcBooleanResult")
 except RuntimeError:
     bool_clip = []
     bool_result = []

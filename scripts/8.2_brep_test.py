@@ -48,7 +48,7 @@ import ifcopenshell
 import ifcopenshell.validate
 from compas_occ.brep import OCCBrep
 
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 
 STEP_DIR = os.path.join(REPO_ROOT, "temp", "brep_conversion_tests")
 
@@ -66,7 +66,7 @@ def load_brep(filename):
 
 
 def make_model():
-    return Model.template(schema="IFC4", unit="m", use_occ=True)
+    return BuildingInformationModel.template(schema="IFC4", unit="m", use_occ=True)
 
 
 def validate_ifc(model):
@@ -82,7 +82,7 @@ def validate_ifc(model):
 
     logger = Collector()
     try:
-        ifcopenshell.validate.validate(model.file._file, logger)
+        ifcopenshell.validate.validate(model._file._file, logger)
     except Exception as e:
         issues.append("EXCEPTION during validate: " + str(e))
     return issues
@@ -90,7 +90,7 @@ def validate_ifc(model):
 
 def collect_entity_types(model):
     """Return a set of all IFC entity type names present in the file."""
-    return {e.is_a() for e in model.file._file}
+    return {e.is_a() for e in model._file._file}
 
 
 def run_test(
@@ -119,22 +119,22 @@ def run_test(
         return False
 
     model = make_model()
-    storey = model.building_storeys[0]
+    storey = model.storeys[0]
 
     try:
-        element = model.create(
-            cls="IfcBuildingElementProxy",
+        element = model.create_element(
+            ifc_type="IfcBuildingElementProxy",
             parent=storey,
             geometry=brep,
             name=name,
         )
     except Exception as e:
-        print("  " + FAIL + " model.create raised exception:")
+        print("  " + FAIL + " model.create_element raised exception:")
         traceback.print_exc()
         return False
 
     if element is None:
-        print("  " + FAIL + " model.create returned None")
+        print("  " + FAIL + " model.create_element returned None")
         return False
 
     print("  Created: " + str(element))

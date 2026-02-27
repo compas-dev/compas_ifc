@@ -1,9 +1,8 @@
 from pprint import pprint
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 
-model = Model("data/wall-with-opening-and-window.ifc")
-window = model.get_entities_by_type("IfcWindow")[0]
-window.print_spatial_hierarchy(max_depth=5)
+model = BuildingInformationModel("data/wall-with-opening-and-window.ifc")
+window = model.get_elements_by_type("IfcWindow")[0]
 
 # =============================================================================
 # Info
@@ -21,4 +20,4 @@ pprint(window.to_dict())
 print("\nProperties")
 print("=" * 53 + "\n")
 
-pprint(window.property_sets)
+pprint(window.properties)

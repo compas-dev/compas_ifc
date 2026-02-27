@@ -1,44 +1,44 @@
-"""Verify transformation rectification by comparing global positions
-between the old Model (direct IFC placement chains) and new BuildingModel
-(rectified relative transforms composed via scene-graph)."""
+"""Verify transformation rectification is self-consistent: load a model
+with rectified placements and check that each element's composed global
+position (from modeltransformation) matches its IFC placement chain."""
 
 from compas.geometry import Frame, Transformation, Point
-from compas_ifc.model import Model
-from compas_ifc.bim import BuildingInformationModel as BuildingModel
+from compas_ifc.bim import BuildingInformationModel
+from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
 
-# Load with both APIs
-old_model = Model("data/Duplex_A_20110907.ifc", verbose=False)
-new_model = BuildingModel(filepath="data/Duplex_A_20110907.ifc")
+model = BuildingInformationModel(filepath="data/Duplex_A_20110907.ifc")
 
-# Compare global positions for all elements
 mismatches = 0
 checked = 0
 
-for element in new_model.building_elements:
+for element in model.building_elements:
     if element.global_id is None:
         continue
 
-    old_entity = old_model.get_entity_by_global_id(element.global_id)
-    if old_entity is None or old_entity.frame is None:
+    ifc_entity = element._ifc_entity
+    if ifc_entity is None or not hasattr(ifc_entity, "ObjectPlacement") or ifc_entity.ObjectPlacement is None:
         continue
 
-    # Old model: global frame directly from IFC placement chain
-    old_point = old_entity.frame.point
+    # IFC placement chain: global position from raw IFC data
+    ifc_global = IfcLocalPlacement_to_transformation(ifc_entity.ObjectPlacement)
+    ifc_frame = Frame.from_transformation(ifc_global)
+    ifc_point = ifc_frame.point
 
-    # New model: composed transform from scene-graph (modeltransformation)
-    new_frame = element.frame
-    new_point = new_frame.point
+    # Model tree: composed global position from scene-graph
+    model_transform = element.modeltransformation
+    model_frame = Frame.from_transformation(model_transform)
+    model_point = model_frame.point
 
-    dist = old_point.distance_to_point(new_point)
+    dist = ifc_point.distance_to_point(model_point)
     checked += 1
 
     if dist > 1e-6:
         mismatches += 1
         if mismatches <= 5:
             print(f"MISMATCH {element.ifc_type} '{element.name}':")
-            print(f"  old: {old_point}")
-            print(f"  new: {new_point}")
-            print(f"  dist: {dist:.6e}")
+            print(f"  ifc:   {ifc_point}")
+            print(f"  model: {model_point}")
+            print(f"  dist:  {dist:.6e}")
 
 if mismatches == 0:
     print(f"ALL {checked} elements match (tolerance 1e-6)")

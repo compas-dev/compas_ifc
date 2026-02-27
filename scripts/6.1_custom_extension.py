@@ -1,23 +1,9 @@
-from compas_ifc.entities.generated.IFC4 import IfcBuildingElement
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 
+model = BuildingInformationModel(filepath="data/Duplex_A_20110907.ifc", use_occ=True)
 
-class ExtendedIfcBuildingElement(IfcBuildingElement):
-    @property
-    def volume(self):
-        return self.geometry.volume
-
-
-model = Model("data/Duplex_A_20110907.ifc", use_occ=True, extensions={"IfcBuildingElement": ExtendedIfcBuildingElement})
-
-total_wall_volume = 0
-for wall in model.get_entities_by_type("IfcWall"):
-    total_wall_volume += wall.volume
-
+total_wall_volume = sum(e.volume for e in model.get_elements_by_type("IfcWall") if e.volume)
 print("Total wall volume:", total_wall_volume, f"{model.unit}³")
 
-total_slab_volume = 0
-for slab in model.get_entities_by_type("IfcSlab"):
-    total_slab_volume += slab.volume
-
+total_slab_volume = sum(e.volume for e in model.get_elements_by_type("IfcSlab") if e.volume)
 print("Total slab volume:", total_slab_volume, f"{model.unit}³")

@@ -1,4 +1,4 @@
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 
-model = Model("data/wall-with-opening-and-window.ifc")
-model.print_summary()
+model = BuildingInformationModel("data/wall-with-opening-and-window.ifc")
+model.print_hierarchy()

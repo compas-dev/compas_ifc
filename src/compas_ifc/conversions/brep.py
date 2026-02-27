@@ -425,7 +425,7 @@ def _face_to_ifc_nurbs_surface(face, model):
 
     # Use the raw ifcopenshell file to create nested entity lists, since
     # model.create() only unwraps one level of Base wrappers.
-    ifc_file = model.file._file
+    ifc_file = model._file._file
 
     def make_pt(u1, v1):
         pole = bspline.Pole(u1, v1)
@@ -471,7 +471,7 @@ def _face_to_ifc_nurbs_surface(face, model):
         KnotSpec="UNSPECIFIED",
         WeightsData=ifc_weights,
     )
-    return model.file.from_entity(entity)
+    return model._file.from_entity(entity)
 
 
 def _find_orphan_faces(brep):

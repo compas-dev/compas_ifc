@@ -263,8 +263,8 @@ if os.path.exists(hilo_path):
         print(f"    {name:25s} {count:5d}  ({pct:.1f}%)")
 
     # Check boolean entities in file
-    bool_clip = hilo.file.get_entities_by_type("IfcBooleanClippingResult")
-    bool_result = hilo.file.get_entities_by_type("IfcBooleanResult")
+    bool_clip = hilo._file.get_entities_by_type("IfcBooleanClippingResult")
+    bool_result = hilo._file.get_entities_by_type("IfcBooleanResult")
     print(f"\n  IfcBooleanClippingResult: {len(bool_clip)}")
     print(f"  IfcBooleanResult:         {len(bool_result)}")
 

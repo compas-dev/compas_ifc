@@ -13,7 +13,7 @@ body geometry (semi-transparent grey) overlaid with axis centerlines
 from compas.colors import Color
 from compas.geometry import Box, Sphere, Cone, Cylinder, Transformation, Polyline
 from compas.datastructures import Mesh
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 from compas_ifc.representations import Extrusion
 from compas_ifc.brep import TessellatedBrep
 
@@ -41,8 +41,8 @@ def geometry_to_viewable(geom):
 # Load model
 # ------------------------------------------------------------------
 
-model = Model("data/Duplex_A_20110907.ifc")
-products = model.get_entities_by_type("IfcProduct")
+model = BuildingInformationModel("data/Duplex_A_20110907.ifc")
+products = model.get_elements_by_type("IfcProduct")
 
 # ------------------------------------------------------------------
 # Build viewer
@@ -64,15 +64,15 @@ axis_group = viewer.scene.add_group(name="Axis Centerlines")
 body_count = 0
 axis_count = 0
 
-for entity in products:
-    if entity.is_a("IfcSpace"):
+for element in products:
+    if element.ifc_type == "IfcSpace":
         continue
 
-    name = f"[{entity.is_a()}] {getattr(entity, 'Name', '') or ''}"
-    T_entity = Transformation.from_frame(entity.frame) if entity.frame else Transformation()
+    name = f"[{element.ifc_type}] {element.name}"
+    T_entity = Transformation.from_frame(element.frame) if element.frame else Transformation()
 
     # --- Body geometry ---
-    geom = entity.geometry
+    geom = element.geometry
     if geom is not None:
         viewable, T_local = geometry_to_viewable(geom)
         if viewable is not None:
@@ -91,7 +91,7 @@ for entity in products:
                 print(f"  WARNING: Could not add body {name}: {e}")
 
     # --- Axis representation ---
-    axis = entity.axis
+    axis = element.axis
     if axis is not None:
         axis_count += 1
         # Transform axis points to world coordinates

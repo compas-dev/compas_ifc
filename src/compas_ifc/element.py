@@ -85,14 +85,6 @@ class GenericElement(Element):
     # ==========================================================================
 
     @property
-    def ifc_entity(self):
-        """The underlying raw IFC entity (read-only escape hatch).
-
-        Returns ``None`` for elements created programmatically without an IFC source.
-        """
-        return self._ifc_entity
-
-    @property
     def global_id(self) -> Optional[str]:
         """The IFC GlobalId of the element."""
         if self._global_id is None and self._ifc_entity is not None:
@@ -235,6 +227,30 @@ class GenericElement(Element):
         return None
 
     @property
+    def axis(self):
+        """The axis (centerline) representation of the element.
+
+        Returns a ``Polyline`` for elements that have an axis representation
+        (typically walls, beams, columns). Returns ``None`` otherwise.
+        """
+        if self._ifc_entity is not None:
+            try:
+                return self._ifc_entity.axis
+            except AttributeError:
+                return None
+        return None
+
+    @property
+    def frame(self):
+        """The local coordinate frame of the element from IFC placement."""
+        if self._ifc_entity is not None:
+            try:
+                return self._ifc_entity.frame
+            except AttributeError:
+                return None
+        return None
+
+    @property
     def transformation(self):
         return self._transformation
 
@@ -246,6 +262,23 @@ class GenericElement(Element):
         if self._ifc_entity is not None and getattr(self, "model", None) is not None and transformation is not None:
             frame = Frame.from_transformation(transformation)
             self._ifc_entity.frame = frame
+
+    def to_dict(self) -> dict:
+        """Return a dictionary representation of the underlying IFC entity attributes.
+
+        Delegates to the IFC entity's ``to_dict()`` method which returns
+        all IFC schema attributes as a nested dictionary.
+        """
+        if self._ifc_entity is not None:
+            return self._ifc_entity.to_dict()
+        return {"ifc_type": self.ifc_type, "name": self.name}
+
+    def show(self):
+        """Show this element's geometry in compas_viewer."""
+        if self._ifc_entity is not None:
+            self._ifc_entity.show()
+        else:
+            raise ValueError("Element has no IFC entity to visualise.")
 
     # ==========================================================================
     # Internal helpers

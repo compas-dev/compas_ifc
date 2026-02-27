@@ -173,9 +173,9 @@ from compas_ifc.conversions.representation import assign_axis_representation
 
 for elem in model.building_elements:
     if elem.name == "CSG_Box":
-        assign_axis_representation(elem.ifc_entity, Polyline([Point(0, 0, 0), Point(2, 0, 0)]))
+        assign_axis_representation(elem._ifc_entity, Polyline([Point(0, 0, 0), Point(2, 0, 0)]))
     elif elem.name == "Ext_Circle":
-        assign_axis_representation(elem.ifc_entity, Polyline([Point(0, 5, 0), Point(0, 5, 4)]))
+        assign_axis_representation(elem._ifc_entity, Polyline([Point(0, 5, 0), Point(0, 5, 4)]))
 
 # ==================================================================
 # Save
@@ -203,14 +203,14 @@ model2 = BuildingInformationModel(output_path)
 # Entity counts (low-level IFC file queries)
 # ------------------------------------------------------------------
 
-csg_count = len(model2.file.get_entities_by_type("IfcCsgSolid"))
-eas_count = len(model2.file.get_entities_by_type("IfcExtrudedAreaSolid"))
-ras_count = len(model2.file.get_entities_by_type("IfcRevolvedAreaSolid"))
-sds_count = len(model2.file.get_entities_by_type("IfcSweptDiskSolid"))
-pfs_count = len(model2.file.get_entities_by_type("IfcPolygonalFaceSet"))
-brep_count = len(model2.file.get_entities_by_type("IfcAdvancedBrep"))
-rep_maps = len(model2.file.get_entities_by_type("IfcRepresentationMap"))
-mapped_items = len(model2.file.get_entities_by_type("IfcMappedItem"))
+csg_count = len(model2._file.get_entities_by_type("IfcCsgSolid"))
+eas_count = len(model2._file.get_entities_by_type("IfcExtrudedAreaSolid"))
+ras_count = len(model2._file.get_entities_by_type("IfcRevolvedAreaSolid"))
+sds_count = len(model2._file.get_entities_by_type("IfcSweptDiskSolid"))
+pfs_count = len(model2._file.get_entities_by_type("IfcPolygonalFaceSet"))
+brep_count = len(model2._file.get_entities_by_type("IfcAdvancedBrep"))
+rep_maps = len(model2._file.get_entities_by_type("IfcRepresentationMap"))
+mapped_items = len(model2._file.get_entities_by_type("IfcMappedItem"))
 
 print("IFC Entity Counts:")
 print(f"  IfcCsgSolid:              {csg_count:3d}  (expected 5)")
@@ -317,7 +317,7 @@ for name, (expected_type, checks) in sorted(EXPECTED.items()):
 axis_results = []
 for elem in model2.building_elements:
     if elem.name in ("CSG_Box", "Ext_Circle"):
-        axis = elem.ifc_entity.axis
+        axis = elem.axis
         ok = axis is not None and len(axis.points) >= 2
         axis_results.append((elem.name, ok))
 

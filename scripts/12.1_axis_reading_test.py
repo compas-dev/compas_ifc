@@ -9,14 +9,14 @@ Expected result: ~65 elements with axis representations (all IfcPolyline,
 typically 2-point centerlines for walls, beams, columns).
 """
 
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 
 # ------------------------------------------------------------------
 # Load model
 # ------------------------------------------------------------------
 
-model = Model("data/Duplex_A_20110907.ifc")
-products = model.get_entities_by_type("IfcProduct")
+model = BuildingInformationModel("data/Duplex_A_20110907.ifc")
+products = model.get_elements_by_type("IfcProduct")
 
 # ------------------------------------------------------------------
 # Read axis representations
@@ -31,22 +31,20 @@ print("Axis Representation Reading Test")
 print("=" * 70)
 print()
 
-for entity in products:
+for element in products:
     total_products += 1
-    axis = entity.axis
+    axis = element.axis
     if axis is None:
         continue
 
     axis_count += 1
-    ifc_type = entity.is_a()
-    type_counts[ifc_type] = type_counts.get(ifc_type, 0) + 1
+    type_counts[element.ifc_type] = type_counts.get(element.ifc_type, 0) + 1
 
-    name = getattr(entity, "Name", "") or ""
     n_pts = len(axis.points)
 
     if axis_count <= 10:
         pts_str = " ->".join(f"({p.x:.1f}, {p.y:.1f}, {p.z:.1f})" for p in axis.points)
-        print(f"  [{ifc_type}] {name}")
+        print(f"  [{element.ifc_type}] {element.name}")
         print(f"    Axis: {n_pts} points -- {pts_str}")
         print()
 

@@ -33,7 +33,7 @@ wall = model.create_wall(
     name="Test Wall",
 )
 print(f"Wall: {wall}")
-print(f"  IFC entity: {wall.ifc_entity}")
+print(f"  IFC entity: {wall._ifc_entity}")
 print(f"  GlobalId: {wall.global_id}")
 print(f"  Geometry: {wall.geometry}")
 
@@ -43,7 +43,7 @@ slab = model.create_slab(
     name="Test Slab",
 )
 print(f"Slab: {slab}")
-print(f"  IFC entity: {slab.ifc_entity}")
+print(f"  IFC entity: {slab._ifc_entity}")
 print(f"  GlobalId: {slab.global_id}")
 
 # Add to second storey too
@@ -64,7 +64,7 @@ print(f"Building elements: {len(model.building_elements)}")
 print("\n=== 3. Modify element ===")
 wall.name = "Renamed Wall"
 print(f"Wall name after rename: {wall.name}")
-print(f"IFC Name after rename: {wall.ifc_entity.Name}")
+print(f"IFC Name after rename: {wall._ifc_entity.Name}")
 
 # ========================================
 # 4. Print final hierarchy

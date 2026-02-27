@@ -150,9 +150,7 @@ axis_count = 0
 axis_types = {}
 
 for elem in model.building_elements:
-    if elem.ifc_entity is None:
-        continue
-    axis = elem.ifc_entity.axis
+    axis = elem.axis
     if axis is None:
         continue
     axis_count += 1
@@ -179,8 +177,8 @@ print("=" * 70)
 print("4. INSTANCING")
 print("=" * 70)
 
-rep_maps = model.file.get_entities_by_type("IfcRepresentationMap")
-mapped_items = model.file.get_entities_by_type("IfcMappedItem")
+rep_maps = model._file.get_entities_by_type("IfcRepresentationMap")
+mapped_items = model._file.get_entities_by_type("IfcMappedItem")
 
 print(f"  IfcRepresentationMap: {len(rep_maps)}")
 print(f"  IfcMappedItem:        {len(mapped_items)}")
@@ -189,9 +187,9 @@ print(f"  IfcMappedItem:        {len(mapped_items)}")
 mapped_parse_ok = 0
 mapped_parse_fail = 0
 for elem in model.building_elements:
-    if elem.ifc_entity is None:
+    if elem._ifc_entity is None:
         continue
-    rep = elem.ifc_entity.Representation
+    rep = elem._ifc_entity.Representation
     if rep is None:
         continue
     for shape_rep in rep.Representations:

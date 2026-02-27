@@ -16,15 +16,15 @@ import os
 
 from compas.geometry import Circle, Frame, Point, Polygon, Polyline, Vector
 
-from compas_ifc.model import Model
+from compas_ifc.bim import BuildingInformationModel
 from compas_ifc.representations import Pipe, Revolution
 
 # ------------------------------------------------------------------
 # Create model
 # ------------------------------------------------------------------
 
-model = Model.template(schema="IFC4", unit="m")
-storey = model.building_storeys[0]
+model = BuildingInformationModel.template(schema="IFC4", unit="m")
+storey = model.storeys[0]
 
 # ------------------------------------------------------------------
 # 1. Revolution: circle profile, 360 degrees (full torus-like solid)
@@ -38,12 +38,12 @@ rev1 = Revolution(
     frame=Frame(Point(0, 0, 0), Vector.Xaxis(), Vector.Yaxis()),
 )
 
-model.create(
-    "IfcColumn",
+model.create_element(
+    ifc_type="IfcColumn",
     geometry=rev1,
     frame=Frame(Point(0, 0, 0), Vector.Xaxis(), Vector.Yaxis()),
     parent=storey,
-    Name="Revolution_Circle_360",
+    name="Revolution_Circle_360",
 )
 
 # ------------------------------------------------------------------
@@ -65,12 +65,12 @@ rev2 = Revolution(
     frame=Frame(Point(5, 0, 0), Vector.Xaxis(), Vector.Yaxis()),
 )
 
-model.create(
-    "IfcBeam",
+model.create_element(
+    ifc_type="IfcBeam",
     geometry=rev2,
     frame=Frame(Point(5, 0, 0), Vector.Xaxis(), Vector.Yaxis()),
     parent=storey,
-    Name="Revolution_Polygon_180",
+    name="Revolution_Polygon_180",
 )
 
 # ------------------------------------------------------------------
@@ -87,12 +87,12 @@ pipe1 = Pipe(
     radius=0.15,
 )
 
-model.create(
-    "IfcBuildingElementProxy",
+model.create_element(
+    ifc_type="IfcBuildingElementProxy",
     geometry=pipe1,
     frame=Frame(Point(10, 0, 0), Vector.Xaxis(), Vector.Yaxis()),
     parent=storey,
-    Name="Pipe_Basic",
+    name="Pipe_Basic",
 )
 
 # ------------------------------------------------------------------
@@ -109,12 +109,12 @@ pipe2 = Pipe(
     inner_radius=0.25,
 )
 
-model.create(
-    "IfcBuildingElementProxy",
+model.create_element(
+    ifc_type="IfcBuildingElementProxy",
     geometry=pipe2,
     frame=Frame(Point(15, 0, 0), Vector.Xaxis(), Vector.Yaxis()),
     parent=storey,
-    Name="Pipe_Hollow",
+    name="Pipe_Hollow",
 )
 
 # ------------------------------------------------------------------
@@ -135,34 +135,29 @@ print("=" * 60)
 print("Verification: Reload and check parametric round-trip")
 print("=" * 60)
 
-model2 = Model(output_path)
+model2 = BuildingInformationModel(output_path)
 
 # Count swept solid entities
-revolved = model2.get_entities_by_type("IfcRevolvedAreaSolid")
-swept_disk = model2.get_entities_by_type("IfcSweptDiskSolid")
+revolved = model2._file.get_entities_by_type("IfcRevolvedAreaSolid")
+swept_disk = model2._file.get_entities_by_type("IfcSweptDiskSolid")
 
 print(f"IfcRevolvedAreaSolid entities: {len(revolved)}")
 print(f"IfcSweptDiskSolid entities:    {len(swept_disk)}")
 print()
 
-# Verify each product
-products = model2.get_entities_by_type("IfcProduct")
+# Verify each element
 results = {}
 
-for entity in products:
-    if entity.is_a("IfcSite") or entity.is_a("IfcBuilding") or entity.is_a("IfcBuildingStorey"):
+for element in model2.building_elements:
+    if not element.name:
         continue
 
-    name = getattr(entity, "Name", "") or ""
-    if not name:
-        continue
-
-    geom = entity.geometry
+    geom = element.geometry
 
     if geom is not None:
         gtype = type(geom).__name__
-        results[name] = ("OK", gtype, geom)
-        print(f"  [{entity.is_a()}] {name}: geometry={gtype}")
+        results[element.name] = ("OK", gtype, geom)
+        print(f"  [{element.ifc_type}] {element.name}: geometry={gtype}")
 
         # Print parametric details
         if isinstance(geom, Revolution):
@@ -177,8 +172,8 @@ for entity in products:
                 print(f"    inner_radius: {geom.inner_radius:.3f}")
         print()
     else:
-        results[name] = ("MISSING", "None", None)
-        print(f"  [{entity.is_a()}] {name}: geometry=MISSING")
+        results[element.name] = ("MISSING", "None", None)
+        print(f"  [{element.ifc_type}] {element.name}: geometry=MISSING")
         print()
 
 # ------------------------------------------------------------------
