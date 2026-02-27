@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from functools import reduce
 from operator import mul
+from typing import TYPE_CHECKING
 
 from compas.geometry import Frame
 from compas.geometry import Point
@@ -9,10 +12,12 @@ from compas.geometry import Vector
 from compas_ifc.conversions.primitives import IfcCartesianPoint_to_point
 from compas_ifc.conversions.primitives import IfcDirection_to_vector
 from compas_ifc.entities.base import Base
-from compas_ifc.model import Model
+
+if TYPE_CHECKING:
+    from compas_ifc.bim import BuildingInformationModel
 
 
-def create_IfcAxis2Placement3D(model: Model, point: Point = None, dir1: Vector = None, dir2: Vector = None) -> Base:
+def create_IfcAxis2Placement3D(model: BuildingInformationModel, point: Point = None, dir1: Vector = None, dir2: Vector = None) -> Base:
     """
     Create an IFC Axis2Placement3D from a point, a direction and a second direction.
     """
@@ -23,14 +28,14 @@ def create_IfcAxis2Placement3D(model: Model, point: Point = None, dir1: Vector =
     return axis2placement
 
 
-def create_IfcAxis1Placement(model: Model, point: Point = None, direction: Vector = None) -> Base:
+def create_IfcAxis1Placement(model: BuildingInformationModel, point: Point = None, direction: Vector = None) -> Base:
     """Create an ``IfcAxis1Placement`` from a point and an axis direction.
 
     Used for revolution axes in ``IfcRevolvedAreaSolid``.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     point : :class:`Point`, optional
         Location of the axis.  Defaults to ``[0, 0, 0]``.
     direction : :class:`Vector`, optional
@@ -46,7 +51,7 @@ def create_IfcAxis1Placement(model: Model, point: Point = None, direction: Vecto
     return model.create("IfcAxis1Placement", Location=pt, Axis=d)
 
 
-def frame_to_ifc_axis2_placement_3d(model: Model, frame: Frame) -> Base:
+def frame_to_ifc_axis2_placement_3d(model: BuildingInformationModel, frame: Frame) -> Base:
     return create_IfcAxis2Placement3D(model, point=frame.point, dir1=frame.zaxis, dir2=frame.xaxis)
 
 

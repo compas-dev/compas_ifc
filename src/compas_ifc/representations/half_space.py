@@ -6,9 +6,7 @@ a plane, used as a boolean operand for clipping or difference
 operations.
 """
 
-from compas.geometry import Frame
 from compas.geometry import Geometry
-from compas.geometry import Plane
 
 
 class HalfSpace(Geometry):
@@ -45,11 +43,7 @@ class HalfSpace(Geometry):
         self.name = name
 
     def __repr__(self):
-        return (
-            f"<HalfSpace point={self.plane.point}, "
-            f"normal={self.plane.normal}, "
-            f"agree={self.agreement_flag}>"
-        )
+        return f"<HalfSpace point={self.plane.point}, normal={self.plane.normal}, agree={self.agreement_flag}>"
 
     # ------------------------------------------------------------------
     # Geometry interface

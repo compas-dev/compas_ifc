@@ -32,7 +32,6 @@ from compas_ifc.representations import HalfSpace
 from compas_ifc.representations import Pipe
 from compas_ifc.representations import Revolution
 
-
 # ==========================================================================
 # Top-level entry point
 # ==========================================================================

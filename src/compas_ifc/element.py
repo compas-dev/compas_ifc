@@ -360,9 +360,10 @@ class GenericElement(Element):
         list[Contact]
 
         """
+        from compas_model.algorithms.contacts import brep_brep_contacts
+
         from compas_ifc.algorithms.contacts import fast_mesh_mesh_contacts
         from compas_ifc.brep.tessellatedbrep import TessellatedBrep
-        from compas_model.algorithms.contacts import brep_brep_contacts
 
         a = self.modelgeometry
         b = other.modelgeometry

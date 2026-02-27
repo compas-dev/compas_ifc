@@ -26,9 +26,7 @@ import numpy as np
 from compas.datastructures import Mesh
 from compas.geometry import Frame
 from compas.geometry import Point
-from compas.geometry import Transformation
 from compas.geometry import centroid_polygon
-from compas.geometry import transform_points
 from compas_model.interactions import Contact
 from shapely.geometry import Polygon as ShapelyPolygon
 

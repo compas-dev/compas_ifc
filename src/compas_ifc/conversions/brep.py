@@ -2,13 +2,18 @@
 This module contains functions for converting BREP geometry to IFC.
 """
 
-import numpy as np
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.tolerance import TOL
 
 from compas_ifc.entities.base import Base
-from compas_ifc.model import Model
+
+if TYPE_CHECKING:
+    from compas_ifc.bim import BuildingInformationModel
 
 from .frame import create_IfcAxis2Placement3D
 from .primitives import frame_to_IfcAxis2Placement3D
@@ -33,7 +38,7 @@ def calculate_knots_and_multiplicities(knot_sequence):
     return knots, multiplicities
 
 
-def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
+def brep_to_IfcAdvancedBrep(model: BuildingInformationModel, brep: Brep) -> list[Base]:
     brep.fix()
     # Only sew and promote to solid when there are no solids yet.
     # BRepBuilderAPI_Sewing merges all faces into a single shell, destroying
@@ -257,7 +262,8 @@ def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
     for solid in brep.solids:
         shells = list(solid.shells)
 
-        build = lambda shell: _build_shell_faces(shell, model, get_ifc_bspline_edge, get_ifc_line_edge, get_ifc_circle_edge, get_ifc_ellipse_edge, degenerate_edges)
+        def build(shell):
+            return _build_shell_faces(shell, model, get_ifc_bspline_edge, get_ifc_line_edge, get_ifc_circle_edge, get_ifc_ellipse_edge, degenerate_edges)
 
         # Merge all shells (outer + inner voids) into one IfcClosedShell.
         # IfcAdvancedBrepWithVoids is correct per spec but poorly supported
@@ -279,7 +285,8 @@ def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
         if not shells:
             raise ValueError("No solids or shells found in Brep — cannot create IfcAdvancedBrep")
 
-        build = lambda shell: _build_shell_faces(shell, model, get_ifc_bspline_edge, get_ifc_line_edge, get_ifc_circle_edge, get_ifc_ellipse_edge, degenerate_edges)
+        def build(shell):
+            return _build_shell_faces(shell, model, get_ifc_bspline_edge, get_ifc_line_edge, get_ifc_circle_edge, get_ifc_ellipse_edge, degenerate_edges)
 
         # Detect orphan faces: faces in the compound but not in any shell.
         orphan_faces = _find_orphan_faces(brep)
@@ -287,10 +294,17 @@ def brep_to_IfcAdvancedBrep(model: Model, brep: Brep) -> list[Base]:
         if orphan_faces and len(shells) == 1:
             # Single outer shell + orphan void faces → merge into one IfcAdvancedBrep.
             all_faces = build(shells[0])
-            all_faces.extend(_build_orphan_faces(
-                orphan_faces, model, get_ifc_bspline_edge, get_ifc_line_edge,
-                get_ifc_circle_edge, get_ifc_ellipse_edge, degenerate_edges,
-            ))
+            all_faces.extend(
+                _build_orphan_faces(
+                    orphan_faces,
+                    model,
+                    get_ifc_bspline_edge,
+                    get_ifc_line_edge,
+                    get_ifc_circle_edge,
+                    get_ifc_ellipse_edge,
+                    degenerate_edges,
+                )
+            )
             ifc_shell = model.create("IfcClosedShell", CfsFaces=all_faces)
             ifc_brep = model.create("IfcAdvancedBrep", Outer=ifc_shell)
             ifc_breps.append(ifc_brep)
@@ -341,9 +355,7 @@ def _build_shell_faces(shell, model, get_bspline, get_line, get_circle, get_elli
                 if IfcEdgeCurve is None:
                     raise ValueError(f"Edge not found in cache: {edge}")
 
-                ifc_oriented_edges.append(
-                    model.create("IfcOrientedEdge", EdgeElement=IfcEdgeCurve, Orientation=oriented)
-                )
+                ifc_oriented_edges.append(model.create("IfcOrientedEdge", EdgeElement=IfcEdgeCurve, Orientation=oriented))
 
             if not ifc_oriented_edges:
                 # Loop has no non-degenerate edges (e.g. degenerate pole loop); skip it.
@@ -393,8 +405,8 @@ def _face_to_ifc_nurbs_surface(face, model):
     Works directly with the OCC BSpline surface, converting the face via
     BRepBuilderAPI_NurbsConvert first if needed (e.g. for cone faces).
     """
-    from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_NurbsConvert
     from OCC.Core.BRepAdaptor import BRepAdaptor_Surface
+    from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_NurbsConvert
     from OCC.Core.GeomAbs import GeomAbs_BSplineSurface
 
     # Convert to NURBS if not already BSpline.
@@ -468,8 +480,8 @@ def _find_orphan_faces(brep):
     After BRepBuilderAPI_Sewing, inner-void faces of a boolean-cut solid may be
     left as loose faces in the compound rather than being included in a shell.
     """
+    from OCC.Core.TopAbs import TopAbs_FACE
     from OCC.Core.TopExp import TopExp_Explorer
-    from OCC.Core.TopAbs import TopAbs_FACE, TopAbs_SHELL
     from OCC.Core.TopoDS import topods
 
     shell_face_hashes = set()
@@ -503,5 +515,11 @@ def _build_orphan_faces(orphan_faces, model, get_bspline, get_line, get_circle, 
 
     shell_brep = OCCBrep.from_native(shell)
     return _build_shell_faces(
-        shell_brep, model, get_bspline, get_line, get_circle, get_ellipse, degenerate_edges,
+        shell_brep,
+        model,
+        get_bspline,
+        get_line,
+        get_circle,
+        get_ellipse,
+        degenerate_edges,
     )

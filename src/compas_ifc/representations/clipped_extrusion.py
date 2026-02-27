@@ -6,11 +6,7 @@ is an ``IfcExtrudedAreaSolid`` and each clipping operand is an
 ``IfcHalfSpaceSolid``.
 """
 
-from compas.geometry import Frame
 from compas.geometry import Geometry
-from compas.geometry import Plane
-
-from compas_ifc.representations.extrusion import Extrusion
 
 
 class ClippedExtrusion(Geometry):
@@ -55,7 +51,8 @@ class ClippedExtrusion(Geometry):
 
     def __repr__(self):
         ext = self.extrusion
-        from compas.geometry import Circle, Polygon
+        from compas.geometry import Circle
+        from compas.geometry import Polygon
 
         if isinstance(ext.profile, tuple):
             n_voids = len(ext.profile[1])

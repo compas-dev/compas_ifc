@@ -4,7 +4,6 @@ Pipe geometry type for parametric IFC representation.
 
 import math
 
-from compas.geometry import Frame
 from compas.geometry import Geometry
 from compas.geometry import Point
 from compas.geometry import Polyline
@@ -101,9 +100,9 @@ class Pipe(Geometry):
         float
         """
         length = self.directrix.length
-        outer = math.pi * self.radius ** 2 * length
+        outer = math.pi * self.radius**2 * length
         if self.inner_radius is not None:
-            inner = math.pi * self.inner_radius ** 2 * length
+            inner = math.pi * self.inner_radius**2 * length
             return outer - inner
         return outer
 
@@ -195,12 +194,14 @@ class Pipe(Geometry):
         for j in range(n_rings - 1):
             for i in range(n):
                 i_next = (i + 1) % n
-                faces.append([
-                    j * n + i,
-                    j * n + i_next,
-                    (j + 1) * n + i_next,
-                    (j + 1) * n + i,
-                ])
+                faces.append(
+                    [
+                        j * n + i,
+                        j * n + i_next,
+                        (j + 1) * n + i_next,
+                        (j + 1) * n + i,
+                    ]
+                )
 
         return vertices, faces
 

@@ -9,7 +9,6 @@ from compas.geometry import Frame
 from compas.geometry import Geometry
 from compas.geometry import Point
 from compas.geometry import Polygon
-from compas.geometry import Transformation
 from compas.geometry import Vector
 
 
@@ -242,10 +241,7 @@ class Revolution(Geometry):
             cx = self.profile.frame.point.x if hasattr(self.profile, "frame") else 0
             cy = self.profile.frame.point.y if hasattr(self.profile, "frame") else 0
             r = self.profile.radius
-            return [
-                Point(cx + r * math.cos(2 * math.pi * i / n), cy + r * math.sin(2 * math.pi * i / n), 0)
-                for i in range(n)
-            ]
+            return [Point(cx + r * math.cos(2 * math.pi * i / n), cy + r * math.sin(2 * math.pi * i / n), 0) for i in range(n)]
         elif isinstance(self.profile, Polygon):
             return [Point(*p) for p in self.profile.points]
         else:
@@ -310,12 +306,14 @@ class Revolution(Geometry):
             j_next = (j + 1) % n_rings
             for i in range(m):
                 i_next = (i + 1) % m
-                faces.append([
-                    j * m + i,
-                    j * m + i_next,
-                    j_next * m + i_next,
-                    j_next * m + i,
-                ])
+                faces.append(
+                    [
+                        j * m + i,
+                        j * m + i_next,
+                        j_next * m + i_next,
+                        j_next * m + i,
+                    ]
+                )
 
         return vertices, faces
 

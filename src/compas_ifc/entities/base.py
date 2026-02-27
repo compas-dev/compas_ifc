@@ -8,8 +8,8 @@ from compas.datastructures import TreeNode
 from ifcopenshell import entity_instance
 
 if TYPE_CHECKING:
+    from compas_ifc.bim import BuildingInformationModel
     from compas_ifc.file import IFCFile
-    from compas_ifc.model import Model
 
 
 class TypeDefinition:
@@ -166,7 +166,7 @@ class Base(Data):
         return [self.file.from_entity(attr) for attr in getattr(self.entity, name)]
 
     @property
-    def model(self) -> "Model":
+    def model(self) -> "BuildingInformationModel":
         return self.file.model  # TODO: rather convoluted.
 
     @property

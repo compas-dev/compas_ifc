@@ -9,8 +9,6 @@ from typing import Type
 from typing import Union
 
 import ifcopenshell
-import numpy as np
-from compas.geometry import Transformation
 from ifcopenshell.api import run
 
 import compas_ifc
@@ -25,7 +23,7 @@ class IFCFile(object):
     ----------
     filepath : str, optional
         The path to the IFC file.
-    model : :class:`compas_ifc.model.Model`
+    model : :class:`compas_ifc.bim.BuildingInformationModel`
         The model object.
     use_occ : bool
         Whether to use OCC for geometry processing.
@@ -62,7 +60,7 @@ class IFCFile(object):
 
         Parameters
         ----------
-        model : :class:`compas_ifc.model.Model`
+        model : :class:`compas_ifc.bim.BuildingInformationModel`
             The model object.
         filepath : str, optional
             The path to the IFC file. If not provided, a new IFC file is created.
@@ -359,7 +357,17 @@ class IFCFile(object):
         """
         self._file.write(path)
 
-    def export(self, path: str, entities: list[Base] = [], as_snippet: bool = False, export_materials: bool = True, export_properties: bool = True, export_styles: bool = True, export_types: bool = True, export_relationships: bool = True):
+    def export(
+        self,
+        path: str,
+        entities: list[Base] = [],
+        as_snippet: bool = False,
+        export_materials: bool = True,
+        export_properties: bool = True,
+        export_styles: bool = True,
+        export_types: bool = True,
+        export_relationships: bool = True,
+    ):
         """
         Export a subset of the IFC file to a new IFC file.
 

@@ -28,7 +28,6 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import ValidationError
 
-
 # ==========================================================================
 # Standard IFC property set schemas
 # ==========================================================================
@@ -175,6 +174,7 @@ class Specification:
             class MySpec(BaseModel):
                 Pset_SlabCommon: SlabCommonSchema
                 Pset_EnvironmentalImpactIndicators: EnvSchema
+
 
             spec = Specification(..., required_psets=MySpec)
 

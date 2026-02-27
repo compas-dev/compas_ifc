@@ -58,11 +58,7 @@ class BooleanResult(Geometry):
         self.name = name
 
     def __repr__(self):
-        return (
-            f"<BooleanResult {self.operator} "
-            f"first={type(self.first_operand).__name__} "
-            f"second={type(self.second_operand).__name__}>"
-        )
+        return f"<BooleanResult {self.operator} first={type(self.first_operand).__name__} second={type(self.second_operand).__name__}>"
 
     # ------------------------------------------------------------------
     # Geometry interface

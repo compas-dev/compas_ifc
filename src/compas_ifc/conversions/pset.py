@@ -1,7 +1,13 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from ifcopenshell.util.element import get_psets
 
 from compas_ifc.entities.base import Base
-from compas_ifc.model import Model
+
+if TYPE_CHECKING:
+    from compas_ifc.bim import BuildingInformationModel
 
 PRIMARY_MEASURE_TYPES = {
     str: "IfcLabel",
@@ -11,7 +17,7 @@ PRIMARY_MEASURE_TYPES = {
 }
 
 
-def from_dict_to_ifc_properties(model: Model, properties: dict) -> list[Base]:
+def from_dict_to_ifc_properties(model: BuildingInformationModel, properties: dict) -> list[Base]:
     """Convert a dictionary to a list of IfcProperties"""
 
     ifc_properties = []
@@ -37,7 +43,7 @@ def from_dict_to_ifc_properties(model: Model, properties: dict) -> list[Base]:
     return ifc_properties
 
 
-def from_dict_to_pset(model: Model, properties: dict, name: str = None) -> Base:
+def from_dict_to_pset(model: BuildingInformationModel, properties: dict, name: str = None) -> Base:
     ifc_properties = from_dict_to_ifc_properties(model, properties)
     pset = model.create("IfcPropertySet", Name=name, HasProperties=ifc_properties)
     return pset

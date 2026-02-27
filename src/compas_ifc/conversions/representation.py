@@ -2,39 +2,42 @@
 This module contains functions for converting geometry representations between COMPAS and IFC.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from typing import Union
 
 from compas.datastructures import Mesh
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Capsule
+from compas.geometry import Circle
 from compas.geometry import Cone
 from compas.geometry import Cylinder
-from compas.geometry import Shape
-from compas.geometry import Sphere
-from compas.geometry import Torus
-
-from compas.geometry import Circle
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Polygon
 from compas.geometry import Polyline
+from compas.geometry import Shape
+from compas.geometry import Sphere
+from compas.geometry import Torus
 
 from compas_ifc.conversions.brep import brep_to_IfcAdvancedBrep
-from compas_ifc.conversions.mesh import mesh_to_IfcFaceBasedSurfaceModel
 from compas_ifc.conversions.mesh import mesh_to_IfcPolygonalFaceSet
 from compas_ifc.conversions.shapes import box_to_IfcBlock
 from compas_ifc.conversions.shapes import cone_to_IfcRightCircularCone
 from compas_ifc.conversions.shapes import cylinder_to_IfcRightCircularCylinder
 from compas_ifc.conversions.shapes import sphere_to_IfcSphere
 from compas_ifc.entities.extensions import IfcProduct
-from compas_ifc.model import Model
 from compas_ifc.representations import BooleanResult
 from compas_ifc.representations import ClippedExtrusion
 from compas_ifc.representations import Extrusion
 from compas_ifc.representations import HalfSpace
 from compas_ifc.representations import Pipe
 from compas_ifc.representations import Revolution
+
+if TYPE_CHECKING:
+    from compas_ifc.bim import BuildingInformationModel
 
 REPRESENTATION_CACHE = {}
 SHAPE_REP_CACHE = {}
@@ -60,7 +63,7 @@ def assign_body_representation(entity: IfcProduct, representation: Union[Shape, 
     entity : :class:`IfcProduct`
     representation : :class:`Shape` | :class:`Mesh` | :class:`Brep` | :class:`Extrusion`
     """
-    model: Model = entity.model
+    model: BuildingInformationModel = entity.model
     geom_id = id(representation)
 
     if geom_id in REPRESENTATION_MAP_CACHE:
@@ -98,12 +101,12 @@ def assign_body_representation(entity: IfcProduct, representation: Union[Shape, 
     REPRESENTATION_CACHE[geom_id] = ifc_product_definition_shape
 
 
-def _geometry_to_ifc_items(model: Model, representation):
+def _geometry_to_ifc_items(model: BuildingInformationModel, representation):
     """Convert a COMPAS geometry object to IFC representation items.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     representation : :class:`Shape` | :class:`Mesh` | :class:`Brep` | :class:`Extrusion`
 
     Returns
@@ -175,7 +178,7 @@ def _geometry_to_ifc_items(model: Model, representation):
     raise NotImplementedError(f"Conversion of {type(representation)} to IFC not implemented.")
 
 
-def read_representation(model: Model, entity: IfcProduct):
+def read_representation(model: BuildingInformationModel, entity: IfcProduct):
     """Read the body representation of an entity into COMPAS geometry.
 
     See :func:`compas_ifc.conversions.reading.read_body_representation`
@@ -191,14 +194,14 @@ def read_representation(model: Model, entity: IfcProduct):
 # ==========================================================================
 
 
-def _create_representation_map(model: Model, inner_shape_rep):
+def _create_representation_map(model: BuildingInformationModel, inner_shape_rep):
     """Create an ``IfcRepresentationMap`` wrapping an inner ``IfcShapeRepresentation``.
 
     The mapping origin is set to the world origin (identity placement).
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     inner_shape_rep : :class:`~compas_ifc.entities.base.Base`
         The ``IfcShapeRepresentation`` containing the actual geometry items.
 
@@ -217,12 +220,12 @@ def _create_representation_map(model: Model, inner_shape_rep):
     )
 
 
-def _create_identity_transform_operator(model: Model):
+def _create_identity_transform_operator(model: BuildingInformationModel):
     """Create an identity ``IfcCartesianTransformationOperator3D``.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
 
     Returns
     -------
@@ -238,7 +241,7 @@ def _create_identity_transform_operator(model: Model):
     )
 
 
-def _assign_mapped_body(model: Model, entity: IfcProduct, rep_map):
+def _assign_mapped_body(model: BuildingInformationModel, entity: IfcProduct, rep_map):
     """Create an ``IfcMappedItem`` referencing a shared map and assign to entity.
 
     Creates the full chain: ``IfcMappedItem`` -> ``IfcShapeRepresentation``
@@ -246,7 +249,7 @@ def _assign_mapped_body(model: Model, entity: IfcProduct, rep_map):
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     entity : :class:`IfcProduct`
     rep_map : :class:`~compas_ifc.entities.base.Base`
         The ``IfcRepresentationMap`` to reference.
@@ -273,12 +276,12 @@ def _assign_mapped_body(model: Model, entity: IfcProduct, rep_map):
     entity.Representation = pds
 
 
-def transformation_to_IfcCartesianTransformationOperator3D(model: Model, transformation):
+def transformation_to_IfcCartesianTransformationOperator3D(model: BuildingInformationModel, transformation):
     """Convert a :class:`Transformation` to an ``IfcCartesianTransformationOperator3D``.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     transformation : :class:`~compas.geometry.Transformation`
 
     Returns
@@ -314,7 +317,7 @@ def assign_axis_representation(entity: IfcProduct, curve):
         The axis curve.  A Polyline or Line is written as an open IfcPolyline;
         a Polygon is written as a closed IfcPolyline.
     """
-    model: Model = entity.model
+    model: BuildingInformationModel = entity.model
 
     if isinstance(curve, Line):
         curve = Polyline([curve.start, curve.end])
@@ -355,12 +358,12 @@ def assign_axis_representation(entity: IfcProduct, curve):
 # ==========================================================================
 
 
-def polyline_to_IfcPolyline(model: Model, polyline: Polyline):
+def polyline_to_IfcPolyline(model: BuildingInformationModel, polyline: Polyline):
     """Convert a :class:`Polyline` to an ``IfcPolyline`` (open curve).
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     polyline : :class:`Polyline`
 
     Returns
@@ -373,14 +376,14 @@ def polyline_to_IfcPolyline(model: Model, polyline: Polyline):
     return model.create("IfcPolyline", Points=points)
 
 
-def polygon_to_IfcPolyline(model: Model, polygon: Polygon):
+def polygon_to_IfcPolyline(model: BuildingInformationModel, polygon: Polygon):
     """Convert a :class:`Polygon` to an ``IfcPolyline`` (closed curve).
 
     The first point is repeated at the end to close the polyline.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     polygon : :class:`Polygon`
 
     Returns
@@ -400,12 +403,12 @@ def polygon_to_IfcPolyline(model: Model, polygon: Polygon):
 # ==========================================================================
 
 
-def extrusion_to_IfcExtrudedAreaSolid(model: Model, extrusion: Extrusion):
+def extrusion_to_IfcExtrudedAreaSolid(model: BuildingInformationModel, extrusion: Extrusion):
     """Convert an :class:`Extrusion` to an ``IfcExtrudedAreaSolid``.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     extrusion : :class:`Extrusion`
 
     Returns
@@ -434,7 +437,7 @@ def extrusion_to_IfcExtrudedAreaSolid(model: Model, extrusion: Extrusion):
     )
 
 
-def clipped_extrusion_to_IfcBooleanClippingResult(model: Model, clipped: ClippedExtrusion):
+def clipped_extrusion_to_IfcBooleanClippingResult(model: BuildingInformationModel, clipped: ClippedExtrusion):
     """Convert a :class:`ClippedExtrusion` to an ``IfcBooleanClippingResult`` chain.
 
     Builds the recursive chain from inside out: the leaf is an
@@ -443,7 +446,7 @@ def clipped_extrusion_to_IfcBooleanClippingResult(model: Model, clipped: Clipped
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     clipped : :class:`ClippedExtrusion`
 
     Returns
@@ -479,7 +482,7 @@ def clipped_extrusion_to_IfcBooleanClippingResult(model: Model, clipped: Clipped
 # ==========================================================================
 
 
-def boolean_result_to_IfcBooleanResult(model: Model, bool_result: BooleanResult):
+def boolean_result_to_IfcBooleanResult(model: BuildingInformationModel, bool_result: BooleanResult):
     """Convert a :class:`BooleanResult` to an ``IfcBooleanResult``.
 
     Recursively converts both operands and wraps them in an
@@ -487,7 +490,7 @@ def boolean_result_to_IfcBooleanResult(model: Model, bool_result: BooleanResult)
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     bool_result : :class:`BooleanResult`
 
     Returns
@@ -505,12 +508,12 @@ def boolean_result_to_IfcBooleanResult(model: Model, bool_result: BooleanResult)
     )
 
 
-def half_space_to_IfcHalfSpaceSolid(model: Model, half_space: HalfSpace):
+def half_space_to_IfcHalfSpaceSolid(model: BuildingInformationModel, half_space: HalfSpace):
     """Convert a :class:`HalfSpace` to an ``IfcHalfSpaceSolid``.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     half_space : :class:`HalfSpace`
 
     Returns
@@ -528,7 +531,7 @@ def half_space_to_IfcHalfSpaceSolid(model: Model, half_space: HalfSpace):
     )
 
 
-def _geometry_to_ifc_operand(model: Model, geometry):
+def _geometry_to_ifc_operand(model: BuildingInformationModel, geometry):
     """Convert a COMPAS geometry object to an IFC boolean operand entity.
 
     Dispatches based on the geometry type.  Supports all types that
@@ -536,7 +539,7 @@ def _geometry_to_ifc_operand(model: Model, geometry):
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     geometry : :class:`~compas.geometry.Geometry`
 
     Returns
@@ -586,7 +589,7 @@ def _profile_to_ifc(model, profile):
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     profile : :class:`Circle` | :class:`Polygon` | tuple
 
     Returns
@@ -609,12 +612,12 @@ def _profile_to_ifc(model, profile):
 # ==========================================================================
 
 
-def revolution_to_IfcRevolvedAreaSolid(model: Model, revolution: Revolution):
+def revolution_to_IfcRevolvedAreaSolid(model: BuildingInformationModel, revolution: Revolution):
     """Convert a :class:`Revolution` to an ``IfcRevolvedAreaSolid``.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     revolution : :class:`Revolution`
 
     Returns
@@ -654,12 +657,12 @@ def revolution_to_IfcRevolvedAreaSolid(model: Model, revolution: Revolution):
 # ==========================================================================
 
 
-def pipe_to_IfcSweptDiskSolid(model: Model, pipe: Pipe):
+def pipe_to_IfcSweptDiskSolid(model: BuildingInformationModel, pipe: Pipe):
     """Convert a :class:`Pipe` to an ``IfcSweptDiskSolid``.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     pipe : :class:`Pipe`
 
     Returns
@@ -679,12 +682,12 @@ def pipe_to_IfcSweptDiskSolid(model: Model, pipe: Pipe):
     return model.create("IfcSweptDiskSolid", **kwargs)
 
 
-def _polygon_to_IfcArbitraryClosedProfileDef(model: Model, polygon: Polygon):
+def _polygon_to_IfcArbitraryClosedProfileDef(model: BuildingInformationModel, polygon: Polygon):
     """Convert a :class:`Polygon` to an ``IfcArbitraryClosedProfileDef``.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     polygon : :class:`Polygon`
 
     Returns
@@ -704,12 +707,12 @@ def _polygon_to_IfcArbitraryClosedProfileDef(model: Model, polygon: Polygon):
     )
 
 
-def _circle_to_IfcCircleProfileDef(model: Model, circle: Circle):
+def _circle_to_IfcCircleProfileDef(model: BuildingInformationModel, circle: Circle):
     """Convert a :class:`Circle` to an ``IfcCircleProfileDef``.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     circle : :class:`Circle`
 
     Returns
@@ -723,12 +726,12 @@ def _circle_to_IfcCircleProfileDef(model: Model, circle: Circle):
     )
 
 
-def _profile_with_voids_to_ifc(model: Model, outer: Polygon, inners: list):
+def _profile_with_voids_to_ifc(model: BuildingInformationModel, outer: Polygon, inners: list):
     """Convert a profile with voids to an ``IfcArbitraryProfileDefWithVoids``.
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     outer : :class:`Polygon`
     inners : list[:class:`Polygon`]
 
@@ -765,7 +768,9 @@ if __name__ == "__main__":
     import compas
     from compas.geometry import Frame
 
-    model = Model.template(schema="IFC2X3", unit="m")
+    from compas_ifc.bim import BuildingInformationModel
+
+    model = BuildingInformationModel.template(schema="IFC2X3", unit="m")
 
     # geometry = Box.from_width_height_depth(1, 1, 1)
     geometry = Mesh.from_ply(compas.get("bunny.ply"))

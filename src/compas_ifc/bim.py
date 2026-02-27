@@ -1,5 +1,4 @@
 from typing import Optional
-from typing import Union
 
 from compas.geometry import Frame
 from compas.geometry import Transformation
@@ -276,10 +275,7 @@ class BuildingInformationModel(Model):
         if parent_element._ifc_entity is not None:
             return parent_element._ifc_entity
 
-        raise ValueError(
-            f"Parent element '{parent_element.name}' has no IFC entity. "
-            "Add spatial parents before their children."
-        )
+        raise ValueError(f"Parent element '{parent_element.name}' has no IFC entity. Add spatial parents before their children.")
 
     def _assign_ifc_placement(self, element, parent_element):
         """Create an IfcLocalPlacement with PlacementRelTo for correct hierarchy."""
@@ -1168,10 +1164,7 @@ class BuildingInformationModel(Model):
                 if f.property_errors:
                     parts.append(f"property errors: {f.property_errors}")
                 msgs.append(f"[{f.specification}] {'; '.join(parts)}")
-            raise ValueError(
-                f"Element '{element.name}' ({element.ifc_type}) "
-                f"failed validation: {' | '.join(msgs)}"
-            )
+            raise ValueError(f"Element '{element.name}' ({element.ifc_type}) failed validation: {' | '.join(msgs)}")
 
     # ==========================================================================
     # Automatic connection detection
@@ -1757,13 +1750,15 @@ class BuildingInformationModel(Model):
         for edge in self.interferences:
             a, b = self.edge_elements(edge)
             pts = self.graph.edge_attribute(edge, "penetrating_points") or []
-            collision_data.append({
-                "a_gid": a.global_id,
-                "b_gid": b.global_id,
-                "a_label": f"[{a.ifc_type}] {a.name}",
-                "b_label": f"[{b.ifc_type}] {b.name}",
-                "count": len(pts),
-            })
+            collision_data.append(
+                {
+                    "a_gid": a.global_id,
+                    "b_gid": b.global_id,
+                    "a_label": f"[{a.ifc_type}] {a.name}",
+                    "b_label": f"[{b.ifc_type}] {b.name}",
+                    "count": len(pts),
+                }
+            )
 
         # ---- property treeform (top) ------------------------------------------
         info_treeform = Treeform()
@@ -1872,13 +1867,15 @@ class BuildingInformationModel(Model):
                 _isolate_pair(c["a_gid"], c["b_gid"])
                 active_pair[0] = idx
 
-                info_treeform.update_from_dict({
-                    "Collision": {
-                        "Element A": c["a_label"],
-                        "Element B": c["b_label"],
-                        "Penetrating points": str(c["count"]),
-                    },
-                })
+                info_treeform.update_from_dict(
+                    {
+                        "Collision": {
+                            "Element A": c["a_label"],
+                            "Element B": c["b_label"],
+                            "Penetrating points": str(c["count"]),
+                        },
+                    }
+                )
 
             viewer.renderer.update()
 

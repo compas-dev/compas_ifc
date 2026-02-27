@@ -200,10 +200,7 @@ class Extrusion(Geometry):
             cx = self.profile.frame.point.x if hasattr(self.profile, "frame") else 0
             cy = self.profile.frame.point.y if hasattr(self.profile, "frame") else 0
             r = self.profile.radius
-            return [
-                Point(cx + r * math.cos(2 * math.pi * i / n), cy + r * math.sin(2 * math.pi * i / n), 0)
-                for i in range(n)
-            ]
+            return [Point(cx + r * math.cos(2 * math.pi * i / n), cy + r * math.sin(2 * math.pi * i / n), 0) for i in range(n)]
         elif isinstance(self.profile, Polygon):
             return [Point(*p) for p in self.profile.points]
         else:

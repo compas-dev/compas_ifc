@@ -1,10 +1,16 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from compas.datastructures import Mesh
 
 from compas_ifc.entities.base import Base
-from compas_ifc.model import Model
+
+if TYPE_CHECKING:
+    from compas_ifc.bim import BuildingInformationModel
 
 
-def mesh_to_IfcPolygonalFaceSet(model: Model, mesh: Mesh) -> Base:
+def mesh_to_IfcPolygonalFaceSet(model: BuildingInformationModel, mesh: Mesh) -> Base:
     """
     Convert a COMPAS mesh to an IFC PolygonalFaceSet.
     """
@@ -27,7 +33,7 @@ def mesh_to_IfcPolygonalFaceSet(model: Model, mesh: Mesh) -> Base:
     )
 
 
-def mesh_to_IfcFaceBasedSurfaceModel(model: Model, mesh: Mesh) -> Base:
+def mesh_to_IfcFaceBasedSurfaceModel(model: BuildingInformationModel, mesh: Mesh) -> Base:
     """
     Convert a COMPAS mesh to an IFC FaceBasedSurfaceModel.
     """
@@ -51,7 +57,7 @@ def mesh_to_IfcFaceBasedSurfaceModel(model: Model, mesh: Mesh) -> Base:
     return ifc_face_based_surface_model
 
 
-def mesh_to_IfcTriangulatedFaceSet(model: Model, mesh: Mesh) -> Base:
+def mesh_to_IfcTriangulatedFaceSet(model: BuildingInformationModel, mesh: Mesh) -> Base:
     """Convert a COMPAS mesh to an IFC TriangulatedFaceSet.
 
     All non-triangular faces are fan-triangulated (vertex 0 to each pair of
@@ -60,7 +66,7 @@ def mesh_to_IfcTriangulatedFaceSet(model: Model, mesh: Mesh) -> Base:
 
     Parameters
     ----------
-    model : :class:`Model`
+    model : :class:`BuildingInformationModel`
     mesh : :class:`Mesh`
 
     Returns

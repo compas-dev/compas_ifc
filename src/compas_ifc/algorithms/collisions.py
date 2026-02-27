@@ -294,11 +294,11 @@ def _ray_z_triangle_intersections(
     valid_idx = np.where(valid)[0]
     Tv = len(valid_idx)
 
-    a_v = a[valid_idx]                # (Tv,)
-    v0_v = v0[valid_idx]              # (Tv, 3)
-    h_v = h[valid_idx]                # (Tv, 3)
-    edge1_v = edge1[valid_idx]        # (Tv, 3)
-    edge2_v = edge2[valid_idx]        # (Tv, 3)
+    a_v = a[valid_idx]  # (Tv,)
+    v0_v = v0[valid_idx]  # (Tv, 3)
+    h_v = h[valid_idx]  # (Tv, 3)
+    edge1_v = edge1[valid_idx]  # (Tv, 3)
+    edge2_v = edge2[valid_idx]  # (Tv, 3)
 
     f = 1.0 / a_v  # (Tv,)
 

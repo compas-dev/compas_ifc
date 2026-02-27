@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -5,7 +9,9 @@ from compas.geometry import Point
 from compas.geometry import Vector
 
 from compas_ifc.entities.base import Base
-from compas_ifc.model import Model
+
+if TYPE_CHECKING:
+    from compas_ifc.bim import BuildingInformationModel
 
 
 def IfcCartesianPoint_to_point(cartesian_point: Base) -> Point:
@@ -54,21 +60,21 @@ def IfcPlane_to_plane(plane: Base) -> Plane:
     return Plane(point, normal)
 
 
-def point_to_IfcCartesianPoint(model: Model, point: Point) -> Base:
+def point_to_IfcCartesianPoint(model: BuildingInformationModel, point: Point) -> Base:
     """
     Convert a COMPAS point to an IFC CartesianPoint.
     """
     return model.create("IfcCartesianPoint", Coordinates=(float(point.x), float(point.y), float(point.z)))
 
 
-def vector_to_IfcDirection(model: Model, vector: Vector) -> Base:
+def vector_to_IfcDirection(model: BuildingInformationModel, vector: Vector) -> Base:
     """
     Convert a COMPAS vector to an IFC Direction.
     """
     return model.create("IfcDirection", DirectionRatios=(float(vector.x), float(vector.y), float(vector.z)))
 
 
-def frame_to_IfcAxis2Placement3D(model: Model, frame: Frame) -> Base:
+def frame_to_IfcAxis2Placement3D(model: BuildingInformationModel, frame: Frame) -> Base:
     """
     Convert a COMPAS frame to an IFC Axis2Placement3D.
     """
@@ -80,7 +86,7 @@ def frame_to_IfcAxis2Placement3D(model: Model, frame: Frame) -> Base:
     )
 
 
-def frame_to_IfcPlane(model: Model, frame: Frame) -> Base:
+def frame_to_IfcPlane(model: BuildingInformationModel, frame: Frame) -> Base:
     """
     Convert a COMPAS frame to an IFC Plane.
     """

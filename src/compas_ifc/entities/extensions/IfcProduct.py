@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
 
+from compas.geometry import Frame
+
 from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
 from compas_ifc.conversions.frame import assign_entity_frame
 from compas_ifc.conversions.representation import assign_body_representation
-from compas.geometry import Frame
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcProduct

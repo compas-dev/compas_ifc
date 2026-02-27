@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import ifcopenshell
 from compas.geometry import Box
 from compas.geometry import Cone
@@ -6,7 +10,9 @@ from compas.geometry import Sphere
 
 from compas_ifc.conversions.frame import create_IfcAxis2Placement3D
 from compas_ifc.entities.base import Base
-from compas_ifc.model import Model
+
+if TYPE_CHECKING:
+    from compas_ifc.bim import BuildingInformationModel
 
 
 def create_IfcShapeRepresentation(file: ifcopenshell.file, item: ifcopenshell.entity_instance, context: ifcopenshell.entity_instance) -> ifcopenshell.entity_instance:
@@ -22,7 +28,7 @@ def create_IfcShapeRepresentation(file: ifcopenshell.file, item: ifcopenshell.en
     )
 
 
-def box_to_IfcBlock(model: Model, box: Box) -> Base:
+def box_to_IfcBlock(model: BuildingInformationModel, box: Box) -> Base:
     """
     Convert a COMPAS box to an IFC Block.
     """
@@ -37,7 +43,7 @@ def box_to_IfcBlock(model: Model, box: Box) -> Base:
     )
 
 
-def sphere_to_IfcSphere(model: Model, sphere: Sphere) -> ifcopenshell.entity_instance:
+def sphere_to_IfcSphere(model: BuildingInformationModel, sphere: Sphere) -> ifcopenshell.entity_instance:
     """
     Convert a COMPAS sphere to an IFC Sphere.
     """
@@ -48,7 +54,7 @@ def sphere_to_IfcSphere(model: Model, sphere: Sphere) -> ifcopenshell.entity_ins
     )
 
 
-def cone_to_IfcRightCircularCone(model: Model, cone: Cone) -> ifcopenshell.entity_instance:
+def cone_to_IfcRightCircularCone(model: BuildingInformationModel, cone: Cone) -> ifcopenshell.entity_instance:
     """
     Convert a COMPAS cone to an IFC Cone.
     """
@@ -61,7 +67,7 @@ def cone_to_IfcRightCircularCone(model: Model, cone: Cone) -> ifcopenshell.entit
     )
 
 
-def cylinder_to_IfcRightCircularCylinder(model: Model, cylinder: Cylinder) -> ifcopenshell.entity_instance:
+def cylinder_to_IfcRightCircularCylinder(model: BuildingInformationModel, cylinder: Cylinder) -> ifcopenshell.entity_instance:
     """
     Convert a COMPAS cylinder to an IFC Cylinder.
     """
@@ -74,7 +80,7 @@ def cylinder_to_IfcRightCircularCylinder(model: Model, cylinder: Cylinder) -> if
     )
 
 
-def occ_cylinder_to_ifc_cylindrical_surface(model: Model, occ_cylinder):
+def occ_cylinder_to_ifc_cylindrical_surface(model: BuildingInformationModel, occ_cylinder):
     location = occ_cylinder.Location().Coord()
     xdir = occ_cylinder.XAxis().Direction().Coord()
     zdir = occ_cylinder.Axis().Direction().Coord()
@@ -82,7 +88,7 @@ def occ_cylinder_to_ifc_cylindrical_surface(model: Model, occ_cylinder):
     return model.create("IfcCylindricalSurface", Position=IfcAxis2Placement3D, Radius=occ_cylinder.Radius())
 
 
-def occ_sphere_to_ifc_spherical_surface(model: Model, occ_sphere):
+def occ_sphere_to_ifc_spherical_surface(model: BuildingInformationModel, occ_sphere):
     location = occ_sphere.Location().Coord()
     xdir = occ_sphere.XAxis().Direction().Coord()
     zdir = occ_sphere.Position().Axis().Direction().Coord()
@@ -90,7 +96,7 @@ def occ_sphere_to_ifc_spherical_surface(model: Model, occ_sphere):
     return model.create("IfcSphericalSurface", Position=IfcAxis2Placement3D, Radius=occ_sphere.Radius())
 
 
-def occ_torus_to_ifc_toroidal_surface(model: Model, occ_torus):
+def occ_torus_to_ifc_toroidal_surface(model: BuildingInformationModel, occ_torus):
     location = occ_torus.Location().Coord()
     xdir = occ_torus.XAxis().Direction().Coord()
     zdir = occ_torus.Axis().Direction().Coord()
@@ -99,7 +105,9 @@ def occ_torus_to_ifc_toroidal_surface(model: Model, occ_torus):
 
 
 if __name__ == "__main__":
-    model = Model()
+    from compas_ifc.bim import BuildingInformationModel
+
+    model = BuildingInformationModel()
     print(create_IfcAxis2Placement3D(model))
 
     box = Box(10, 10, 10)
