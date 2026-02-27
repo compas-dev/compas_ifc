@@ -64,21 +64,21 @@ def point_to_IfcCartesianPoint(model: BuildingInformationModel, point: Point) ->
     """
     Convert a COMPAS point to an IFC CartesianPoint.
     """
-    return model.create("IfcCartesianPoint", Coordinates=(float(point.x), float(point.y), float(point.z)))
+    return model._create("IfcCartesianPoint", Coordinates=(float(point.x), float(point.y), float(point.z)))
 
 
 def vector_to_IfcDirection(model: BuildingInformationModel, vector: Vector) -> Base:
     """
     Convert a COMPAS vector to an IFC Direction.
     """
-    return model.create("IfcDirection", DirectionRatios=(float(vector.x), float(vector.y), float(vector.z)))
+    return model._create("IfcDirection", DirectionRatios=(float(vector.x), float(vector.y), float(vector.z)))
 
 
 def frame_to_IfcAxis2Placement3D(model: BuildingInformationModel, frame: Frame) -> Base:
     """
     Convert a COMPAS frame to an IFC Axis2Placement3D.
     """
-    return model.create(
+    return model._create(
         "IfcAxis2Placement3D",
         Location=point_to_IfcCartesianPoint(model, frame.point),
         Axis=vector_to_IfcDirection(model, frame.zaxis),
@@ -90,4 +90,4 @@ def frame_to_IfcPlane(model: BuildingInformationModel, frame: Frame) -> Base:
     """
     Convert a COMPAS frame to an IFC Plane.
     """
-    return model.create("IfcPlane", Position=frame_to_IfcAxis2Placement3D(model, frame))
+    return model._create("IfcPlane", Position=frame_to_IfcAxis2Placement3D(model, frame))

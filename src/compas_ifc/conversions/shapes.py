@@ -34,7 +34,7 @@ def box_to_IfcBlock(model: BuildingInformationModel, box: Box) -> Base:
     """
     pt = box.frame.point.copy()
     pt -= [box.xsize / 2, box.ysize / 2, box.zsize / 2]
-    return model.create(
+    return model._create(
         "IfcBlock",
         Position=create_IfcAxis2Placement3D(model, pt, box.frame.zaxis, box.frame.xaxis),
         XLength=box.xsize,
@@ -47,7 +47,7 @@ def sphere_to_IfcSphere(model: BuildingInformationModel, sphere: Sphere) -> ifco
     """
     Convert a COMPAS sphere to an IFC Sphere.
     """
-    return model.create(
+    return model._create(
         "IfcSphere",
         Position=create_IfcAxis2Placement3D(model, sphere.base),
         Radius=sphere.radius,
@@ -59,7 +59,7 @@ def cone_to_IfcRightCircularCone(model: BuildingInformationModel, cone: Cone) ->
     Convert a COMPAS cone to an IFC Cone.
     """
     plane = cone.circle.plane
-    return model.create(
+    return model._create(
         "IfcRightCircularCone",
         Position=create_IfcAxis2Placement3D(model, plane.point, plane.normal),
         Height=cone.height,
@@ -72,7 +72,7 @@ def cylinder_to_IfcRightCircularCylinder(model: BuildingInformationModel, cylind
     Convert a COMPAS cylinder to an IFC Cylinder.
     """
     plane = cylinder.circle.plane
-    return model.create(
+    return model._create(
         "IfcRightCircularCylinder",
         Position=create_IfcAxis2Placement3D(model, plane.point, plane.normal),
         Height=cylinder.height,
@@ -85,7 +85,7 @@ def occ_cylinder_to_ifc_cylindrical_surface(model: BuildingInformationModel, occ
     xdir = occ_cylinder.XAxis().Direction().Coord()
     zdir = occ_cylinder.Axis().Direction().Coord()
     IfcAxis2Placement3D = create_IfcAxis2Placement3D(model, location, zdir, xdir)
-    return model.create("IfcCylindricalSurface", Position=IfcAxis2Placement3D, Radius=occ_cylinder.Radius())
+    return model._create("IfcCylindricalSurface", Position=IfcAxis2Placement3D, Radius=occ_cylinder.Radius())
 
 
 def occ_sphere_to_ifc_spherical_surface(model: BuildingInformationModel, occ_sphere):
@@ -93,7 +93,7 @@ def occ_sphere_to_ifc_spherical_surface(model: BuildingInformationModel, occ_sph
     xdir = occ_sphere.XAxis().Direction().Coord()
     zdir = occ_sphere.Position().Axis().Direction().Coord()
     IfcAxis2Placement3D = create_IfcAxis2Placement3D(model, location, zdir, xdir)
-    return model.create("IfcSphericalSurface", Position=IfcAxis2Placement3D, Radius=occ_sphere.Radius())
+    return model._create("IfcSphericalSurface", Position=IfcAxis2Placement3D, Radius=occ_sphere.Radius())
 
 
 def occ_torus_to_ifc_toroidal_surface(model: BuildingInformationModel, occ_torus):
@@ -101,7 +101,7 @@ def occ_torus_to_ifc_toroidal_surface(model: BuildingInformationModel, occ_torus
     xdir = occ_torus.XAxis().Direction().Coord()
     zdir = occ_torus.Axis().Direction().Coord()
     IfcAxis2Placement3D = create_IfcAxis2Placement3D(model, location, zdir, xdir)
-    return model.create("IfcToroidalSurface", Position=IfcAxis2Placement3D, MajorRadius=occ_torus.MajorRadius(), MinorRadius=occ_torus.MinorRadius())
+    return model._create("IfcToroidalSurface", Position=IfcAxis2Placement3D, MajorRadius=occ_torus.MajorRadius(), MinorRadius=occ_torus.MinorRadius())
 
 
 if __name__ == "__main__":

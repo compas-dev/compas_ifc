@@ -82,7 +82,7 @@ def assign_body_representation(entity: IfcProduct, representation: Union[Shape, 
     # 1st use: direct representation (no map overhead for single-use geometry)
     items, representation_type = _geometry_to_ifc_items(model, representation)
 
-    ifc_shape_representation = model.create(
+    ifc_shape_representation = model._create(
         "IfcShapeRepresentation",
         ContextOfItems=model._file.default_body_context,
         RepresentationIdentifier="Body",
@@ -92,7 +92,7 @@ def assign_body_representation(entity: IfcProduct, representation: Union[Shape, 
 
     SHAPE_REP_CACHE[geom_id] = ifc_shape_representation
 
-    ifc_product_definition_shape = model.create(
+    ifc_product_definition_shape = model._create(
         "IfcProductDefinitionShape",
         Representations=[ifc_shape_representation],
     )
@@ -159,7 +159,7 @@ def _geometry_to_ifc_items(model: BuildingInformationModel, representation):
         else:
             raise NotImplementedError(f"Conversion of {type(representation)} to IFC not implemented.")
 
-        ifc_csg_solid = model.create("IfcCsgSolid", TreeRootExpression=ifc_csg_primitive3d)
+        ifc_csg_solid = model._create("IfcCsgSolid", TreeRootExpression=ifc_csg_primitive3d)
         return [ifc_csg_solid], "CSG"
 
     if isinstance(representation, Mesh):
@@ -213,7 +213,7 @@ def _create_representation_map(model: BuildingInformationModel, inner_shape_rep)
     from compas_ifc.conversions.frame import create_IfcAxis2Placement3D
 
     origin = create_IfcAxis2Placement3D(model)
-    return model.create(
+    return model._create(
         "IfcRepresentationMap",
         MappingOrigin=origin,
         MappedRepresentation=inner_shape_rep,
@@ -231,13 +231,13 @@ def _create_identity_transform_operator(model: BuildingInformationModel):
     -------
     :class:`~compas_ifc.entities.base.Base`
     """
-    return model.create(
+    return model._create(
         "IfcCartesianTransformationOperator3D",
-        Axis1=model.create("IfcDirection", DirectionRatios=(1.0, 0.0, 0.0)),
-        Axis2=model.create("IfcDirection", DirectionRatios=(0.0, 1.0, 0.0)),
-        LocalOrigin=model.create("IfcCartesianPoint", Coordinates=(0.0, 0.0, 0.0)),
+        Axis1=model._create("IfcDirection", DirectionRatios=(1.0, 0.0, 0.0)),
+        Axis2=model._create("IfcDirection", DirectionRatios=(0.0, 1.0, 0.0)),
+        LocalOrigin=model._create("IfcCartesianPoint", Coordinates=(0.0, 0.0, 0.0)),
         Scale=1.0,
-        Axis3=model.create("IfcDirection", DirectionRatios=(0.0, 0.0, 1.0)),
+        Axis3=model._create("IfcDirection", DirectionRatios=(0.0, 0.0, 1.0)),
     )
 
 
@@ -255,13 +255,13 @@ def _assign_mapped_body(model: BuildingInformationModel, entity: IfcProduct, rep
         The ``IfcRepresentationMap`` to reference.
     """
     target = _create_identity_transform_operator(model)
-    mapped_item = model.create(
+    mapped_item = model._create(
         "IfcMappedItem",
         MappingSource=rep_map,
         MappingTarget=target,
     )
 
-    outer_rep = model.create(
+    outer_rep = model._create(
         "IfcShapeRepresentation",
         ContextOfItems=model._file.default_body_context,
         RepresentationIdentifier="Body",
@@ -269,7 +269,7 @@ def _assign_mapped_body(model: BuildingInformationModel, entity: IfcProduct, rep
         Items=[mapped_item],
     )
 
-    pds = model.create(
+    pds = model._create(
         "IfcProductDefinitionShape",
         Representations=[outer_rep],
     )
@@ -289,13 +289,13 @@ def transformation_to_IfcCartesianTransformationOperator3D(model: BuildingInform
     :class:`~compas_ifc.entities.base.Base`
     """
     frame = Frame.from_transformation(transformation)
-    return model.create(
+    return model._create(
         "IfcCartesianTransformationOperator3D",
-        Axis1=model.create("IfcDirection", DirectionRatios=(float(frame.xaxis.x), float(frame.xaxis.y), float(frame.xaxis.z))),
-        Axis2=model.create("IfcDirection", DirectionRatios=(float(frame.yaxis.x), float(frame.yaxis.y), float(frame.yaxis.z))),
-        LocalOrigin=model.create("IfcCartesianPoint", Coordinates=(float(frame.point.x), float(frame.point.y), float(frame.point.z))),
+        Axis1=model._create("IfcDirection", DirectionRatios=(float(frame.xaxis.x), float(frame.xaxis.y), float(frame.xaxis.z))),
+        Axis2=model._create("IfcDirection", DirectionRatios=(float(frame.yaxis.x), float(frame.yaxis.y), float(frame.yaxis.z))),
+        LocalOrigin=model._create("IfcCartesianPoint", Coordinates=(float(frame.point.x), float(frame.point.y), float(frame.point.z))),
         Scale=1.0,
-        Axis3=model.create("IfcDirection", DirectionRatios=(float(frame.zaxis.x), float(frame.zaxis.y), float(frame.zaxis.z))),
+        Axis3=model._create("IfcDirection", DirectionRatios=(float(frame.zaxis.x), float(frame.zaxis.y), float(frame.zaxis.z))),
     )
 
 
@@ -329,7 +329,7 @@ def assign_axis_representation(entity: IfcProduct, curve):
     else:
         raise NotImplementedError(f"Unsupported axis curve type: {type(curve)}")
 
-    ifc_shape_representation = model.create(
+    ifc_shape_representation = model._create(
         "IfcShapeRepresentation",
         ContextOfItems=model._file.default_axis_context,
         RepresentationIdentifier="Axis",
@@ -346,7 +346,7 @@ def assign_axis_representation(entity: IfcProduct, curve):
         reps.append(ifc_shape_representation)
         existing_rep.Representations = reps
     else:
-        ifc_product_definition_shape = model.create(
+        ifc_product_definition_shape = model._create(
             "IfcProductDefinitionShape",
             Representations=[ifc_shape_representation],
         )
@@ -372,8 +372,8 @@ def polyline_to_IfcPolyline(model: BuildingInformationModel, polyline: Polyline)
     """
     points = []
     for p in polyline.points:
-        points.append(model.create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
-    return model.create("IfcPolyline", Points=points)
+        points.append(model._create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
+    return model._create("IfcPolyline", Points=points)
 
 
 def polygon_to_IfcPolyline(model: BuildingInformationModel, polygon: Polygon):
@@ -392,10 +392,10 @@ def polygon_to_IfcPolyline(model: BuildingInformationModel, polygon: Polygon):
     """
     points = []
     for p in polygon.points:
-        points.append(model.create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
+        points.append(model._create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
     # Close the polyline
     points.append(points[0])
-    return model.create("IfcPolyline", Points=points)
+    return model._create("IfcPolyline", Points=points)
 
 
 # ==========================================================================
@@ -426,9 +426,9 @@ def extrusion_to_IfcExtrudedAreaSolid(model: BuildingInformationModel, extrusion
 
     # Direction
     d = extrusion.direction
-    direction = model.create("IfcDirection", DirectionRatios=(float(d.x), float(d.y), float(d.z)))
+    direction = model._create("IfcDirection", DirectionRatios=(float(d.x), float(d.y), float(d.z)))
 
-    return model.create(
+    return model._create(
         "IfcExtrudedAreaSolid",
         SweptArea=swept_area,
         Position=position,
@@ -462,12 +462,12 @@ def clipped_extrusion_to_IfcBooleanClippingResult(model: BuildingInformationMode
     for plane, agreement in reversed(clipped.clipping_planes):
         frame = Frame.from_plane(plane)
         ifc_plane = frame_to_IfcPlane(model, frame)
-        half_space = model.create(
+        half_space = model._create(
             "IfcHalfSpaceSolid",
             BaseSurface=ifc_plane,
             AgreementFlag=agreement,
         )
-        current = model.create(
+        current = model._create(
             "IfcBooleanClippingResult",
             Operator="DIFFERENCE",
             FirstOperand=current,
@@ -500,7 +500,7 @@ def boolean_result_to_IfcBooleanResult(model: BuildingInformationModel, bool_res
     first = _geometry_to_ifc_operand(model, bool_result.first_operand)
     second = _geometry_to_ifc_operand(model, bool_result.second_operand)
 
-    return model.create(
+    return model._create(
         "IfcBooleanResult",
         Operator=bool_result.operator,
         FirstOperand=first,
@@ -524,7 +524,7 @@ def half_space_to_IfcHalfSpaceSolid(model: BuildingInformationModel, half_space:
 
     frame = Frame.from_plane(half_space.plane)
     ifc_plane = frame_to_IfcPlane(model, frame)
-    return model.create(
+    return model._create(
         "IfcHalfSpaceSolid",
         BaseSurface=ifc_plane,
         AgreementFlag=half_space.agreement_flag,
@@ -643,7 +643,7 @@ def revolution_to_IfcRevolvedAreaSolid(model: BuildingInformationModel, revoluti
         direction=[float(ad.x), float(ad.y), float(ad.z)],
     )
 
-    return model.create(
+    return model._create(
         "IfcRevolvedAreaSolid",
         SweptArea=swept_area,
         Position=position,
@@ -679,7 +679,7 @@ def pipe_to_IfcSweptDiskSolid(model: BuildingInformationModel, pipe: Pipe):
     if pipe.inner_radius is not None:
         kwargs["InnerRadius"] = float(pipe.inner_radius)
 
-    return model.create("IfcSweptDiskSolid", **kwargs)
+    return model._create("IfcSweptDiskSolid", **kwargs)
 
 
 def _polygon_to_IfcArbitraryClosedProfileDef(model: BuildingInformationModel, polygon: Polygon):
@@ -696,11 +696,11 @@ def _polygon_to_IfcArbitraryClosedProfileDef(model: BuildingInformationModel, po
     """
     points = []
     for p in polygon.points:
-        points.append(model.create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
+        points.append(model._create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
     # Close the polyline
     points.append(points[0])
-    polyline = model.create("IfcPolyline", Points=points)
-    return model.create(
+    polyline = model._create("IfcPolyline", Points=points)
+    return model._create(
         "IfcArbitraryClosedProfileDef",
         ProfileType="AREA",
         OuterCurve=polyline,
@@ -719,7 +719,7 @@ def _circle_to_IfcCircleProfileDef(model: BuildingInformationModel, circle: Circ
     -------
     :class:`~compas_ifc.entities.base.Base`
     """
-    return model.create(
+    return model._create(
         "IfcCircleProfileDef",
         ProfileType="AREA",
         Radius=float(circle.radius),
@@ -742,21 +742,21 @@ def _profile_with_voids_to_ifc(model: BuildingInformationModel, outer: Polygon, 
     # Outer curve
     outer_points = []
     for p in outer.points:
-        outer_points.append(model.create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
+        outer_points.append(model._create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
     outer_points.append(outer_points[0])
-    outer_polyline = model.create("IfcPolyline", Points=outer_points)
+    outer_polyline = model._create("IfcPolyline", Points=outer_points)
 
     # Inner curves
     inner_curves = []
     for inner_polygon in inners:
         inner_points = []
         for p in inner_polygon.points:
-            inner_points.append(model.create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
+            inner_points.append(model._create("IfcCartesianPoint", Coordinates=(float(p[0]), float(p[1]), float(p[2]))))
         inner_points.append(inner_points[0])
-        inner_polyline = model.create("IfcPolyline", Points=inner_points)
+        inner_polyline = model._create("IfcPolyline", Points=inner_points)
         inner_curves.append(inner_polyline)
 
-    return model.create(
+    return model._create(
         "IfcArbitraryProfileDefWithVoids",
         ProfileType="AREA",
         OuterCurve=outer_polyline,
@@ -776,7 +776,7 @@ if __name__ == "__main__":
     geometry = Mesh.from_ply(compas.get("bunny.ply"))
     # geometry = Mesh.from_meshgrid(5, 2, 5, 2)
 
-    product = model.create(geometry=geometry, parent=model.building_storeys[0], name="test", frame=Frame.worldXY())
+    product = model._create(geometry=geometry, parent=model.building_storeys[0], name="test", frame=Frame.worldXY())
 
     model.show()
 

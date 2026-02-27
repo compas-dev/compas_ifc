@@ -24,7 +24,7 @@ print(f"Original IFC connections: {len(original_conn_edges)}")
 # Store original connection pairs as frozensets of GlobalIds for comparison
 original_pairs = set()
 for edge in original_conn_edges:
-    a, b = model.edge_elements(edge)
+    a, b = model._edge_elements(edge)
     pair = frozenset([a.global_id, b.global_id])
     original_pairs.add(pair)
 
@@ -88,7 +88,7 @@ print(f"\nTotal connection edges after compute_connections: {len(auto_conn_edges
 # Build set of auto-discovered pairs
 auto_pairs = set()
 for edge in auto_conn_edges:
-    a, b = model.edge_elements(edge)
+    a, b = model._edge_elements(edge)
     pair = frozenset([a.global_id, b.global_id])
     auto_pairs.add(pair)
 
@@ -139,7 +139,7 @@ if newly_found:
 
 if auto_conn_edges:
     sample_edge = auto_conn_edges[0]
-    a, b = model.edge_elements(sample_edge)
+    a, b = model._edge_elements(sample_edge)
     contacts = model.graph.edge_attribute(sample_edge, "contacts") or []
     print(f"\nSample connection: {a.name} <-> {b.name}")
     print(f"  Contact patches: {len(contacts)}")

@@ -126,7 +126,7 @@ print(f"\nTotal interference edges: {len(collision_edges)}")
 if collision_edges:
     print("\nDetected interferences:")
     for i, edge in enumerate(collision_edges[:20]):
-        a, b = model.edge_elements(edge)
+        a, b = model._edge_elements(edge)
         pts = model.graph.edge_attribute(edge, "penetrating_points") or []
         a_name = a.name or a.ifc_type
         b_name = b.name or b.ifc_type

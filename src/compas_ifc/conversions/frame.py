@@ -21,10 +21,10 @@ def create_IfcAxis2Placement3D(model: BuildingInformationModel, point: Point = N
     """
     Create an IFC Axis2Placement3D from a point, a direction and a second direction.
     """
-    point = model.create("IfcCartesianPoint", Coordinates=point or [0.0, 0.0, 0.0])
-    dir1 = model.create("IfcDirection", DirectionRatios=dir1 or [0.0, 0.0, 1.0])
-    dir2 = model.create("IfcDirection", DirectionRatios=dir2 or [1.0, 0.0, 0.0])
-    axis2placement = model.create("IfcAxis2Placement3D", Location=point, Axis=dir1, RefDirection=dir2)
+    point = model._create("IfcCartesianPoint", Coordinates=point or [0.0, 0.0, 0.0])
+    dir1 = model._create("IfcDirection", DirectionRatios=dir1 or [0.0, 0.0, 1.0])
+    dir2 = model._create("IfcDirection", DirectionRatios=dir2 or [1.0, 0.0, 0.0])
+    axis2placement = model._create("IfcAxis2Placement3D", Location=point, Axis=dir1, RefDirection=dir2)
     return axis2placement
 
 
@@ -46,9 +46,9 @@ def create_IfcAxis1Placement(model: BuildingInformationModel, point: Point = Non
     :class:`~compas_ifc.entities.base.Base`
         An ``IfcAxis1Placement`` entity.
     """
-    pt = model.create("IfcCartesianPoint", Coordinates=point or [0.0, 0.0, 0.0])
-    d = model.create("IfcDirection", DirectionRatios=direction or [0.0, 0.0, 1.0])
-    return model.create("IfcAxis1Placement", Location=pt, Axis=d)
+    pt = model._create("IfcCartesianPoint", Coordinates=point or [0.0, 0.0, 0.0])
+    d = model._create("IfcDirection", DirectionRatios=direction or [0.0, 0.0, 1.0])
+    return model._create("IfcAxis1Placement", Location=pt, Axis=d)
 
 
 def frame_to_ifc_axis2_placement_3d(model: BuildingInformationModel, frame: Frame) -> Base:
@@ -57,7 +57,7 @@ def frame_to_ifc_axis2_placement_3d(model: BuildingInformationModel, frame: Fram
 
 def assign_entity_frame(entity: Base, frame: Frame):
     local_placement = frame_to_ifc_axis2_placement_3d(entity.model, frame)
-    placement = entity.model.create("IfcLocalPlacement", RelativePlacement=local_placement)
+    placement = entity.model._create("IfcLocalPlacement", RelativePlacement=local_placement)
     entity.ObjectPlacement = placement
 
 

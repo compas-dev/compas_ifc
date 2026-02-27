@@ -54,9 +54,9 @@ for obj, layers in zip(objs, layer_info):
                 project.Name = name
                 entities[layer] = project
             elif name is None:
-                model.create(ifc_type, name=name, geometry=mesh, parent=entities[parent_layer])
+                model.create_element(ifc_type=ifc_type, name=name, geometry=mesh, parent=entities[parent_layer])
             else:
-                entities[layer] = model.create(ifc_type, name=name, parent=entities[parent_layer])
+                entities[layer] = model.create_element(ifc_type=ifc_type, name=name, parent=entities[parent_layer])
 
         parent_layer = layer
 

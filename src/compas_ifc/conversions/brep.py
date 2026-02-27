@@ -70,7 +70,7 @@ def brep_to_IfcAdvancedBrep(model: BuildingInformationModel, brep: Brep) -> list
     def get_ifc_vertex(point):
         key = TOL.geometric_key(point)
         if key not in vertices:
-            vertices[key] = model.create("IfcVertexPoint", VertexGeometry=get_ifc_point(point))
+            vertices[key] = model._create("IfcVertexPoint", VertexGeometry=get_ifc_point(point))
         return vertices[key]
 
     def get_ifc_bspline_edge(edge):
@@ -140,7 +140,7 @@ def brep_to_IfcAdvancedBrep(model: BuildingInformationModel, brep: Brep) -> list
                 control_points.append(control_points[0])
                 weights.append(weights[0])
 
-            IfcBSplineCurve = model.create(
+            IfcBSplineCurve = model._create(
                 "IfcRationalBSplineCurveWithKnots",
                 Degree=curve.degree,
                 ControlPointsList=control_points,
@@ -153,7 +153,7 @@ def brep_to_IfcAdvancedBrep(model: BuildingInformationModel, brep: Brep) -> list
                 WeightsData=weights,
             )
 
-            IfcEdgeCurve = model.create(
+            IfcEdgeCurve = model._create(
                 "IfcEdgeCurve",
                 EdgeStart=start_vertex,
                 EdgeEnd=end_vertex,
@@ -173,14 +173,14 @@ def brep_to_IfcAdvancedBrep(model: BuildingInformationModel, brep: Brep) -> list
 
             # IfcLine: parametric infinite line defined by a point and direction vector.
             # Do not use IfcPolyLine (polyline approximation) for straight edges.
-            direction = model.create(
+            direction = model._create(
                 "IfcDirection",
                 DirectionRatios=list(edge.to_line().direction.unitized()),
             )
-            ifc_vector = model.create("IfcVector", Orientation=direction, Magnitude=1.0)
-            IfcLine = model.create("IfcLine", Pnt=start_pt, Dir=ifc_vector)
+            ifc_vector = model._create("IfcVector", Orientation=direction, Magnitude=1.0)
+            IfcLine = model._create("IfcLine", Pnt=start_pt, Dir=ifc_vector)
 
-            IfcEdgeCurve = model.create(
+            IfcEdgeCurve = model._create(
                 "IfcEdgeCurve",
                 EdgeStart=start_vertex,
                 EdgeEnd=end_vertex,
@@ -200,14 +200,14 @@ def brep_to_IfcAdvancedBrep(model: BuildingInformationModel, brep: Brep) -> list
             is_closed = TOL.geometric_key(edge.first_vertex.point) == TOL.geometric_key(edge.last_vertex.point)
             end_vertex = start_vertex if is_closed else get_ifc_vertex(edge.last_vertex.point)
 
-            IfcCircle = model.create(
+            IfcCircle = model._create(
                 "IfcCircle",
                 Position=frame_to_IfcAxis2Placement3D(model, c.frame),
                 Radius=c.radius,
             )
             # IfcOrientedEdge.EdgeElement must be an IfcEdge (IfcEdgeCurve),
             # not an IfcConic directly — wrap IfcCircle in IfcEdgeCurve.
-            IfcEdgeCurve = model.create(
+            IfcEdgeCurve = model._create(
                 "IfcEdgeCurve",
                 EdgeStart=start_vertex,
                 EdgeEnd=end_vertex,
@@ -235,13 +235,13 @@ def brep_to_IfcAdvancedBrep(model: BuildingInformationModel, brep: Brep) -> list
                 is_closed = TOL.geometric_key(edge.first_vertex.point) == TOL.geometric_key(edge.last_vertex.point)
                 end_vertex = start_vertex if is_closed else get_ifc_vertex(edge.last_vertex.point)
 
-                IfcEllipse = model.create(
+                IfcEllipse = model._create(
                     "IfcEllipse",
                     Position=placement,
                     SemiAxis1=ellipse.MajorRadius(),
                     SemiAxis2=ellipse.MinorRadius(),
                 )
-                IfcEdgeCurve = model.create(
+                IfcEdgeCurve = model._create(
                     "IfcEdgeCurve",
                     EdgeStart=start_vertex,
                     EdgeEnd=end_vertex,
@@ -271,8 +271,8 @@ def brep_to_IfcAdvancedBrep(model: BuildingInformationModel, brep: Brep) -> list
         all_faces = []
         for shell in shells:
             all_faces.extend(build(shell))
-        ifc_shell = model.create("IfcClosedShell", CfsFaces=all_faces)
-        ifc_brep = model.create("IfcAdvancedBrep", Outer=ifc_shell)
+        ifc_shell = model._create("IfcClosedShell", CfsFaces=all_faces)
+        ifc_brep = model._create("IfcAdvancedBrep", Outer=ifc_shell)
 
         ifc_breps.append(ifc_brep)
 
@@ -305,13 +305,13 @@ def brep_to_IfcAdvancedBrep(model: BuildingInformationModel, brep: Brep) -> list
                     degenerate_edges,
                 )
             )
-            ifc_shell = model.create("IfcClosedShell", CfsFaces=all_faces)
-            ifc_brep = model.create("IfcAdvancedBrep", Outer=ifc_shell)
+            ifc_shell = model._create("IfcClosedShell", CfsFaces=all_faces)
+            ifc_brep = model._create("IfcAdvancedBrep", Outer=ifc_shell)
             ifc_breps.append(ifc_brep)
         else:
             for shell in shells:
-                outer_ifc_shell = model.create("IfcClosedShell", CfsFaces=build(shell))
-                ifc_brep = model.create("IfcAdvancedBrep", Outer=outer_ifc_shell)
+                outer_ifc_shell = model._create("IfcClosedShell", CfsFaces=build(shell))
+                ifc_brep = model._create("IfcAdvancedBrep", Outer=outer_ifc_shell)
                 ifc_breps.append(ifc_brep)
 
     return ifc_breps
@@ -355,22 +355,22 @@ def _build_shell_faces(shell, model, get_bspline, get_line, get_circle, get_elli
                 if IfcEdgeCurve is None:
                     raise ValueError(f"Edge not found in cache: {edge}")
 
-                ifc_oriented_edges.append(model.create("IfcOrientedEdge", EdgeElement=IfcEdgeCurve, Orientation=oriented))
+                ifc_oriented_edges.append(model._create("IfcOrientedEdge", EdgeElement=IfcEdgeCurve, Orientation=oriented))
 
             if not ifc_oriented_edges:
                 # Loop has no non-degenerate edges (e.g. degenerate pole loop); skip it.
                 continue
 
-            edge_loop = model.create("IfcEdgeLoop", EdgeList=ifc_oriented_edges)
+            edge_loop = model._create("IfcEdgeLoop", EdgeList=ifc_oriented_edges)
             if is_outer_bound:
-                face_bounds.append(model.create("IfcFaceOuterBound", Bound=edge_loop, Orientation=True))
+                face_bounds.append(model._create("IfcFaceOuterBound", Bound=edge_loop, Orientation=True))
                 is_outer_bound = False
             else:
-                face_bounds.append(model.create("IfcFaceBound", Bound=edge_loop, Orientation=False))
+                face_bounds.append(model._create("IfcFaceBound", Bound=edge_loop, Orientation=False))
 
         same_sense = face.orientation == 0
         ifc_surface = _face_to_ifc_surface(face, model)
-        ifc_faces.append(model.create("IfcAdvancedFace", Bounds=face_bounds, FaceSurface=ifc_surface, SameSense=same_sense))
+        ifc_faces.append(model._create("IfcAdvancedFace", Bounds=face_bounds, FaceSurface=ifc_surface, SameSense=same_sense))
 
     return ifc_faces
 
@@ -424,7 +424,7 @@ def _face_to_ifc_nurbs_surface(face, model):
     nv = bspline.NbVPoles()
 
     # Use the raw ifcopenshell file to create nested entity lists, since
-    # model.create() only unwraps one level of Base wrappers.
+    # model._create() only unwraps one level of Base wrappers.
     ifc_file = model._file._file
 
     def make_pt(u1, v1):

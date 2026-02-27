@@ -75,7 +75,7 @@ for elem in all_elements:
 # ========================================
 print("\n=== 4. Connection edges (first 5) ===")
 for edge in model.connections[:5]:
-    a, b = model.edge_elements(edge)
+    a, b = model._edge_elements(edge)
     print(f"  {a.ifc_type} '{a.name}' <-> {b.ifc_type} '{b.name}'")
 
 # ========================================
@@ -83,7 +83,7 @@ for edge in model.connections[:5]:
 # ========================================
 print("\n=== 5. Space boundaries (first 5) ===")
 for edge in model.space_boundaries[:5]:
-    space, elem = model.edge_elements(edge)
+    space, elem = model._edge_elements(edge)
     print(f"  {space.ifc_type} '{space.name}' <-> {elem.ifc_type} '{elem.name}'")
 
 # ========================================
@@ -134,16 +134,16 @@ print(f"All group edges: {len(all_group_edges)}")
 print(f"Coverage: {all_group_edges == all_edges}")
 
 # Verify total relationship records == IFC relationship count
-total_records = sum(len(model.edge_relationships(edge)) for edge in model.graph.edges())
+total_records = sum(len(model._edge_relationships(edge)) for edge in model.graph.edges())
 print(f"\nTotal relationship records: {total_records}")
 print(f"Total unique edges: {len(all_edges)}")
 
 # Edges with multiple relationship records
-multi = [edge for edge in model.graph.edges() if len(model.edge_relationships(edge)) > 1]
+multi = [edge for edge in model.graph.edges() if len(model._edge_relationships(edge)) > 1]
 print(f"Edges with multiple records: {len(multi)}")
 for edge in multi[:5]:
-    a, b = model.edge_elements(edge)
-    rels = model.edge_relationships(edge)
+    a, b = model._edge_elements(edge)
+    rels = model._edge_relationships(edge)
     cats = [r["category"] for r in rels]
     print(f"  {a.ifc_type} '{a.name}' <-> {b.ifc_type} '{b.name}': {len(rels)}x {cats}")
 
