@@ -11,9 +11,8 @@ print("*" * 53 + "\n")
 print("\nChange Project Name and Description")
 print("=" * 53 + "\n")
 
-project = model.project
-project.Name = "New Project Name"
-project.Description = "New Project Description"
+model.name = "New Project Name"
+model.description = "New Project Description"
 model.save("temp/change_project_name.ifc")
 
 print("\nExport selected entities")

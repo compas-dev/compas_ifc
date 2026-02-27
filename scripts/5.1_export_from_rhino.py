@@ -32,7 +32,6 @@ entities = {}
 
 model = BuildingInformationModel()
 model.unit = "m"
-project = model.project
 
 for obj, layers in zip(objs, layer_info):
     compas_brep = brepobject_to_compas(obj)
@@ -51,8 +50,8 @@ for obj, layers in zip(objs, layer_info):
             name, ifc_type = parse_string(layer)
 
             if ifc_type == "IfcProject":
-                project.Name = name
-                entities[layer] = project
+                model.name = name
+                entities[layer] = None
             elif name is None:
                 model.create_element(ifc_type=ifc_type, name=name, geometry=mesh, parent=entities[parent_layer])
             else:

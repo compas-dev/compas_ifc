@@ -6,10 +6,11 @@ from compas_model.models import Model
 from compas_ifc.element import GenericElement
 from compas_ifc.file import IFCFile
 from compas_ifc.interactions import InteractionMixin
+from compas_ifc.model_mixin import ModelMixin
 from compas_ifc.tree import TreeMixin
 
 
-class BuildingInformationModel(InteractionMixin, TreeMixin, Model):
+class BuildingInformationModel(InteractionMixin, TreeMixin, ModelMixin, Model):
     """A building information model backed by an IFC file.
 
     Extends ``compas_model.Model`` to provide IFC-specific functionality
@@ -103,17 +104,18 @@ class BuildingInformationModel(InteractionMixin, TreeMixin, Model):
     # ==========================================================================
 
     @property
-    def project(self):
-        """The underlying IfcProject entity (read-only escape hatch).
-
-        Returns the Base-wrapped ``IfcProject`` entity, providing access to
-        project-level attributes (``Name``, ``Description``, ``sites``,
-        ``buildings``, ``contexts``, ``units``, ``north``, ``frame``, etc.).
-
-        Returns ``None`` if no IfcProject exists in the file.
-        """
+    def description(self) -> Optional[str]:
+        """Description of the project (maps to ``IfcProject.Description``)."""
         projects = self._file.get_entities_by_type("IfcProject")
-        return projects[0] if projects else None
+        if not projects:
+            return None
+        return getattr(projects[0], "Description", None)
+
+    @description.setter
+    def description(self, value: Optional[str]):
+        projects = self._file.get_entities_by_type("IfcProject")
+        if projects:
+            projects[0].Description = value
 
     @property
     def schema_name(self) -> str:
@@ -194,88 +196,6 @@ class BuildingInformationModel(InteractionMixin, TreeMixin, Model):
     def building_elements(self) -> list[GenericElement]:
         """All non-spatial building elements (walls, slabs, beams, etc.)."""
         return [e for e in self.elements() if not e._is_spatial]
-
-    # ==========================================================================
-    # Element add / remove (bi-directional sync)
-    # ==========================================================================
-
-    def add_element(self, element, parent=None, material=None):
-        """Add a GenericElement to the model tree and create its IFC entity.
-
-        For elements loaded from IFC (with an existing ``_ifc_entity``), only
-        the compas_model bookkeeping is performed. For programmatically created
-        elements, the IFC entity, relationship, geometry representation, and
-        placement are all created in the underlying IFC file.
-
-        Parameters
-        ----------
-        element : GenericElement
-            The element to add.
-        parent : GenericElement, optional
-            Parent element in the spatial hierarchy.
-        material : optional
-            Material to assign (from compas_model).
-
-        Returns
-        -------
-        GenericElement
-
-        """
-        # Let compas_model do tree/graph bookkeeping
-        result = super().add_element(element, parent=parent, material=material)
-
-        if element._ifc_entity is not None:
-            # Import case: element already has an IFC entity, just index it
-            if element.global_id:
-                self._elements_by_global_id[element.global_id] = element
-            return result
-
-        # Programmatic creation: create IFC entity in the file
-        ifc_parent = self._resolve_ifc_parent(parent)
-        kwargs = {}
-        if element.name:
-            kwargs["Name"] = element.name
-
-        ifc_entity = self._file._create(cls=element.ifc_type, parent=ifc_parent, **kwargs)
-        element._ifc_entity = ifc_entity
-        element._global_id = ifc_entity.GlobalId
-        self._elements_by_global_id[ifc_entity.GlobalId] = element
-
-        # Sync geometry → IFC representation
-        if element._geometry is not None:
-            ifc_entity.geometry = element._geometry
-
-        # Sync transformation → IFC placement (with PlacementRelTo for hierarchy)
-        if element.transformation:
-            self._assign_ifc_placement(element, parent)
-
-        # Sync properties → IFC property sets
-        if element._properties:
-            ifc_entity.property_sets = element._properties
-
-        # Enforce validation specifications if any are active
-        if self.specifications:
-            self._enforce_specifications(element)
-
-        return result
-
-    def remove_element(self, element):
-        """Remove a GenericElement from the model and the IFC file.
-
-        Parameters
-        ----------
-        element : GenericElement
-            The element to remove.
-
-        """
-        if element._ifc_entity is not None:
-            self._file.remove(element._ifc_entity)
-            element._ifc_entity = None
-
-        if element.global_id and element.global_id in self._elements_by_global_id:
-            del self._elements_by_global_id[element.global_id]
-
-        super().remove_element(element)
 
     # ==========================================================================
     # Convenience creation methods

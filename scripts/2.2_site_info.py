@@ -3,8 +3,7 @@ from compas_ifc.bim import BuildingInformationModel
 
 model = BuildingInformationModel("data/wall-with-opening-and-window.ifc")
 
-project = model.project
-site = project.sites[0]
+site = model.sites[0]
 
 # =============================================================================
 # Info

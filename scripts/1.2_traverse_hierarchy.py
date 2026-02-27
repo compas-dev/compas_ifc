@@ -16,11 +16,9 @@ model.print_hierarchy()
 print("\nShortcut APIs")
 print("=" * 53 + "\n")
 
-project = model.project
-print("Project:", project)
-print("Sites:", project.sites)
-print("Buildings:", project.buildings)
-print("Building elements:", project.building_elements)
+print("Sites:", model.sites)
+print("Buildings:", model.buildings)
+print("Building elements:", model.building_elements)
 
 print("\nSite contains:")
 site = model.sites[0]

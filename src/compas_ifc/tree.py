@@ -382,41 +382,6 @@ class TreeMixin:
         return "<Unknown>"
 
     # ==========================================================================
-    # IFC Placement helpers
-    # ==========================================================================
-
-    def _resolve_ifc_parent(self, parent_element):
-        """Return the IFC Base entity for a parent GenericElement.
-
-        If parent is None, defaults to the IfcProject.
-        """
-        if parent_element is None:
-            return self._file.default_project
-
-        if parent_element._ifc_entity is not None:
-            return parent_element._ifc_entity
-
-        raise ValueError(f"Parent element '{parent_element.name}' has no IFC entity. Add spatial parents before their children.")
-
-    def _assign_ifc_placement(self, element, parent_element):
-        """Create an IfcLocalPlacement with PlacementRelTo for correct hierarchy."""
-        from compas_ifc.conversions.frame import frame_to_ifc_axis2_placement_3d
-
-        local_frame = Frame.from_transformation(element.transformation)
-        local_placement = frame_to_ifc_axis2_placement_3d(self, local_frame)
-
-        parent_placement = None
-        if parent_element and parent_element._ifc_entity:
-            parent_placement = getattr(parent_element._ifc_entity, "ObjectPlacement", None)
-
-        placement = self._file._create_entity(
-            "IfcLocalPlacement",
-            PlacementRelTo=parent_placement,
-            RelativePlacement=local_placement,
-        )
-        element._ifc_entity.ObjectPlacement = placement
-
-    # ==========================================================================
     # IFC Export
     # ==========================================================================
 
