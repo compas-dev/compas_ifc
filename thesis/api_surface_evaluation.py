@@ -23,6 +23,7 @@ from compas_model.models import Model
 
 from compas_ifc.bim import BuildingInformationModel
 from compas_ifc.element import GenericElement
+from compas_ifc.factory import ElementFactoryMixin
 from compas_ifc.interactions import InteractionMixin
 from compas_ifc.tree import TreeMixin
 
@@ -108,6 +109,7 @@ print("API Surface: BuildingInformationModel")
 print("=" * 70)
 
 bim_own = public_members(BuildingInformationModel)
+bim_from_factory = public_members(ElementFactoryMixin)
 bim_from_interaction = public_members(InteractionMixin)
 bim_from_tree = public_members(TreeMixin)
 bim_from_model = public_members(Model)
@@ -115,6 +117,7 @@ bim_all = all_public_members(BuildingInformationModel)
 
 print(f"\nTotal public API surface: {len(bim_all)} members")
 print(f"  Defined on BuildingInformationModel:  {len(bim_own)}")
+print(f"  From ElementFactoryMixin:             {len(bim_from_factory)}")
 print(f"  From InteractionMixin:                {len(bim_from_interaction)}")
 print(f"  From TreeMixin:                       {len(bim_from_tree)}")
 print(f"  Inherited from compas_model.Model:    {len(bim_from_model)}")
@@ -122,6 +125,11 @@ print(f"  Inherited from compas_model.Model:    {len(bim_from_model)}")
 print(f"\n--- BuildingInformationModel own ({len(bim_own)}) ---")
 for name in bim_own:
     kind = classify_member(BuildingInformationModel, name)
+    print(f"  {kind:12s}  {name}")
+
+print(f"\n--- ElementFactoryMixin ({len(bim_from_factory)}) ---")
+for name in bim_from_factory:
+    kind = classify_member(ElementFactoryMixin, name)
     print(f"  {kind:12s}  {name}")
 
 print(f"\n--- InteractionMixin ({len(bim_from_interaction)}) ---")
@@ -175,7 +183,7 @@ print("SUMMARY TABLE")
 print("=" * 70)
 
 # compas_ifc-specific public API = own + mixin contributions (excluding abstract overrides)
-bim_compas_ifc = sorted(set(bim_own) | set(bim_from_interaction) | set(bim_from_tree))
+bim_compas_ifc = sorted(set(bim_own) | set(bim_from_factory) | set(bim_from_interaction) | set(bim_from_tree))
 
 print(f"\n{'Class':<35s} {'Novel API':>10s} {'Abstract':>10s} {'Inherited':>10s} {'Total':>8s}")
 print("-" * 75)
@@ -189,7 +197,9 @@ print(f"{'TOTAL':<35s} {total_novel:>10d} {total_abstract:>10d}")
 print(f"\n--- Novel compas_ifc API on BuildingInformationModel ({len(bim_compas_ifc)}) ---")
 for name in bim_compas_ifc:
     source = "bim"
-    if name in bim_from_interaction:
+    if name in bim_from_factory:
+        source = "ElementFactoryMixin"
+    elif name in bim_from_interaction:
         source = "InteractionMixin"
     elif name in bim_from_tree:
         source = "TreeMixin"
