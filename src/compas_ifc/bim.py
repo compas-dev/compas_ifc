@@ -461,23 +461,6 @@ class BuildingInformationModel(InteractionMixin, TreeMixin, Model):
     # Display
     # ==========================================================================
 
-    def print_hierarchy(self, max_depth: int = 10):
-        """Print the spatial hierarchy of the model."""
-
-        def _print_node(element, depth, max_depth):
-            if depth > max_depth:
-                return
-            indent = "  " * depth
-            geom_marker = "*" if element.geometry is not None else ""
-            print(f"{indent}{element.ifc_type}: {element.name} {geom_marker}")
-            for child in element.children:
-                _print_node(child, depth + 1, max_depth)
-
-        print(f"BuildingInformationModel: {self.name}")
-        # Top-level elements are direct children of tree root
-        for node in self.tree.root.children:
-            _print_node(node.element, 1, max_depth)
-
     def show(self, elements=None):
         """Show the model (or specific elements and their children) in compas_viewer.
 
@@ -549,3 +532,4 @@ class BuildingInformationModel(InteractionMixin, TreeMixin, Model):
 
         viewer.ui.sidebar.sceneform.action = update_treeform
         viewer.show()
+
