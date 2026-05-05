@@ -53,12 +53,14 @@ sub = w["sub"]
 spec = w["spec"]
 units = w["units"]
 columns = w["columns"]
+beams = w["beams"]
 SPACING_X = w["SPACING_X"]
 SPACING_Y = w["SPACING_Y"]
 
 expected_slabs = GRID_SIZE**2
 expected_cols = (GRID_SIZE + 1) ** 2
-expected_edges = 2 * GRID_SIZE * (GRID_SIZE - 1)
+expected_beams = (GRID_SIZE + 1) * GRID_SIZE
+expected_slab_edges = GRID_SIZE * (GRID_SIZE - 1)  # slabs touch along one axis only
 
 # ===========================================================================
 # PART 1: Custom Element Class
@@ -121,7 +123,7 @@ print(f"  Applies to: {spec.ifc_types}")
 # PART 3: Array Creation
 # ===========================================================================
 print("\n" + "=" * 70)
-print(f"PART 3: ARRAY CREATION ({GRID_SIZE}x{GRID_SIZE} slabs + columns)")
+print(f"PART 3: ARRAY CREATION ({GRID_SIZE}x{GRID_SIZE} slabs + columns + beams)")
 print("=" * 70)
 
 storey = model.storeys[0]
@@ -131,10 +133,12 @@ check("Array: slab count", len(units) == expected_slabs, f"{len(units)}")
 check("Array: slabs under storey", len(slab_children) == expected_slabs, f"{len(slab_children)}")
 check("Array: all slabs pass validation", all(r.status == "pass" for r in w["model_results"]), f"{sum(r.status == 'pass' for r in w['model_results'])}/{len(w['model_results'])}")
 check("Array: column count", len(columns) == expected_cols, f"{len(columns)}")
+check("Array: beam count", len(beams) == expected_beams, f"{len(beams)}")
 
 print(f"\n  Slabs:   {GRID_SIZE}x{GRID_SIZE} = {expected_slabs}, spacing {SPACING_X:.2f} x {SPACING_Y:.2f} m")
 print(f"  Columns: {GRID_SIZE+1}x{GRID_SIZE+1} = {expected_cols}, section {COLUMN_SECTION} m, height {COLUMN_HEIGHT} m")
-print(f"  Total building elements: {expected_slabs + expected_cols}")
+print(f"  Beams:   {expected_beams} along Y axis")
+print(f"  Total building elements: {expected_slabs + expected_cols + expected_beams}")
 
 # ===========================================================================
 # PART 4: Graph Edges
@@ -143,8 +147,8 @@ print("\n" + "=" * 70)
 print("PART 4: GRAPH EDGES (compute_connections)")
 print("=" * 70)
 
-check("Graph: edge count", w["edge_count"] == expected_edges, f"{w['edge_count']} == {expected_edges}")
-check("Graph: stored in model", model.graph.number_of_edges() >= expected_edges, f"{model.graph.number_of_edges()}")
+check("Graph: slab-slab edges", w["edge_count"] >= expected_slab_edges, f"{w['edge_count']} >= {expected_slab_edges}")
+check("Graph: stored in model", model.graph.number_of_edges() == w["edge_count"], f"{model.graph.number_of_edges()}")
 
 print(f"\n  Computed connections: {w['edge_count']}")
 print(f"  Graph edges: {model.graph.number_of_edges()}")
@@ -158,8 +162,10 @@ print("=" * 70)
 
 slabs2 = [e for e in model2.building_elements if e.ifc_type == "IfcSlab"]
 cols2 = [e for e in model2.building_elements if e.ifc_type == "IfcColumn"]
+beams2 = [e for e in model2.building_elements if e.ifc_type == "IfcBeam"]
 check("Reload: slab count", len(slabs2) == expected_slabs, f"{len(slabs2)} vs {expected_slabs}")
 check("Reload: column count", len(cols2) == expected_cols, f"{len(cols2)} vs {expected_cols}")
+check("Reload: beam count", len(beams2) == expected_beams, f"{len(beams2)} vs {expected_beams}")
 
 # Properties round-trip
 sample = slabs2[0]
@@ -171,12 +177,12 @@ check("Reload: EnvironmentalImpact survives", "ClimateChangePerUnit" in env_rt, 
 check("Reload: ConcreteRecipe survives", "RecipeName" in recipe_rt, str(list(recipe_rt.keys())[:4]))
 
 # Graph edges
-check("Reload: graph edges", model2.graph.number_of_edges() >= expected_edges, f"{model2.graph.number_of_edges()}")
+check("Reload: graph edges", model2.graph.number_of_edges() >= expected_slab_edges, f"{model2.graph.number_of_edges()}")
 
 # Transform alignment
 misaligned = 0
 checked = 0
-for elem in list(slabs2) + list(cols2):
+for elem in list(slabs2) + list(cols2) + list(beams2):
     if elem._ifc_entity and elem._ifc_entity.ObjectPlacement:
         ifc_t = IfcLocalPlacement_to_transformation(elem._ifc_entity.ObjectPlacement)
         model_t = elem.modeltransformation
@@ -189,7 +195,7 @@ for elem in list(slabs2) + list(cols2):
 check("Reload: transforms aligned", misaligned == 0, f"{misaligned} of {checked}")
 
 print(f"\n  Saved to: {w['out_path']}")
-print(f"  Reloaded: {len(slabs2)} slabs, {len(cols2)} columns")
+print(f"  Reloaded: {len(slabs2)} slabs, {len(cols2)} columns, {len(beams2)} beams")
 print(f"  Graph edges: {model2.graph.number_of_edges()}")
 print(f"  Misaligned: {misaligned}")
 
@@ -206,12 +212,14 @@ check("Extract: spatial scaffolding", has_project and has_storey)
 
 extract_slabs = [e for e in sub.building_elements if e.ifc_type == "IfcSlab"]
 extract_cols = [e for e in sub.building_elements if e.ifc_type == "IfcColumn"]
+extract_beams = [e for e in sub.building_elements if e.ifc_type == "IfcBeam"]
 check("Extract: slab count", len(extract_slabs) == expected_slabs, f"{len(extract_slabs)} vs {expected_slabs}")
 check("Extract: column count", len(extract_cols) == expected_cols, f"{len(extract_cols)} vs {expected_cols}")
-check("Extract: graph edges", sub.graph.number_of_edges() >= expected_edges, f"{sub.graph.number_of_edges()}")
+check("Extract: beam count", len(extract_beams) == expected_beams, f"{len(extract_beams)} vs {expected_beams}")
+check("Extract: graph edges", sub.graph.number_of_edges() >= expected_slab_edges, f"{sub.graph.number_of_edges()}")
 
 print(f"\n  Extracted to: {w['extract_path']}")
-print(f"  Slabs: {len(extract_slabs)}, Columns: {len(extract_cols)}")
+print(f"  Slabs: {len(extract_slabs)}, Columns: {len(extract_cols)}, Beams: {len(extract_beams)}")
 print(f"  Graph edges: {sub.graph.number_of_edges()}")
 
 # ===========================================================================

@@ -335,7 +335,10 @@ class IFCFile(object):
                             facecolors.append([0.5, 0.5, 0.5, 1])
                             continue
                         material = shape.geometry.materials[m_id]
-                        color = (*material.diffuse.components, 1 - material.transparency)
+                        alpha = 1 - material.transparency
+                        if alpha <= 0:
+                            alpha = 1.0
+                        color = (*material.diffuse.components, alpha)
                         facecolors.append(color)
                         facecolors.append(color)
                         facecolors.append(color)

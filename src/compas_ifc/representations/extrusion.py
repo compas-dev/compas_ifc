@@ -71,6 +71,27 @@ class Extrusion(Geometry):
     # Geometry interface
     # ------------------------------------------------------------------
 
+    def compute_aabb(self):
+        from compas.geometry import Box
+
+        pts = self._profile_points()
+        extrusion_vec = self.direction * self.depth
+        all_pts = pts + [Point(p.x + extrusion_vec.x, p.y + extrusion_vec.y, p.z + extrusion_vec.z) for p in pts]
+        coords = [[p.x, p.y, p.z] for p in all_pts]
+        min_x = min(c[0] for c in coords)
+        max_x = max(c[0] for c in coords)
+        min_y = min(c[1] for c in coords)
+        max_y = max(c[1] for c in coords)
+        min_z = min(c[2] for c in coords)
+        max_z = max(c[2] for c in coords)
+        cx = (min_x + max_x) / 2
+        cy = (min_y + max_y) / 2
+        cz = (min_z + max_z) / 2
+        dx = max_x - min_x or 1e-6
+        dy = max_y - min_y or 1e-6
+        dz = max_z - min_z or 1e-6
+        return Box(dx, dy, dz, Frame(Point(cx, cy, cz), Vector(1, 0, 0), Vector(0, 1, 0)))
+
     def transform(self, transformation):
         """Transform the extrusion by transforming its frame.
 

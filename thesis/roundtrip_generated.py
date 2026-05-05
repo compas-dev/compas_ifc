@@ -330,7 +330,7 @@ for etype in [
     "IfcCsgSolid", "IfcBooleanClippingResult", "IfcBooleanResult",
     "IfcPolygonalFaceSet", "IfcRepresentationMap", "IfcMappedItem",
 ]:
-    entity_counts[etype] = len(model2.file.get_entities_by_type(etype))
+    entity_counts[etype] = len(model2._file.get_entities_by_type(etype))
 
 print("\n  IFC Entity Counts:")
 for etype, count in entity_counts.items():

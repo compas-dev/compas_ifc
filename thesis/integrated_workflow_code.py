@@ -10,15 +10,12 @@ Demonstrates all front-end model capabilities in a single script:
 Uses ``temp/devday/rfs.stp`` as the funicular slab unit geometry.
 """
 
-import math
-
 from pydantic import BaseModel
 from pydantic import Field
 
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polygon
-from compas.geometry import Rotation
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas_occ.brep import OCCBrep
@@ -96,7 +93,7 @@ class FunicularSlabUnit(GenericElement):
     instance self-describing.
     """
 
-    STEP_PATH = "temp/devday/rfs.stp"
+    STEP_PATH = "thesis/data/slab.stp"
     STEP_SCALE = 0.001  # STEP file is in mm, IFC model is in m
     Schema = FunicularSlabSchema
     _cached_brep = None
@@ -172,9 +169,8 @@ def run(out_path="temp/thesis_integrated_workflow.ifc", extract_path="temp/thesi
     """Execute the full integrated workflow and return key objects for verification."""
 
     brep = FunicularSlabUnit._load_geometry()
-    slab_bb = brep.aabb
-    SPACING_X = slab_bb.xsize
-    SPACING_Y = slab_bb.ysize
+    SPACING_X = 6.650
+    SPACING_Y = 7.517
 
     # 1. Template model with specification enforcement
     model = BuildingInformationModel.template(schema="IFC4", unit="m", use_occ=True)
@@ -195,21 +191,12 @@ def run(out_path="temp/thesis_integrated_workflow.ifc", extract_path="temp/thesi
         for j in range(GRID_SIZE):
             u = FunicularSlabUnit(
                 name=f"FSU_{i}_{j}",
-                frame=Frame(Point(i * SPACING_X, j * SPACING_Y, 0), Vector.Xaxis(), Vector.Yaxis()),
+                frame=Frame(Point(i * SPACING_X, j * SPACING_Y, COLUMN_HEIGHT), Vector.Xaxis(), Vector.Yaxis()),
             )
             model.add_element(u, parent=storey)
             units.append(u)
 
-    # 4. Column array (4x4, at slab corners, rotated 45 deg)
-    half_x = SPACING_X / 2
-    half_y = SPACING_Y / 2
-    slab_z_max = max(p.z for p in brep.points)
-    R45 = Rotation.from_axis_and_angle(Vector.Zaxis(), math.radians(45))
-    col_xaxis = Vector.Xaxis()
-    col_yaxis = Vector.Yaxis()
-    col_xaxis.transform(R45)
-    col_yaxis.transform(R45)
-
+    # 4. Column array (4x4, at slab grid corners)
     s = COLUMN_SECTION / 2
     col_profile = Polygon([Point(-s, -s, 0), Point(s, -s, 0), Point(s, s, 0), Point(-s, s, 0)])
     col_extrusion = Extrusion(profile=col_profile, direction=Vector(0, 0, 1), depth=COLUMN_HEIGHT)
@@ -217,10 +204,10 @@ def run(out_path="temp/thesis_integrated_workflow.ifc", extract_path="temp/thesi
     columns = []
     for ci in range(GRID_SIZE + 1):
         for cj in range(GRID_SIZE + 1):
-            cx = ci * SPACING_X - half_x
-            cy = cj * SPACING_Y - half_y
-            cz = slab_z_max - COLUMN_HEIGHT
-            col_frame = Frame(Point(cx, cy, cz), col_xaxis, col_yaxis)
+            cx = ci * SPACING_X
+            cy = cj * SPACING_Y
+            cz = 0
+            col_frame = Frame(Point(cx, cy, cz), Vector.Xaxis(), Vector.Yaxis())
             col = model.create_element(
                 ifc_type="IfcColumn",
                 name=f"COL_{ci}_{cj}",
@@ -230,19 +217,41 @@ def run(out_path="temp/thesis_integrated_workflow.ifc", extract_path="temp/thesi
             )
             columns.append(col)
 
-    # 5. Automatic connection detection
-    edge_count = model.compute_connections(element_types=["IfcSlab"])
+    # 5. Beam array (along Y, between slab columns)
+    beam_profile = Polygon([
+        Point(-0.13763, 0, 0.48721),
+        Point(-0.250, 0, 0),
+        Point(0.250, 0, 0),
+        Point(0.13763, 0, 0.48721),
+    ])
+    beam_extrusion = Extrusion(profile=beam_profile, direction=Vector(0, 1, 0), depth=SPACING_Y)
 
-    # 6. Validate entire model
+    beams = []
+    for i in range(GRID_SIZE + 1):
+        for j in range(GRID_SIZE):
+            beam_frame = Frame(Point(i * SPACING_X, j * SPACING_Y, COLUMN_HEIGHT), Vector.Xaxis(), Vector.Yaxis())
+            beam = model.create_element(
+                ifc_type="IfcBeam",
+                name=f"BEAM_{i}_{j}",
+                geometry=beam_extrusion,
+                frame=beam_frame,
+                parent=storey,
+            )
+            beams.append(beam)
+
+    # 6. Automatic connection detection
+    edge_count = model.compute_connections(element_types=["IfcSlab", "IfcBeam"])
+
+    # 7. Validate entire model
     model_results = validate_model(model, [spec])
 
-    # 7. Save
+    # 8. Save
     model.save(out_path)
 
-    # 8. Reload
+    # 9. Reload
     model2 = BuildingInformationModel(out_path, rectify_placements=True, load_geometries=False)
 
-    # 9. Granular extract
+    # 10. Granular extract
     storey2 = model2.storeys[0]
     sub = model2.extract(storey2, path=extract_path, load_geometries=False)
 
@@ -254,6 +263,7 @@ def run(out_path="temp/thesis_integrated_workflow.ifc", extract_path="temp/thesi
         "spec": spec,
         "units": units,
         "columns": columns,
+        "beams": beams,
         "bad_results": bad_results,
         "good_results": good_results,
         "model_results": model_results,

@@ -173,7 +173,7 @@ check("Tree: void/fill chains >= 48", len(chains_with_fillers) + len(chains_void
 
 # Verify that openings are children of building elements (not storeys)
 openings_under_spatial = sum(
-    1 for o in openings if o.parent is not None and o.parent.is_spatial
+    1 for o in openings if o.parent is not None and o.parent._is_spatial
 )
 check("Tree: no openings directly under spatial elements", openings_under_spatial == 0,
       f"{openings_under_spatial}")

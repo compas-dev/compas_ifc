@@ -269,7 +269,7 @@ class ValidationCollector:
 
 
 try:
-    ifcopenshell.validate.validate(model.file._file, ValidationCollector())
+    ifcopenshell.validate.validate(model._file._file, ValidationCollector())
 except Exception as e:
     validation_issues.append(("ERR", f"validate() exception: {e}"))
 
@@ -294,7 +294,7 @@ print()
 # ==================================================================
 
 print("  Entity type checks...")
-entity_types = {e.is_a() for e in model.file._file}
+entity_types = {e.is_a() for e in model._file._file}
 
 check("Entities: IfcAdvancedBrep present", "IfcAdvancedBrep" in entity_types, "")
 

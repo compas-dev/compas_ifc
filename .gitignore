@@ -125,3 +125,5 @@ conda.recipe/
 generated/
 
 thesis/outputs/
+thesis/figures/
+thesis/data/

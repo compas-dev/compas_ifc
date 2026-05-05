@@ -1,0 +1,297 @@
+================================================================
+APPENDIX A — COMPAS IFC: EVALUATION RESULTS
+================================================================
+
+All evaluation scripts: project repository, thesis/
+Executed with: compas_ifc 1.7.0, Python 3.11.14,
+               IfcOpenShell 0.8.4.post1, OpenCascade 7.9.0 (pythonocc-core)
+
+----------------------------------------------------------------
+A.1  API Surface Measurement
+----------------------------------------------------------------
+
+COMPAS IFC API Surface Measurement
+===================================
+BuildingInformationModel: 36 novel API (15 core + 9 factory + 9 interaction + 3 tree)
+GenericElement: 10 novel API + 8 abstract overrides
+
+Class                                Novel API   Abstract  Inherited    Total
+---------------------------------------------------------------------------
+BuildingInformationModel                    36          0         54       90
+GenericElement                              10          8         33       51
+---------------------------------------------------------------------------
+TOTAL                                       46          8
+
+Novel API on BuildingInformationModel by category:
+  Core (15):           add_element, building_elements, buildings, get_element_by_global_id,
+                       get_elements_by_name, get_elements_by_type, project, remove_element,
+                       save, schema_name, show, sites, storeys, unit, validate
+  Factory (9):         create_beam, create_column, create_door, create_element, create_roof,
+                       create_slab, create_wall, create_window, template
+  Interaction (9):     RELATIONSHIP_GROUPS, compute_collisions, compute_connections, connections,
+                       get_interactions_by_category, get_interactions_by_group, interferences,
+                       show_collisions, space_boundaries
+  Tree (3):            export, extract, print_hierarchy
+
+Novel API on GenericElement (10):
+  axis, compute_collisions, geometry, global_id, name, properties, show,
+  surface_area, transformation, volume
+
+----------------------------------------------------------------
+A.2  Geometric Fidelity
+----------------------------------------------------------------
+
+--- Stage 1: Synthetic Model (roundtrip_generated) ---
+
+Elements: 22 across 9 representation types
+  Extrusion (polygon, circle, profile-with-voids): 3
+  Revolution (full, partial): 2
+  Pipe (solid, hollow): 2
+  CSG (box, sphere, cone, cylinder): 4
+  ClippedExtrusion (1-clip, 2-clip): 2
+  BooleanResult (diff, union, intersect, nested, half-space): 5
+  Mesh (IfcPolygonalFaceSet): 1
+  Instancing (MappedItem): 1 definition, 3 instances
+
+IFC entity verification:
+  IfcExtrudedAreaSolid        14    IfcRevolvedAreaSolid       2
+  IfcSweptDiskSolid            2    IfcCsgSolid                5
+  IfcBooleanClippingResult     3    IfcBooleanResult           9
+  IfcPolygonalFaceSet          1    IfcRepresentationMap       1
+  IfcMappedItem                2
+
+Round-trip: all 22 elements preserve type and parameters exactly
+Volume deviation: 0.00% for all 9 analytically verifiable shapes
+Surface area spot-checks: Ext_Polygon, CSG_Box, CSG_Sphere — all exact
+
+114 PASS / 0 FAIL
+
+--- Stage 2: BRep from STEP (roundtrip_brep) ---
+
+Corpus: 26 STEP files covering full BRep complexity spectrum
+  Planar/analytic, NURBS, filleted, chamfered, compound,
+  hollow, revolved, swept, extreme-scale (tiny/large/thin)
+
+Shape category                  Count  Vol method         Area method
+---------------------------------------------------------------------
+Planar/analytic (exact match)      15  evaluator 0.00%    evaluator 0.00%
+NURBS/curved (analytic fallback)    8  analytic  0.00%    analytic  0.00%
+Known evaluator limitations         3  INFO only          INFO only
+
+All 26 shapes written as IfcAdvancedBrep (not IfcFacetedBrep)
+Surface types confirmed: IfcAdvancedFace + IfcBSplineSurfaceWithKnots
+Schema validation: 0 errors
+
+66 PASS / 0 FAIL  (15 additional INFO for known evaluator limitations)
+
+--- Stage 3a: Duplex A (roundtrip_duplex) ---
+
+Model: Duplex_A_20110907.ifc (IFC2X3)
+Elements with geometry: 265, parse errors: 0
+
+  Type                Count      %
+  -----------------------------------
+  Extrusion             196   74.0%
+  Mesh                   65   24.5%
+  ClippedExtrusion        4    1.5%
+
+  Profile types: Polygon(4) dominant (148), plus Polygon(5..18)
+  Extrusion depth range: 0.0127 – 7.4213 m
+
+Write round-trip (44 sampled elements):
+  Matched: 44 | Mismatched: 0 | Missing: 0
+
+Volume/surface area — pipeline smoke test (verifies the computation
+  chain produces a result for each representation type; no analytic
+  reference exists for production-model elements):
+  Extrusion(196):        196/196 volume > 0, 196/196 area > 0
+  ClippedExtrusion(4):     4/4   volume > 0,   4/4   area > 0
+  Mesh(65):                8/65  volume > 0,  65/65  area > 0
+
+274 PASS / 0 FAIL
+
+--- Stage 3b: HiLo (roundtrip_hilo) ---
+
+Model: HiLo_Model-Architecture.ifc (IFC2X3)
+Elements with geometry: 1,424, parse errors: 0
+
+  Type                Count      %
+  -----------------------------------
+  Extrusion            1085   76.2%
+  TessellatedBrep       208   14.6%
+  ClippedExtrusion      125    8.8%
+  Mesh                    5    0.4%
+  BooleanResult           1    0.1%
+
+  Profile types: 16 distinct (Circle 466, Polygon(4) 393, Polygon(12) 173, ...)
+  Max clipping planes on single element: 5
+
+Write round-trip (46 sampled elements):
+  Matched: 46 | Mismatched: 0 | Missing: 0
+
+Volume/surface area — pipeline smoke test (as above):
+  Extrusion(1085):       1085/1085 volume > 0, 1085/1085 area > 0
+  ClippedExtrusion(125):  120/125  volume > 0,  125/125  area > 0
+  BooleanResult(1):         1/1    volume > 0,    1/1    area > 0
+  Mesh(5):                  0/5    volume > 0,    5/5    area > 0
+  TessellatedBrep(208):   205/208  volume > 0,  208/208  area > 0
+
+364 PASS / 0 FAIL
+
+Combined A.2: 818 PASS / 0 FAIL across all 4 stages
+
+----------------------------------------------------------------
+A.3  Spatial Hierarchy
+----------------------------------------------------------------
+
+--- A.3.1  Placement Chain Rectification ---
+
+Duplex A:
+=========
+Model: Duplex_A_20110907.ifc — 295 elements, 4 storeys
+Rectified: 22 elements (7.5%), 5 distinct patterns
+
+  Element Type              From Parent              To Parent              Count
+  ---------------------------------------------------------------------------------
+  IfcOpeningElement         IfcSpace                 IfcFurnishingElement      10
+  IfcMember                 IfcBuildingStorey         IfcStair                  4
+  IfcRailing                IfcBuildingStorey         IfcStair                  4
+  IfcOpeningElement         IfcRoof                   IfcSlab                   2
+  IfcStairFlight            IfcBuildingStorey         IfcStair                  2
+
+Void/fill chains: 50 total (38 with fillers, 12 void-only)
+  All fillers nested under openings (0 flat)
+Transform accuracy: 295 checked, 0 misaligned
+Save/reload: elements preserved (295), openings preserved (50), transforms aligned
+
+12 PASS / 0 FAIL
+
+HiLo:
+=====
+Model: HiLo_Model-Architecture.ifc — 1,925 elements, 3 storeys
+Rectified: 566 elements (29.4%), 4 distinct patterns
+
+  Element Type              From Parent              To Parent              Count
+  ---------------------------------------------------------------------------------
+  IfcMember                 IfcBuildingStorey         IfcCurtainWall           291
+  IfcOpeningElement         IfcBuildingStorey         IfcBuildingElementProxy  270
+  IfcOpeningElement         IfcBuildingStorey         IfcWallStandardCase        4
+  IfcOpeningElement         IfcBuildingStorey         IfcSlab                    1
+
+Void/fill chains: 384 total (3 with fillers, 381 void-only)
+Transform accuracy: 1,442 checked, 0 misaligned
+Save/reload: elements (1,925), openings (384), graph edges (806) — all preserved
+
+11 PASS / 0 FAIL
+
+--- A.3.2  Granular Export ---
+
+Granular Export: Duplex A
+==========================
+Full model: 295 elements, 4 storeys
+
+Single-storey extractions:
+  Storey                   Extracted   Scaffolding   Positions OK
+  -----------------------------------------------------------------
+  Level 1                       133         yes           yes
+  Roof                           16         yes           yes
+  Level 2                       136         yes           yes
+  T/FDN                          17         yes           yes
+
+  Total positions checked: 293, misaligned: 0
+  Max positional error: 4.12e-14 m
+
+Discipline subset (IfcWallStandardCase only):
+  Input: 56 walls -> Output: 134 elements (56 walls + 36 openings + 22 windows + 14 doors + scaffolding)
+  Positions: 128 checked, 0 misaligned, max error: 4.12e-14
+
+Code conciseness:
+  compas_ifc:         3 lines
+  Direct IfcOpenShell: 75 lines (96% reduction)
+
+9 PASS / 0 FAIL
+
+----------------------------------------------------------------
+A.4  Custom Validation
+----------------------------------------------------------------
+
+Custom Validation: Duplex A
+=============================
+
+Standard validation (7 specifications, 146 element checks):
+  145 pass, 1 fail (IfcSlab missing Pset_SlabCommon)
+
+  Specification                  Elements   Pass   Fail
+  -------------------------------------------------------
+  Beam common properties                8      8      0
+  Door common properties               14     14      0
+  Roof common properties                1      1      0
+  Slab common properties               21     20      1
+  Space common properties              21     21      0
+  Wall common properties               57     57      0
+  Window common properties             24     24      0
+
+Custom fire safety schema (71 element checks):
+  14 pass (doors with FireRating), 57 fail (walls lacking FireRating)
+
+Runtime enforcement:
+  Wall without Pset_WallCommon:  rejected
+  Wall with valid properties:    accepted
+  Slab (no wall spec applies):   accepted
+
+Schema export:
+  Pydantic definition: 14 lines
+  IDS XML equivalent:  68 lines (79% reduction)
+
+13 PASS / 0 FAIL
+
+----------------------------------------------------------------
+A.5  Integrated Workflow
+----------------------------------------------------------------
+
+Integrated Workflow
+====================
+Workflow code: 194 lines (excluding comments/blanks)
+
+Custom element class:
+  FunicularSlabUnit: IfcSlab + 3 Pydantic schemas + BRep from STEP
+  Geometry: volume 14.09 m3, area 190.79 m2, footprint 6.65 x 7.52 m
+  Property sets: Pset_SlabCommon, EnvironmentalImpact, ConcreteRecipe
+  Schema validation: valid defaults accepted, invalid values rejected (3 errors)
+
+Model creation:
+  9 slabs (3x3), 16 columns (4x4), 12 beams — 37 total on storey
+  All 9 slabs pass specification enforcement
+
+Connection detection:
+  6 edges: 6 slab-slab
+
+Save/reload verification:
+  Elements: 9 slabs, 16 columns, 12 beams — all preserved
+  Property sets: Pset_SlabCommon, EnvironmentalImpact, ConcreteRecipe — all survive
+  Graph edges: 6 preserved
+  Transforms: 0 misaligned
+
+Granular extract:
+  Storey extraction: 37 elements, 6 edges, spatial scaffolding present
+
+29 PASS / 0 FAIL
+
+================================================================
+TOTAL: 892 PASS / 0 FAIL across all evaluation scripts
+================================================================
+
+Per-section breakdown:
+  A.1  API Surface:          (measurement only, no pass/fail checks)
+  A.2  Geometric Fidelity:   818 PASS (114 + 66 + 274 + 364)
+  A.3.1 Hierarchy Duplex:     12 PASS
+  A.3.1 Hierarchy HiLo:       11 PASS
+  A.3.2 Granular Export:        9 PASS
+  A.4  Validation:             13 PASS
+  A.5  Integrated Workflow:    29 PASS
+  ----------------------------------------
+  Total:                      892 PASS / 0 FAIL
+
+NOTE: The thesis body text (§4.6.6) claims "897 individual checks with zero
+failures". The actual count is 892. Difference of 5 may be due to script
+changes since the thesis text was written. Update the thesis accordingly.

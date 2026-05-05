@@ -222,8 +222,8 @@ if parse_errors > 0:
 # IFC boolean entity counts
 # ------------------------------------------------------------------
 
-bool_clip_entities = model.file.get_entities_by_type("IfcBooleanClippingResult")
-bool_result_entities = model.file.get_entities_by_type("IfcBooleanResult")
+bool_clip_entities = model._file.get_entities_by_type("IfcBooleanClippingResult")
+bool_result_entities = model._file.get_entities_by_type("IfcBooleanResult")
 print(f"  IFC Boolean Entities:")
 print(f"    IfcBooleanClippingResult: {len(bool_clip_entities)}")
 print(f"    IfcBooleanResult:         {len(bool_result_entities)}")
