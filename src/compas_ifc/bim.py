@@ -249,9 +249,15 @@ class BuildingInformationModel(ElementFactoryMixin, InteractionMixin, TreeMixin,
         if element.transformation:
             self._assign_ifc_placement(element, parent)
 
-        # Sync properties → IFC property sets
+        # Sync properties → IFC schema attributes + property sets
         if element._properties:
-            ifc_entity.property_sets = element._properties
+            schema_attrs = {"Description", "ObjectType", "Tag", "PredefinedType"}
+            psets = {k: v for k, v in element._properties.items() if k not in schema_attrs and isinstance(v, dict)}
+            if psets:
+                ifc_entity.property_sets = psets
+            for attr in schema_attrs:
+                if attr in element._properties:
+                    setattr(ifc_entity, attr, element._properties[attr])
 
         # Enforce validation specifications if any are active
         if self.specifications:

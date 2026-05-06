@@ -7,11 +7,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+This release aligns the package with the front-end data model described in
+chapter 4 of the underlying PhD thesis. The user-facing API now consists of
+two classes (`BuildingInformationModel`, `GenericElement`) plus an
+explicit spatial tree, an interaction graph, a Pydantic-based validation
+engine, and a parametric geometry layer. Internal helpers have been
+reorganised accordingly and the legacy `compas_ifc.model` entry point is
+gone.
+
 ### Added
+
+* `compas_ifc.bim.BuildingInformationModel` — the front-end model class,
+  combining `ElementFactoryMixin`, `InteractionMixin`, and `TreeMixin`.
+* `compas_ifc.element.GenericElement` — unified element abstraction with
+  bidirectional sync to the underlying IFC entity. Replaces per-product
+  subclasses for everyday usage.
+* `compas_ifc.factory.ElementFactoryMixin` — typed creators
+  (`create_wall`, `create_slab`, …) plus a `template()` classmethod that
+  scaffolds default IfcProject / IfcSite / IfcBuilding / IfcBuildingStorey.
+* `create_element` now normalises arbitrary type strings (`"IfcWall"`,
+  `"Wall"`, `"wall"` → `IfcWall`) and falls back to
+  `IfcBuildingElementProxy` (with `ObjectType` preserved) for unknown
+  custom strings.
+* `compas_ifc.tree.TreeMixin` — IFC import with placement-chain
+  rectification, `extract`/`export` for self-contained subsets,
+  `print_hierarchy`.
+* `compas_ifc.interactions.InteractionMixin` — typed interaction graph
+  populated from IFC relationships, plus `compute_connections`,
+  `compute_collisions`, and `show_collisions`.
+* `compas_ifc.validation` — `Specification` dataclass, `validate_model`,
+  `validate_element`, and Pydantic schemas for the standard IFC psets.
+  Specifications attached to `model.specifications` enforce validation at
+  insertion time; `model.validate(specs)` runs advisory checks.
+* `compas_ifc.representations` — parametric geometry types (`Extrusion`,
+  `Revolution`, `Pipe`, `ClippedExtrusion`, `BooleanResult`, `HalfSpace`)
+  that round-trip losslessly through IFC.
+* `compas_ifc.algorithms.contacts` and `algorithms.collisions` — vectorised
+  NumPy + Shapely broadphase + narrowphase replacements for the previous
+  pure-Python implementations.
+* `thesis/appendix/A/` — reproducible evaluation suite for chapter 4 of
+  the thesis, with a `run_all.py` runner that writes a consolidated
+  `outputs/A-summary.txt`.
+* `tests/test_bim.py` and `tests/test_validation.py` — minimal pytest
+  coverage of the front-end API.
 
 ### Changed
 
+* The package entry point is now
+  `from compas_ifc.bim import BuildingInformationModel`. The previous
+  `from compas_ifc.model import Model` import path has been removed.
+* Spatial hierarchy is materialised as `model.tree` (a COMPAS `Tree`
+  instance) with direct `parent` / `children` pointers; non-hierarchical
+  IFC relationships go into `model.graph`.
+* Documentation has been rewritten end to end (`README.md`, `docs/index`,
+  `docs/architecture`, `docs/api/*`, `docs/tutorials/*`,
+  `docs/examples`).
+
 ### Removed
+
+* `compas_ifc.model.Model` (replaced by
+  `compas_ifc.bim.BuildingInformationModel`).
+* `src/compas_ifc/__main__.py` (no-op stub).
+* `tests/test_placeholder.py` (replaced by real tests).
+* Stale documentation: old tutorial and example pages, the
+  `compas_ifc.entities.generated` API page, the development planning
+  notes under `thesis/`.
 
 
 ## [1.7.0] 2025-10-24

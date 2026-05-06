@@ -238,7 +238,7 @@ for status, label, detail in results:
 print(f"\n  {pass_count} PASS / {fail_count} FAIL  (of {pass_count + fail_count} checks)")
 
 # Workflow code metrics
-workflow_file = "thesis/integrated_workflow_code.py"
+workflow_file = "thesis/appendix/A/integrated_workflow_code.py"
 with open(workflow_file) as f:
     lines = f.readlines()
 total = len(lines)

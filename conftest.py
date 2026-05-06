@@ -1,22 +1,22 @@
-import pytest
-import compas
-import compas_ifc
 import math
+
+import compas
 import numpy
+import pytest
 from compas.geometry import allclose
 
+import compas_ifc
 
-def pytest_ignore_collect(path):
-    if "rhino" in str(path):
+
+def pytest_ignore_collect(collection_path):
+    p = str(collection_path)
+    if "rhino" in p:
         return True
-
-    if "blender" in str(path):
+    if "blender" in p:
         return True
-
-    if "ghpython" in str(path):
+    if "ghpython" in p:
         return True
-
-    if str(path).endswith("_cli.py"):
+    if p.endswith("_cli.py"):
         return True
 
 

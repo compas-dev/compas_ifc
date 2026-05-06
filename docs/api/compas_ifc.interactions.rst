@@ -1,5 +1,11 @@
 *******************************************************************************
-Advanced.3 Custom Class Extensions
+compas_ifc.interactions
 *******************************************************************************
 
-Comming soon...
+.. currentmodule:: compas_ifc.interactions
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    InteractionMixin

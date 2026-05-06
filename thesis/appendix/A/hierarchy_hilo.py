@@ -81,7 +81,7 @@ print("PART 1: TREE STRUCTURE — HiLo_Model-Architecture.ifc")
 print("=" * 70)
 
 model = BuildingInformationModel(
-    "temp/1072_HiLo_Model-Architecture.ifc",
+    "temp/HiLo_Model-Architecture.ifc",
     rectify_placements=True,
     rectify_verbose=False,
 )

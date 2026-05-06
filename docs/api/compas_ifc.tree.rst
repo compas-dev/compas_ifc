@@ -1,5 +1,11 @@
 *******************************************************************************
-Advanced.1 Units
+compas_ifc.tree
 *******************************************************************************
 
-Comming soon...
+.. currentmodule:: compas_ifc.tree
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    TreeMixin

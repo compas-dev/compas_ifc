@@ -1,59 +1,153 @@
 ********************************************************************************
-Software Architecture
+Architecture
 ********************************************************************************
 
-In a nutshell, COMPAS IFC is built around a three-layer structure, purposefully designed for different group of users concerned with different level of granularity of the IFC data.
-
-- **Top-layer**: This layer provides simple usage interfaces for interacting with a BIM model. It abstracts the complexities of the IFC format, allowing non-experts to manipulate IFC data with ease.
-
-- **Middle-layer**: This layer grants access to individual IFC entities and their properties. It is designed for advanced users who need to work with the geometry and metadata of IFC entities at a more granular level.
-
-- **Bottom-layer**: This layer deals with the raw IFC data and schema processing. It concerns the most technical users such as contributors to the software itself regarding issues such as performance, memory usage, etc.
-
-The architecture is designed to separate concerns, allowing users to choose the level of complexity they need, from simple model manipulations to detailed data handling.
+COMPAS IFC is organised as a three-layer front-end / back-end structure that
+separates *what users interact with* from *how IFC data is read, written, and
+kept consistent*. The architecture is described in detail in chapter 4 of the
+underlying thesis (*Data Model for Humans*); this page summarises it.
 
 .. figure:: _images/architecture.jpg
    :alt: COMPAS IFC architecture
    :align: center
 
-   COMPAS IFC architecture
+   The three layers of COMPAS IFC.
 
+Top layer — front-end API
+=========================
 
+The user-facing API consists of four components:
 
+:class:`~compas_ifc.bim.BuildingInformationModel`
+   The orchestrator. Opens, queries, modifies, and saves IFC files. Holds
+   project-level metadata (name, schema version, units) and exposes the
+   spatial tree, the interaction graph, the element factory, the validation
+   engine, and visualisation helpers.
 
-Top-layer
----------
+:class:`~compas_ifc.element.GenericElement`
+   A single element class that represents every IFC product subclass —
+   ``IfcWall``, ``IfcSlab``, ``IfcSpace``, ``IfcSite``, ``IfcBuildingStorey``,
+   and the rest. Distinguished by an ``ifc_type`` string that maps back to
+   the appropriate IFC class on export. Custom strings without a matching IFC
+   class fall back to ``IfcBuildingElementProxy`` while preserving the
+   original type as ``ObjectType``.
 
-The Top-layer of COMPAS IFC centers on the `Model` class, providing a user-friendly interface for IFC data interaction. This class offers intuitive APIs for simplified BIM model manipulation.
+Spatial tree (``model.tree``)
+   An explicit tree built on COMPAS' ``Tree`` data structure. Each node has
+   direct ``parent`` / ``children`` pointers and a placement matrix relative
+   to its parent. Spatial-containment relationships in the IFC schema
+   (``IfcRelContainedInSpatialStructure``, ``IfcRelAggregates``) are
+   normalised into this tree on import; placement chains that don't align
+   with the spatial parent are rectified automatically.
 
-**Key features of the `Model` class:**
+Interaction graph (``model.graph``)
+   A bidirectional graph that captures the non-hierarchical relationships
+   that don't fit the tree structure — structural connections, MEP system
+   flows, material associations, geometric dependencies (openings, fills,
+   space boundaries). Edges are labelled by category and group, so users can
+   query ``model.connections``, ``model.space_boundaries``, or
+   ``model.get_interactions_by_group("structural")``.
 
-1. **Simple file operations**: Load, save, and create IFC files effortlessly.
-2. **Built-in visualization methods**: For easy model inspection.
-3. **High-level querying**: For straightforward element retrieval and manipulation.
-4. **Abstraction of IFC complexities**: Enabling effective BIM model work without deep IFC knowledge.
+Bidirectional mapping layer
+===========================
 
-This approach lowers the entry barrier for IFC file handling, allowing users to focus on their tasks rather than underlying data structures. For more details on the `Model` class, see the `Tutorials <tutorials.html>`_ section.
+The middle layer keeps the front-end abstractions and the underlying IFC file
+in sync. It is implementation detail — users do not need to interact with it
+directly — but understanding it helps when reading the source code:
 
-Middle-layer
-------------
+* **Relationship resolution.** Spatial-containment and decomposition
+  relationships are converted to tree edges; structural, MEP, and geometric
+  relationships are converted to graph edges. Round-tripping reverses the
+  process: graph and tree edges are rewritten back into the appropriate
+  ``IfcRel...`` instances on save.
 
-The Middle-layer of COMPAS IFC provides a comprehensive suite of native Python classes for interacting with individual IFC entities and their properties. These classes are automatically generated from the official IFC schemas, ensuring a complete and up-to-date mapping of IFC classes and types.
+* **Placement-chain rectification.** During import, each element's
+  ``IfcLocalPlacement.PlacementRelTo`` is checked against its spatial
+  parent. Misalignments — for instance an opening element placed relative
+  to the storey instead of its host wall — are corrected so that the global
+  position is preserved while the relative transform conforms to the
+  hierarchy.
 
-**Key features of the Middle-layer include:**
+* **Representation conversion.** Each IFC geometric representation type is
+  routed to the appropriate computational kernel: simple primitives and
+  meshes use the COMPAS core library, swept solids and freeform B-Reps go
+  through OpenCascade (via ``compas_occ``), and boolean operations dispatch
+  to CGAL (``compas_cgal``) or OpenCascade as appropriate. The mapping is
+  bidirectional: parametric definitions are preserved on round-trip rather
+  than collapsing to tessellated meshes.
 
-1. **Strongly typed classes**: Each class is strongly typed, enabling modern IDEs (such as those using Pylance) to provide extensive type hints and analysis. This enhances the development experience by improving code completion, reducing development time, and minimizing the need for constant documentation lookups.
+* **Type normalisation.** ``model.create_element(ifc_type=...)`` accepts
+  ``"IfcWall"``, ``"Wall"``, ``"wall"``, or any custom string; the value is
+  resolved against the active schema and either mapped to its canonical
+  class name or stored as ``ObjectType`` on an ``IfcBuildingElementProxy``.
 
-2. **Robust extension mechanism**: COMPAS IFC includes a powerful extension mechanism that allows for the enhancement of key classes to simplify their usage and empowers users to create custom extensions for tailored functionality. For instance:
+* **Property serialisation.** Pset definitions and IFC schema attributes are
+  unified into ``element.properties`` for reading, and split back into the
+  appropriate sinks (``Pset_*`` instances vs. direct entity attributes) on
+  write.
 
-   - The ``IfcProduct`` class is extended with a ``geometry`` property that parses complex IFC geometric representations into COMPAS-based geometry.
-   - The ``IfcElement`` class is augmented with ``parent`` and ``children`` properties, simplifying navigation of the IFC spatial hierarchy.
+Bottom layer — IFC schema interface
+===================================
 
-These features provide a powerful and flexible interface for working with IFC data at a granular level, suitable for advanced users who require detailed control over IFC entities and their properties.
+At the bottom, ``compas_ifc.file.IFCFile`` adapts
+`IfcOpenShell <https://ifcopenshell.org/>`_ to the rest of the toolkit. It
+handles low-level parsing and writing, schema dispatch (IFC2X3 / IFC4 /
+IFC4X3), entity creation, and instance lookup. The
+``compas_ifc.entities`` package provides Python wrappers that add convenience
+methods (``geometry``, ``frame``, ``children``, ``property_sets``) to raw
+``ifcopenshell`` entities; these wrappers are an internal implementation
+detail of the mapping layer.
 
-For more information on the extension mechanism, please refer to the `API: extensions <architecture.html>`_ section. For a comprehensive overview of the class mapping, see the `API Reference: Full class mapping <api.html>`_.
+Geometry kernels
+================
 
-Bottom-layer
-------------
+Three computational kernels combine to cover the full IFC geometry spectrum
+without degradation:
 
-Lastly, in the Bottom-layer, COMPAS IFC interacts with the IfcOpenShell library to parse and manage IFC data. This layer is primarily of interest to contributors and advanced users who needs to modify the lower-level functionalities for tasks such as performance optimization, memory usage reduction, etc.
+============================= ============================ =====================
+IFC representation             COMPAS class                 Kernel
+============================= ============================ =====================
+``IfcBlock``, ``IfcSphere``,   ``Box``, ``Sphere``,         COMPAS core
+``IfcCylinder``                ``Cylinder``
+``IfcExtrudedAreaSolid``,      ``Extrusion``                OpenCascade
+``IfcRevolvedAreaSolid``
+``IfcBooleanResult``,          ``Brep`` or ``Mesh``         CGAL / OpenCascade
+``IfcCsgSolid``
+``IfcFacetedBrep``             ``Mesh``                     COMPAS core / CGAL
+``IfcAdvancedBrep``            ``Brep``                     OpenCascade
+``IfcTriangulatedFaceSet``,    ``Mesh``                     COMPAS core
+``IfcPolygonalFaceSet``
+``IfcBSplineSurface``,         ``NurbsSurface``,            OpenCascade
+``IfcRationalBSplineCurve``    ``NurbsCurve``
+============================= ============================ =====================
+
+The user-facing API is uniform across kernels: ``element.volume``,
+``element.surface_area``, ``element.geometry.bounding_box`` work identically
+regardless of the underlying representation type.
+
+Validation engine
+=================
+
+Custom property requirements are expressed as
+`Pydantic <https://docs.pydantic.dev/>`_ schemas. A
+:class:`~compas_ifc.validation.Specification` ties a schema to the IFC types
+it applies to. Specifications can be:
+
+* attached to ``model.specifications`` for *enforcement* — validation runs
+  inside ``add_element``/``create_element`` and rejects non-conforming
+  insertions immediately; or
+* passed to ``model.validate(specs)`` for *advisory* checking, which returns
+  per-element ``ValidationResult`` records without modifying the model.
+
+Pydantic schemas are substantially more concise than the equivalent
+``IDS`` (Information Delivery Specification) XML, and they export to JSON
+Schema for consumption by external tools.
+
+Further reading
+===============
+
+* The thesis chapter 4 (`Data Model for Humans`) describes the design
+  principles, the cognitive-complexity target (≤ 100 user-facing API
+  members), and the evaluation results in detail.
+* The reproducible evaluation scripts are in ``thesis/appendix/A/`` of the
+  source repository.

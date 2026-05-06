@@ -31,7 +31,7 @@ Prerequisites:
   temp/brep_conversion_tests/
 
 Run with:
-  conda run -n compas-ifc python thesis/roundtrip_brep.py
+  conda run -n compas-ifc python thesis/appendix/A/roundtrip_brep.py
 """
 
 import math
@@ -68,7 +68,7 @@ def check(label, condition, detail=""):
 # Paths
 # ==================================================================
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 STEP_DIR = os.path.join(REPO_ROOT, "temp", "brep_conversion_tests")
 OUT_DIR = os.path.join(REPO_ROOT, "temp")
 IFC_PATH = os.path.join(OUT_DIR, "thesis_roundtrip_brep.ifc")

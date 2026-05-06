@@ -7,7 +7,7 @@ Demonstrates all front-end model capabilities in a single script:
     custom element class -> template model -> validation enforcement ->
     array creation -> columns -> compute_connections -> save/reload -> extract
 
-Uses ``temp/devday/rfs.stp`` as the funicular slab unit geometry.
+Uses ``thesis/data/slab.stp`` as the funicular slab unit geometry.
 """
 
 from pydantic import BaseModel

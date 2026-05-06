@@ -1,15 +1,11 @@
 *******************************************************************************
-Model
+compas_ifc.element
 *******************************************************************************
 
-.. currentmodule:: compas_ifc
-
-Classes
-=======
+.. currentmodule:: compas_ifc.element
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    model.Model
-    file.IFCFile
+    GenericElement

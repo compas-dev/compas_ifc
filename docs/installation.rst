@@ -13,15 +13,17 @@ If you want to use the built-in viewer, install COMPAS Viewer as well.
 
     pip install compas_viewer
 
-If you need to interact with IFC geometry using OCC Brep, install COMPAS OCC througn conda-forge.
+If you need to interact with IFC geometry using OCC Brep, install COMPAS
+OCC through conda-forge.
 
 .. code-block:: bash
 
     conda install compas_occ -c conda-forge
 
 
-Next Steps
+Next steps
 ----------
 
-Now that you have COMPAS IFC installed, proceed to the :doc:`Hello World tutorial <basics.hello_world>` to learn the basics of working with IFC files.
-
+Now that you have COMPAS IFC installed, proceed to
+:doc:`tutorials/01_open_a_model` to learn the basics of working with IFC
+files.

@@ -3,16 +3,15 @@ Tutorials
 ********************************************************************************
 
 .. rst-class:: lead
-In this section you will find tutorials on how to use the COMPAS IFC package.
 
+End-to-end walkthroughs of the front-end API.
 
 .. toctree::
    :maxdepth: 1
    :titlesonly:
-   :glob:
 
-   tutorials/basics.hello_world
-   tutorials/basics.entity_apis
-   .. tutorials/basics.create_model
-   .. tutorials/intermediate.multi_story_building
-   .. tutorials/advanced.custom_extensions
+   tutorials/01_open_a_model
+   tutorials/02_create_a_model
+   tutorials/03_validation
+   tutorials/04_interactions
+   tutorials/05_granular_export

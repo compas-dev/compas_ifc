@@ -4,64 +4,105 @@ COMPAS IFC
 
 .. rst-class:: lead
 
-COMPAS IFC is a high-level python development tool for `Industry Foundation Classes (IFC) <https://www.buildingsmart.org/standards/bsi-standards/industry-foundation-classes/>`_, a major industry standard and digital format for data-exchange of Building Information Modelling (BIM) applications.
+A front-end data model for the
+`Industry Foundation Classes (IFC) <https://www.buildingsmart.org/standards/bsi-standards/industry-foundation-classes/>`_,
+the open exchange format for Building Information Modelling.
 
 .. image:: _images/compas_ifc.png
     :width: 100%
 
 
-What for ?
-==========
+Why
+===
 
-The primary goal of COMPAS IFC is to provide an accessible, transparent and user-friendly toolkit to interact with the highly intricate IFC format. 
-So that developers and researchers can easily build custom computational workflows to read and write BIM data in IFC format intuitively with very small amounts of code.
-
-
-Stands on giants' shoulder
-==========================
-
-As a core extension of `COMPAS framework <https://compas.dev/>`_, COMPAS IFC supports bi-directional translation from COMPAS data structures to corresponding IFC entities.
-It benefits directly from the extensive range of tools that COMPAS ecosystem already provides, such as `COMPAS CGAL <https://github.com/compas-dev/compas_cgal>`_ and `COMPAS OCC <https://github.com/compas-dev/compas_occ>`_ for geometry processing, and `COMPAS Viewer <https://github.com/compas-dev/compas_viewer>`_ for visualization.
-COMPAS IFC also heavily relies on `IfcOpenShell <https://github.com/IfcOpenShell/IfcOpenShell>`_, a fast, powerful and widely-used open source library as its "backend", for low-level functionalities like IFC file entities processing, geometry parsing, schema reading etc.
-On top of this, COMPAS IFC additionally provides a large amount of useful APIs to greatly simplify common BIM data operations such as querying element info, inspecting project spatial hierarchy, reading and writing entities, geometry processing, visualization, exporting individual elements and creation of valid new IFC files from scratch.
-
-.. note::
-   For more information about the basic usage of COMPAS IFC, please refer to `Tutorials section <tutorials.html>`_.
+The IFC schema accommodates virtually any building concept, but its breadth
+makes it costly to work with: a small piece of geometry must navigate dozens
+of class hierarchies and reach across several relationship entities.
+COMPAS IFC presents one container class
+(:class:`~compas_ifc.bim.BuildingInformationModel`) and one element class
+(:class:`~compas_ifc.element.GenericElement`) on top of that schema, plus an
+explicit spatial tree, an interaction graph, an integrated geometry kernel,
+and a Pydantic-based validation engine. The resulting front-end exposes
+fewer than fifty user-facing members for the operations a typical workflow
+needs.
 
 
-Built for simplicity
-====================
+How it differs
+==============
 
-The biggest challenge to work with IFC stems from its sheer complexity. 
-The latest `IFC 4.3 Specification <https://ifc43-docs.standards.buildingsmart.org/>`_ contains over two thousand object-oriented classes/type definitions accompanied with a large set of rules on how specific types of elements must relate to each other.
-While tools including IfcOpenShell provides fully mapped APIs for each class/type definition, it can still be extremely difficult and cumbersome to build even simplest applications for IFC without significant expertise knowledge about the standard. 
-Additional work must be done to bridge this gap.
-To address this challenge, COMPAS IFC presents a lean and simplified data model as a “front-end” abstraction of the complicated IFC file content.
-Users can interact intuitively with such a data model with minimal effort, while maintaining the integrity and validity of the raw IFC data behind.
+* **Integrated geometry kernel.** Geometric definitions are not just stored;
+  they are *computed*. Volumes, surface areas, bounding boxes, and contact
+  detection work uniformly across primitives, swept solids, B-Reps, and
+  meshes — backed by COMPAS core, OpenCascade, and CGAL.
 
-.. note::
-   For more information about the data model please refer to `Architecture: Simplified Data Model <architecture.html>`_.
+* **Explicit spatial hierarchy.** Containment is materialised as a tree with
+  direct ``parent`` / ``children`` pointers. Placement chains that diverge
+  from the spatial hierarchy on import are rectified automatically while
+  preserving global positions.
+
+* **Unified element strategy.** Every IFC product subclass is represented
+  by the same Python class, distinguished by an ``ifc_type`` string.
+  Custom strings without a matching IFC class fall back gracefully to
+  ``IfcBuildingElementProxy``.
+
+* **Structured customisation.** Custom property requirements are declared
+  as `Pydantic <https://docs.pydantic.dev/>`_ schemas, enforced at
+  insertion time, and exportable to JSON Schema for downstream tooling.
+
+* **Lossless round-trip.** IFC2X3, IFC4, and IFC4X3 files survive a
+  load → modify → save cycle without representational degradation.
 
 
-Empower the advanced
-====================
-
-COMPAS IFC can also be a powerful tool for advanced users, who want to work at low-level directly with nitty-gritties of raw IFC entities.
-Given an official schema, COMPAS IFC automatically generates a full mapping of IFC classes in native python, with all attributes and functions strongly typed.
-This enables modern IDEs' language servers such as Pylance to provide extensive type-hints and analysis on all IFC classes and their attributes, which greatly improves the development experience, reduces development time and removes the need of constant lookup on documentations.
-In addition, an extension mechanism is provided allowing advanced users customize existing IFC classes, and insert their custom modifications into the class inheritance chain.
-
-.. note::
-   For more information about the full python class mapping mechanism please refer to `Architecture: Full class mapping <architecture.html>`_.
-
-
-Moving fast
+Quick start
 ===========
 
-COMPAS IFC is developed for research and innovation, being used both in academia and innovative industry startups. It is currently under active development. If you have questions please do not hesitate create new issues on github repo or contanct us at li.chen@arch.ethz.ch or van.mele@arch.ethz.ch.
+.. code-block:: python
+
+   from compas_ifc.bim import BuildingInformationModel
+
+   model = BuildingInformationModel("data/Duplex_A_20110907.ifc")
+   for storey in model.storeys:
+       print(storey.name, "->", len(list(storey.children)), "children")
+
+   walls = model.get_elements_by_type("IfcWall")
+   print(sum(w.volume or 0 for w in walls), "m³ of wall volume")
+
+   model.save("modified.ifc")
+
+See :doc:`tutorials` and :doc:`examples` for more.
 
 
-Table of Contents
+Standing on giants' shoulders
+=============================
+
+COMPAS IFC builds on:
+
+* `COMPAS framework <https://compas.dev/>`_ — geometry, data structures,
+  and visualisation.
+* `IfcOpenShell <https://ifcopenshell.org/>`_ — schema-aware low-level IFC
+  parsing and writing.
+* `compas_occ <https://github.com/compas-dev/compas_occ>`_ — OpenCascade
+  bindings for B-Rep and NURBS.
+* `compas_cgal <https://github.com/compas-dev/compas_cgal>`_ — CGAL
+  bindings for boolean operations and predicates.
+* `Pydantic <https://docs.pydantic.dev/>`_ — declarative schema validation.
+
+
+Provenance
+==========
+
+COMPAS IFC is the open-source artefact described in chapter 4 of *Future
+Data Models for AEC: From Simplicity for Humans to Interoperability by AI*
+(Li Chen, ETH Zürich, 2026). The reproducible evaluation suite that backs
+the chapter's claims lives in ``thesis/appendix/A/`` of the source
+repository.
+
+For questions or contributions please open an issue on
+`GitHub <https://github.com/compas-dev/compas_ifc/issues>`_ or contact
+li.chen@arch.ethz.ch.
+
+
+Table of contents
 =================
 
 .. toctree::

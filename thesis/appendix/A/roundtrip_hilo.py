@@ -150,7 +150,7 @@ def compare_mesh(original, reloaded, name):
 # CHECK FILE EXISTS
 # ==================================================================
 
-hilo_path = "temp/1072_HiLo_Model-Architecture.ifc"
+hilo_path = "temp/HiLo_Model-Architecture.ifc"
 
 if not os.path.exists(hilo_path):
     print(f"[SKIP] HiLo model not found at {hilo_path}")
