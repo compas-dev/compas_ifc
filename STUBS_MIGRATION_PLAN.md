@@ -16,7 +16,7 @@ Branch: continue on `finalizing` (no new branch).
 - [x] Phase 4 — IDE / type-checker plumbing
 - [x] Phase 5 — Cleanup (delete the 5,500 generated files)
 - [x] Phase 6 — Verification gates
-- [ ] Phase 7 — Docs & changelog
+- [x] Phase 7 — Docs & changelog
 
 ---
 

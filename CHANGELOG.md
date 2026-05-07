@@ -72,6 +72,27 @@ gone.
 * Stale documentation: old tutorial and example pages, the
   `compas_ifc.entities.generated` API page, the development planning
   notes under `thesis/`.
+* `compas_ifc.entities.generated.{IFC2X3,IFC4,IFC4X3}` — the runtime
+  per-class wrappers (~3,000 files, ~20 MB) have been replaced by three
+  PEP 561 stub files (`IFC2X3.pyi`, `IFC4.pyi`, `IFC4X3.pyi`) bundled
+  with the package. IDE autocomplete on raw IFC attributes is preserved
+  through the stubs; runtime code uses dynamic dispatch through
+  ``Base.__getattr__``/``__setattr__``. Users who relied on
+  ``isinstance(x, IfcWall)`` should switch to ``x.is_a("IfcWall")``;
+  runtime imports of ``compas_ifc.entities.generated.IFC4.IfcWall``
+  no longer work — type-time imports under ``if TYPE_CHECKING:``
+  continue to resolve via the stubs.
+
+### Migration notes
+
+* The hand-written extensions in ``compas_ifc/entities/extensions/``
+  now register through the new
+  :func:`compas_ifc.entities.base.extends` decorator rather than by
+  class name. Each extension class is renamed to ``Ifc<Name>Extras``
+  and inherits from ``Base``; the previous ``class IfcElement(IfcElement)``
+  shadowing pattern is gone. External code that imported these classes
+  by name (e.g. ``from compas_ifc.entities.extensions import IfcProduct``)
+  should switch to the new ``IfcProductExtras`` name.
 
 
 ## [1.7.0] 2025-10-24
