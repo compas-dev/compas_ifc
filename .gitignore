@@ -123,6 +123,13 @@ docs/api/generated/
 conda.recipe/
 
 generated/
+# Allow committing the PEP 561 stubs that ship as part of the package.
+# (Subdirectories under entities/generated/ remain ignored so accidental
+# regenerations of the legacy per-class .py trees don't get tracked.)
+!src/compas_ifc/entities/generated/
+src/compas_ifc/entities/generated/*/
+!src/compas_ifc/entities/generated/*.pyi
+!src/compas_ifc/entities/generated/*.py
 
 thesis/appendix/A/outputs/
 thesis/figures/

@@ -1,524 +1,373 @@
+"""Stub generator for ``compas_ifc.entities.generated``.
+
+Emits one PEP 561 stub file per IFC schema:
+
+    src/compas_ifc/entities/generated/IFC2X3.pyi
+    src/compas_ifc/entities/generated/IFC4.pyi
+    src/compas_ifc/entities/generated/IFC4X3.pyi
+
+Each stub declares every IFC entity and enumeration in the schema, with
+type-annotated direct and inverse attributes, plus the public members of
+any extension classes registered through ``@extends`` against that IFC
+class. The runtime layer never imports these files; they exist purely to
+give IDEs / type checkers schema-aware autocomplete on entities returned
+from ``compas_ifc``.
+
+This module is run by maintainers when bumping schema support:
+
+    python -m compas_ifc.entities.generator
+"""
+
+from __future__ import annotations
+
 import inspect
 import os
 import types
+from typing import Iterable
 
 import ifcopenshell
 
-from compas_ifc.entities import extensions
+# Importing the extensions package executes the ``@extends`` decorators
+# and populates the registry consumed by ``StubGenerator``.
+from compas_ifc.entities import extensions  # noqa: F401
+from compas_ifc.entities.base import _extension_registry
 
 
 class Generator:
-    """
-    Generator class for generating all IFC classes and type definitions as strongly typed Python classes.
-    They are generated in the `compas_ifc.entities.generated.[schema_name]` folder.
+    """Generate a ``.pyi`` stub for a single IFC schema.
 
-    Attributes
+    Parameters
     ----------
-    schema : :class:`ifcopenshell.ifcopenshell_wrapper.schema`
-        The IfcOpenShell schema to generate classes for.
+    schema : str
+        Schema name passed to :func:`ifcopenshell.ifcopenshell_wrapper.schema_by_name`.
 
     """
 
-    def __init__(self, schema="IFC4"):
+    def __init__(self, schema: str = "IFC4"):
         self.schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema)
 
-    def generate(self):
-        """Generate all classes and type definitions for the given schema."""
-        HERE = os.path.dirname(__file__)
-        FOLDER = os.path.join(HERE, "generated", self.schema.name())
-        if not os.path.exists(FOLDER):
-            os.makedirs(FOLDER)
+    # ------------------------------------------------------------------
+    # Public entry point
+    # ------------------------------------------------------------------
 
-        doc_string = """
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: class.rst
+    def generate(self) -> None:
+        here = os.path.dirname(__file__)
+        out_path = os.path.join(here, "generated", f"{self.schema.name()}.pyi")
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
-"""
-        init_string = ""
+        lines: list[str] = []
+        lines.append(f'"""Type stubs for {self.schema.name()} entities (auto-generated).')
+        lines.append("")
+        lines.append("Do not edit by hand. Regenerate with:")
+        lines.append("    python -m compas_ifc.entities.generator")
+        lines.append('"""')
+        lines.append("")
+        lines.append("from typing import Optional, Union")
+        lines.append("")
+        lines.append("")
 
-        count = 0
+        # Enums first — they're terminal (no inheritance to other entities).
+        enum_decls = [d for d in self.schema.declarations() if d.as_enumeration_type()]
+        for decl in sorted(enum_decls, key=lambda d: d.name()):
+            lines.extend(self._emit_enum(decl))
 
-        for declaration in self.schema.declarations():
-            class_string = None
-            if declaration.as_entity():
-                entity_generator = EntityGenerator(declaration)
-                class_string = entity_generator.generate()
-                name = entity_generator.name
+        # Entities, sorted so parents precede children.
+        entity_decls = [d for d in self.schema.declarations() if d.as_entity()]
+        for decl in sorted(entity_decls, key=lambda d: (_depth(d), d.name())):
+            lines.extend(self._emit_entity(decl))
 
-            # if declaration.as_type_declaration():
-            #     type_declaration_generator = TypeDeclarationGenerator(declaration)
-            #     class_string = type_declaration_generator.generate()
-            #     name = type_declaration_generator.name
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
 
-            if declaration.as_enumeration_type():
-                enum_generator = EnumGenerator(declaration)
-                class_string = enum_generator.generate()
-                name = enum_generator.name
+        print(f"Wrote {out_path} ({len(entity_decls)} entities, {len(enum_decls)} enums).")
 
-            if class_string:
-                init_string += f"from .{name.lower()} import {name}\n"
-                doc_string += f"    {name}\n"
+    # ------------------------------------------------------------------
+    # Enums
+    # ------------------------------------------------------------------
 
-                with open(os.path.join(FOLDER, f"{name.lower()}.py"), "w") as f:
-                    f.write(class_string)
-                    count += 1
+    def _emit_enum(self, decl) -> list[str]:
+        items = tuple(decl.enumeration_items())
+        return [
+            f"class {decl.name()}(str):",
+            f"    items: tuple = {items!r}",
+            "",
+            "",
+        ]
 
-        init_string = f'"""{doc_string}"""\n\n{init_string}'
+    # ------------------------------------------------------------------
+    # Entities
+    # ------------------------------------------------------------------
 
-        with open(os.path.join(FOLDER, "__init__.py"), "w") as f:
-            f.write(init_string)
+    def _emit_entity(self, decl) -> list[str]:
+        name = decl.name()
+        parent = decl.supertype().name() if decl.supertype() else None
+        base = parent if parent else ""
 
-        print(f"Generated {count} classes for at {FOLDER}.")
+        header = f"class {name}({base}):" if base else f"class {name}:"
+        body: list[str] = []
+        body.append(f'    """Wrapper class for {name}."""')
 
-
-class EntityGenerator:
-    """
-    Generator class for generating a single IFC entityclass.
-
-    Attributes
-    ----------
-    declaration : :class:`ifcopenshell.ifcopenshell_wrapper.declaration`
-        The IfcOpenShell declaration to generate a class for.
-    name : str
-        The name of the class to generate.
-    imports : set
-        The imports required for the class.
-    attribute_imports : set
-        The imports required for the attributes of the class.
-    parent : str
-        The parent class of the class to generate.
-    extension : str
-        The extension class of the class to generate.
-    attributes : list[:class:`AttributeGenerator`]
-        The attributes of the class to generate.
-    inverse_attributes : list[:class:`InverseAttributeGenerator`]
-        The inverse attributes of the class to generate.
-    description : str
-        The description of the class to generate.
-    TEMPLATE : str
-        The template python code for the class to generate.
-
-    """
-
-    TEMPLATE = """IMPORTS
-class CLASS_NAME(PARENT_NAME):
-    \"\"\"DESCRIPTION\"\"\"
-"""
-
-    def __init__(self, declaration):
-        self.declaration = declaration
-        self.name = declaration.name()
-        self.imports = set()
-        self.attribute_imports = set()
-        self.parent = None
-        self.extension = None
-        self.attributes = []
-        self.inverse_attributes = []
-        self.description = ""
-
-    def get_parent(self):
-        if self.declaration.supertype():
-            self.parent = self.declaration.supertype().name()
-            self.imports.add(f"from .{self.parent.lower()} import {self.parent}")
-        else:
-            self.parent = "Base"
-            self.imports.add("from compas_ifc.entities.base import Base")
-
-        extension = getattr(extensions, self.name, None)
-        if extension:
-            print("Found extension class:", extension)
-            self.imports.add(f"from compas_ifc.entities.extensions import {self.name} as {self.name}_Ext   # type: ignore")
-            self.extension = f"{self.name}_Ext"
-
-    def get_description(self):
-        self.description = f"Wrapper class for {self.name}."
-
-    def get_attributes(self):
-        # attributes = self.declaration.attributes()
-        # direved = self.declaration.derived()
-        # all_attributes = self.declaration.all_attributes()
-        # all_inverse_attributes = self.declaration.all_inverse_attributes()
-
-        derived = self.declaration.derived()
-        attribute_names = [attr.name() for attr in self.declaration.attributes()]
-
-        for i, attribute in enumerate(self.declaration.all_attributes()):
-            if attribute.name() in attribute_names:
-                self.attributes.append(AttributeGenerator(attribute, self, False))
-            elif derived[i]:
-                self.attributes.append(AttributeGenerator(attribute, self, True))
-
-        inverse_attributes_from_supertype = []
-        if self.declaration.supertype():
-            for ia in self.declaration.supertype().all_inverse_attributes():
-                inverse_attributes_from_supertype.append(ia.name())
-
-        for inverse_attribute in self.declaration.all_inverse_attributes():
-            if inverse_attribute.name() not in inverse_attributes_from_supertype:
-                self.inverse_attributes.append(InverseAttributeGenerator(inverse_attribute, self))
-
-    def get_attribute_imports_string(self):
-        if not self.attribute_imports:
-            return ""
-
-        attribute_imports_string = "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n"
-        for import_string in sorted(self.attribute_imports):
-            attribute_imports_string += f"    {import_string}\n"
-        return attribute_imports_string
-
-    def get_extension_methods(self, class_name):
-        extension = getattr(extensions, class_name, None)
-        if extension is None:
-            return ""
-
-        print("Extension classes:", extension)
-
-        extension_methods_string = ""
-        for method in dir(extension):
-            method = getattr(extension, method)
-            if isinstance(method, types.FunctionType):
-                extension_methods_string += f"\n{inspect.getsource(method)}"
-            elif isinstance(method, property):
-                if method.fget is not None:
-                    extension_methods_string += f"\n{inspect.getsource(method.fget)}"
-                if method.fset is not None:
-                    extension_methods_string += f"\n{inspect.getsource(method.fset)}"
-
-        return extension_methods_string
-
-    def generate(self):
-        self.get_parent()
-        self.get_description()
-        self.get_attributes()
-
-        class_string = self.TEMPLATE.replace("CLASS_NAME", self.name)
-        if self.extension:
-            class_string = class_string.replace("PARENT_NAME", f"{self.extension}, {self.parent}")
-        else:
-            class_string = class_string.replace("PARENT_NAME", self.parent)
-        class_string = class_string.replace("DESCRIPTION", self.description)
-
-        for attribute in self.attributes:
-            class_string += attribute.generate()
-            self.attribute_imports.update(attribute.imports)
-
-        for inverse_attribute in self.inverse_attributes:
-            class_string += inverse_attribute.generate()
-            self.attribute_imports.update(inverse_attribute.imports)
-
-        if class_string.find("Union") != -1:
-            self.imports.add("from typing import Union")
-
-        import_strings = "\n".join(sorted(self.imports)) + "\n\n" + self.get_attribute_imports_string()
-
-        class_string = class_string.replace("IMPORTS", import_strings)
-
-        # class_string += self.get_extension_methods(self.name)
-
-        return class_string
-
-
-class AttributeGenerator:
-    """
-    Generator class for generating a single IFC attribute.
-
-    Attributes
-    ----------
-    attribute : :class:`ifcopenshell.ifcopenshell_wrapper.attribute`
-        The IfcOpenShell attribute to generate a property for.
-    parent : :class:`EntityGenerator`
-        The parent class of the attribute to generate.
-    is_derived : bool
-        Whether the attribute is derived.
-    name : str
-        The name of the attribute to generate.
-    imports : set
-        The imports required for the attribute.
-    type : str
-        The type of the attribute to generate.
-    description : str
-        The description of the attribute to generate.
-
-    TEMPLATE : str
-        The template python code for the attribute to generate.
-    TEMPLATE_DERIVED : str
-        The template python code for the derived attribute to generate.
-
-    """
-
-    TEMPLATE = """
-    @property
-    def ATTRIBUTE_NAME(self)-> ATTRIBUTE_TYPE:
-        \"\"\"DESCRIPTION\"\"\"
-        return self._get_attribute("ATTRIBUTE_NAME")
-
-    @ATTRIBUTE_NAME.setter
-    def ATTRIBUTE_NAME(self, value: ATTRIBUTE_TYPE):
-        return self._set_attribute("ATTRIBUTE_NAME", value)
-"""
-    TEMPLATE_DERIVED = """
-    @property
-    def ATTRIBUTE_NAME(self)-> ATTRIBUTE_TYPE:
-        \"\"\"DESCRIPTION\"\"\"
-        return self._get_attribute("ATTRIBUTE_NAME")
-
-    @ATTRIBUTE_NAME.setter
-    def ATTRIBUTE_NAME(self, value: ATTRIBUTE_TYPE):
-        # Derived attribute
-        pass
-"""
-
-    TYPE_MAP = {
-        "DOUBLE": "float",
-        "INT": "int",
-        "STRING": "str",
-        "LOGICAL": "bool",
-        "BOOL": "bool",
-        "BINARY": "bytes",
-    }
-
-    def __init__(self, attribute, parent, is_derived):
-        self.parent = parent
-        self.attribute = attribute
-        self.is_derived = is_derived
-        self.name = attribute.name()
-        self.imports = set()
-        self.type = None
-        self.description = str(attribute)
-
-    def get_aggregation_type(self, attribute_type):
-        # type_aggragation = attribute_type.type_of_aggregation()
-        # bound1 = attribute_type.bound1()
-        # bound2 = attribute_type.bound2()
-        # TODO: add support for bounds etc.
-
-        type_of_element = attribute_type.type_of_element()
-        if type_of_element.as_aggregation_type():
-            aggregation_string = self.get_aggregation_type(type_of_element)
-            return f"list[{aggregation_string}]"
-        else:
-            declared_type = type_of_element.declared_type()
-            if isinstance(declared_type, str):
-                # TODO: this duplicates the code
-                TYPE_MAP = {
-                    "integer": "int",
-                    "logical": "bool",
-                    "boolean": "bool",
-                    "real": "float",
-                    "binary": "bytes",
-                }
-                type_of_element_string = TYPE_MAP[declared_type]
+        # Direct attributes (own only — parent attrs come via inheritance).
+        derived_flags = decl.derived()
+        own_attr_names = {a.name() for a in decl.attributes()}
+        attr_lines: list[str] = []
+        all_attrs = decl.all_attributes()
+        for i, attr in enumerate(all_attrs):
+            if attr.name() not in own_attr_names:
+                continue
+            annotation = _attribute_annotation(attr)
+            if derived_flags[i]:
+                attr_lines.append("    @property")
+                attr_lines.append(f"    def {attr.name()}(self) -> {annotation}: ...")
             else:
-                if type_of_element.declared_type().as_select_type():
-                    type_of_element_string = self.get_select_type(type_of_element)
-                elif type_of_element.declared_type().as_type_declaration():
-                    type_of_element_string = self.get_type_declaration(type_of_element)
+                attr_lines.append(f"    {attr.name()}: {annotation}")
+
+        # Inverse attributes — own only.
+        parent_inverse: set[str] = set()
+        if decl.supertype():
+            for ia in decl.supertype().all_inverse_attributes():
+                parent_inverse.add(ia.name())
+        inverse_lines: list[str] = []
+        for ia in decl.all_inverse_attributes():
+            if ia.name() in parent_inverse:
+                continue
+            target = ia.entity_reference().name()
+            inverse_lines.append(
+                f'    def {ia.name()}(self) -> tuple["{target}", ...]: ...'
+            )
+
+        # Extension members merged from `_extension_registry`.
+        ext_lines = self._emit_extension_members(name)
+
+        body.extend(attr_lines)
+        body.extend(inverse_lines)
+        body.extend(ext_lines)
+
+        if len(body) == 1:  # only the docstring
+            body.append("    ...")
+
+        return [header, *body, "", ""]
+
+    # ------------------------------------------------------------------
+    # Extension merging
+    # ------------------------------------------------------------------
+
+    def _emit_extension_members(self, ifc_class_name: str) -> list[str]:
+        registered = _extension_registry.get(ifc_class_name, [])
+        if not registered:
+            return []
+
+        schema_name = self.schema.name()
+        # Skip extension if its target class doesn't exist in this schema.
+        try:
+            self.schema.declaration_by_name(ifc_class_name)
+        except Exception:
+            return []
+
+        lines: list[str] = []
+        for ext_cls, schemas in registered:
+            if schemas is not None and schema_name not in schemas:
+                continue
+            lines.extend(_format_extension_class(ext_cls))
+        return lines
+
+
+# ----------------------------------------------------------------------
+# Module-level helpers
+# ----------------------------------------------------------------------
+
+
+_depth_cache: dict = {}
+
+
+def _depth(decl) -> int:
+    """Inheritance depth of an entity declaration (0 for IfcRoot-less roots)."""
+    name = decl.name()
+    if name in _depth_cache:
+        return _depth_cache[name]
+    d = 0
+    cur = decl
+    while cur.supertype():
+        d += 1
+        cur = cur.supertype()
+    _depth_cache[name] = d
+    return d
+
+
+_TYPE_MAP = {
+    "DOUBLE": "float",
+    "INT": "int",
+    "STRING": "str",
+    "LOGICAL": "bool",
+    "BOOL": "bool",
+    "BINARY": "bytes",
+    "integer": "int",
+    "logical": "bool",
+    "boolean": "bool",
+    "real": "float",
+    "string": "str",
+    "binary": "bytes",
+}
+
+
+def _attribute_annotation(attr) -> str:
+    """Compute a Python type-annotation string for an EXPRESS attribute."""
+    attribute_type = attr.type_of_attribute()
+    optional = attr.optional()
+    base = _attribute_type_string(attribute_type)
+    if optional:
+        return f"Optional[{base}]"
+    return base
+
+
+def _attribute_type_string(attribute_type) -> str:
+    if attribute_type.as_aggregation_type():
+        return _aggregation_type_string(attribute_type)
+    if attribute_type.as_simple_type():
+        return _TYPE_MAP[attribute_type.declared_type()]
+    declared = attribute_type.declared_type()
+    if declared.as_select_type():
+        return _select_type_string(declared)
+    if declared.as_type_declaration():
+        return _type_declaration_string(declared)
+    # Entity or enumeration — forward-referenced as a string.
+    return f'"{declared.name()}"'
+
+
+def _aggregation_type_string(attribute_type) -> str:
+    type_of_element = attribute_type.type_of_element()
+    if type_of_element.as_aggregation_type():
+        return f"list[{_aggregation_type_string(type_of_element)}]"
+    declared = type_of_element.declared_type()
+    if isinstance(declared, str):
+        return f"list[{_TYPE_MAP[declared]}]"
+    if declared.as_select_type():
+        return f"list[{_select_type_string(declared)}]"
+    if declared.as_type_declaration():
+        return f"list[{_type_declaration_string(declared)}]"
+    return f'list["{declared.name()}"]'
+
+
+def _select_type_string(select_decl) -> str:
+    items: list[str] = []
+    seen: set[str] = set()
+
+    def walk(decl):
+        for item in decl.select_list():
+            if item.as_select_type():
+                walk(item)
+            else:
+                if item.as_type_declaration():
+                    s = _type_declaration_string(item)
                 else:
-                    type_of_element_string = type_of_element.declared_type().name()
-                    if type_of_element_string != self.parent.name:
-                        self.imports.add(f"from .{type_of_element_string.lower()} import {type_of_element_string}")
-                    type_of_element_string = f'"{type_of_element_string}"'
-            return f"list[{type_of_element_string}]"
+                    s = f'"{item.name()}"'
+                if s not in seen:
+                    seen.add(s)
+                    items.append(s)
 
-    def get_select_type(self, attribute_type):
-        def flaten_select_list(select_type, initial_list=None):
-            if initial_list is None:
-                initial_list = []
-            select_list = select_type.select_list()
-            for item in select_list:
-                if item.as_select_type():
-                    initial_list = flaten_select_list(item, initial_list)
-                else:
-                    initial_list.append(item)
-            return initial_list
+    walk(select_decl)
+    if not items:
+        return "object"
+    if len(items) == 1:
+        return items[0]
+    return f"Union[{', '.join(items)}]"
 
-        select_list = flaten_select_list(attribute_type.declared_type())
-        class_names = set()
-        for item in select_list:
-            if item.as_type_declaration():
-                class_names.add(self.get_type_declaration(item))
-            else:
-                class_names.add(f'"{item.name()}"')
-                if item.name() != self.parent.name:
-                    self.imports.add(f"from .{item.name().lower()} import {item.name()}")
-        select_string = "Union[" + ", ".join(class_names) + "]"
-        return select_string
 
-    def get_type_declaration(self, attribute_type):
-        if hasattr(attribute_type, "argument_types"):
-            declared_type = attribute_type
+def _type_declaration_string(type_decl) -> str:
+    ifc_type = type_decl.argument_types()[0]
+    if ifc_type.startswith("AGGREGATE OF"):
+        value_type = ifc_type.split("OF ")[1]
+        if value_type == "ENTITY INSTANCE":
+            return "list"
+        return f"list[{_TYPE_MAP[value_type]}]"
+    return _TYPE_MAP[ifc_type]
+
+
+def _format_extension_class(ext_cls) -> list[str]:
+    """Walk an extension class and emit its public members as stub lines.
+
+    Dunder methods and underscore-prefixed members are skipped — they're
+    implementation details that don't belong in the IDE-facing stub.
+    """
+    out: list[str] = []
+    for name, member in ext_cls.__dict__.items():
+        if name.startswith("_"):
+            continue
+        if isinstance(member, property):
+            ret = _signature_return(member.fget) if member.fget else "object"
+            out.append("    @property")
+            out.append(f"    def {name}(self) -> {ret}: ...")
+            if member.fset is not None:
+                out.append(f"    @{name}.setter")
+                ret = _signature_return(member.fset, default="None")
+                # For setters, the value parameter type is best-effort.
+                out.append(f"    def {name}(self, value) -> None: ...")
+        elif isinstance(member, types.FunctionType):
+            out.append(f"    {_format_method_signature(name, member)}")
+    return out
+
+
+def _format_method_signature(name: str, func: types.FunctionType) -> str:
+    try:
+        sig = inspect.signature(func)
+    except (TypeError, ValueError):
+        return f"def {name}(self, *args, **kwargs) -> object: ..."
+
+    params: list[str] = []
+    for i, (pname, param) in enumerate(sig.parameters.items()):
+        if i == 0 and pname == "self":
+            params.append("self")
+            continue
+        if param.kind == inspect.Parameter.VAR_POSITIONAL:
+            params.append(f"*{pname}")
+            continue
+        if param.kind == inspect.Parameter.VAR_KEYWORD:
+            params.append(f"**{pname}")
+            continue
+        ann = _annotation_str(param.annotation) if param.annotation is not param.empty else None
+        if param.default is not param.empty:
+            default = repr(param.default)
+            params.append(f"{pname}: {ann} = {default}" if ann else f"{pname}={default}")
         else:
-            declared_type = attribute_type.declared_type()
+            params.append(f"{pname}: {ann}" if ann else pname)
 
-        ifc_type = declared_type.argument_types()[0]
-        if ifc_type.startswith("AGGREGATE OF"):
-            value_type = ifc_type.split("OF ")[1]
-            if value_type == "ENTITY INSTANCE":
-                python_type = "list"  # TODO: handle this
-            else:
-                python_type = f"list[{self.TYPE_MAP[value_type]}]"
-        else:
-            python_type = self.TYPE_MAP[ifc_type]
-        return python_type
-
-    def get_attribute_type(self):
-        attribute_type = self.attribute.type_of_attribute()
-        if attribute_type.as_aggregation_type():
-            self.type = self.get_aggregation_type(attribute_type)
-        elif attribute_type.as_simple_type():
-            attribute_type = attribute_type.declared_type()
-            TYPE_MAP = {
-                "integer": "int",
-                "logical": "bool",
-                "boolean": "bool",
-                "real": "float",
-                "string": "str",
-            }
-            self.type = TYPE_MAP[attribute_type]
-        elif attribute_type.declared_type().as_select_type():
-            self.type = self.get_select_type(attribute_type)
-        elif attribute_type.declared_type().as_type_declaration():
-            self.type = self.get_type_declaration(attribute_type)
-        else:
-            # Entity, Enumeration
-            type_name = attribute_type.declared_type().name()
-            if type_name != self.parent.name:
-                self.imports.add(f"from .{type_name.lower()} import {type_name}")
-            self.type = f'"{type_name}"'
-
-    def generate(self):
-        self.get_attribute_type()
-        if self.is_derived:
-            attribute_string = self.TEMPLATE_DERIVED.replace("ATTRIBUTE_NAME", self.name)
-        else:
-            attribute_string = self.TEMPLATE.replace("ATTRIBUTE_NAME", self.name)
-        attribute_string = attribute_string.replace("ATTRIBUTE_TYPE", str(self.type))
-        attribute_string = attribute_string.replace("DESCRIPTION", self.description)
-
-        return attribute_string
+    ret = _annotation_str(sig.return_annotation) if sig.return_annotation is not sig.empty else "object"
+    return f"def {name}({', '.join(params)}) -> {ret}: ..."
 
 
-class InverseAttributeGenerator(AttributeGenerator):
-    """
-    Generator class for generating a single IFC inverse attribute.
-
-    Attributes
-    ----------
-    See :class:`AttributeGenerator`
-
-    TEMPLATE : str
-        The template python code for the inverse attribute to generate.
-
-    """
-
-    TEMPLATE = """
-    def ATTRIBUTE_NAME(self)-> list[ATTRIBUTE_TYPE]:
-        \"\"\"DESCRIPTION\"\"\"
-        return self._get_inverse_attribute("ATTRIBUTE_NAME")
-"""
-
-    def __init__(self, attribute, parent):
-        self.parent = parent
-        self.attribute = attribute
-        self.name = attribute.name()
-        self.imports = set()
-        self.type = None
-        self.description = str(attribute)
-
-    def get_attribute_type(self):
-        # TODO: handle bound1, bound2 etc. for the aggregation
-        entity_reference = self.attribute.entity_reference()
-        self.type = entity_reference.name()
-        self.imports.add(f"from .{self.type.lower()} import {self.type}")
-
-    def generate(self):
-        self.get_attribute_type()
-        attribute_string = self.TEMPLATE.replace("ATTRIBUTE_NAME", self.name)
-        attribute_string = attribute_string.replace("ATTRIBUTE_TYPE", f'"{self.type}"')
-        attribute_string = attribute_string.replace("DESCRIPTION", self.description)
-
-        return attribute_string
+def _signature_return(func, default: str = "object") -> str:
+    try:
+        sig = inspect.signature(func)
+    except (TypeError, ValueError):
+        return default
+    if sig.return_annotation is sig.empty:
+        return default
+    return _annotation_str(sig.return_annotation)
 
 
-class TypeDeclarationGenerator:
-    """
-    Generator class for generating a single IFC type declaration.
-    """
-
-    TEMPLATE = """class CLASS_NAME(PARENT_NAME):
-    \"\"\"Some description.\"\"\"
-"""
-
-    TYPE_MAP = {
-        "DOUBLE": "float",
-        "INT": "int",
-        "STRING": "str",
-        "LOGICAL": "bool",
-        "BOOL": "bool",
-        "BINARY": "bytes",
-    }
-
-    def __init__(self, declaration):
-        self.declaration = declaration
-        self.name = declaration.name()
-        self.parent = None
-
-    def get_parent(self):
-        ifc_type = self.declaration.argument_types()[0]
-        if ifc_type.startswith("AGGREGATE OF"):
-            value_type = ifc_type.split("OF ")[1]
-            if value_type == "ENTITY INSTANCE":
-                python_type = "list"  # TODO: handle this
-            else:
-                python_type = f"list[{self.TYPE_MAP[value_type]}]"
-        else:
-            python_type = self.TYPE_MAP[ifc_type]
-        self.parent = python_type
-
-    def generate(self):
-        self.get_parent()
-
-        class_string = self.TEMPLATE.replace("CLASS_NAME", self.name)
-        class_string = class_string.replace("PARENT_NAME", self.parent)
-
-        return class_string
+def _annotation_str(annotation) -> str:
+    if annotation is None or annotation is type(None):
+        return "None"
+    if isinstance(annotation, str):
+        # Forward-referenced — already a string. Quote-strip if double-wrapped.
+        s = annotation.strip("\"'")
+        return f'"{s}"' if not s.startswith(("Optional", "Union", "list", "tuple", "dict", "int", "str", "float", "bool")) else s
+    # Class — use its qualified name; fall back to repr.
+    try:
+        return getattr(annotation, "__name__", repr(annotation))
+    except Exception:
+        return "object"
 
 
-class EnumGenerator:
-    """
-    Generator class for generating a single IFC enumeration type.
-    """
+# ----------------------------------------------------------------------
+# CLI entry point
+# ----------------------------------------------------------------------
 
-    TEMPLATE = """class CLASS_NAME(str):
-    items = ITEMS
-"""
 
-    def __init__(self, declaration):
-        self.declaration = declaration
-        self.name = declaration.name()
-        self.items = []
-
-    def get_items(self):
-        for item in self.declaration.enumeration_items():
-            self.items.append(item)
-
-    def generate(self):
-        self.get_items()
-
-        class_string = self.TEMPLATE.replace("CLASS_NAME", self.name)
-        class_string = class_string.replace("ITEMS", str(self.items))
-
-        return class_string
+def generate_all(schemas: Iterable[str] = ("IFC2X3", "IFC4", "IFC4X3")) -> None:
+    for schema in schemas:
+        Generator(schema=schema).generate()
 
 
 if __name__ == "__main__":
-    generator = Generator(schema="IFC2X3")
-    generator.generate()
-
-    generator = Generator(schema="IFC4")
-    generator.generate()
-
-    generator = Generator(schema="IFC4X3")
-    generator.generate()
+    generate_all()
