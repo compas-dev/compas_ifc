@@ -14,7 +14,7 @@ Branch: continue on `finalizing` (no new branch).
 - [x] Phase 2 — Extensions: refactor with `@extends`
 - [x] Phase 3 — Stub generator
 - [x] Phase 4 — IDE / type-checker plumbing
-- [ ] Phase 5 — Cleanup (delete the 5,500 generated files)
+- [x] Phase 5 — Cleanup (delete the 5,500 generated files)
 - [ ] Phase 6 — Verification gates
 - [ ] Phase 7 — Docs & changelog
 
