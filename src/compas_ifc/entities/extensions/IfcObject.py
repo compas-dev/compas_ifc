@@ -1,18 +1,11 @@
 """Extension for ``IfcObject`` entities — property and quantity sets."""
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 from ifcopenshell.util.element import get_psets
 
 from compas_ifc.conversions.pset import from_dict_to_pset
 from compas_ifc.conversions.pset import from_psets_to_dict
 from compas_ifc.entities.base import Base
 from compas_ifc.entities.base import extends
-
-if TYPE_CHECKING:
-    from compas_ifc.entities.generated.IFC4 import IfcObject  # noqa: F401
 
 
 @extends("IfcObject")

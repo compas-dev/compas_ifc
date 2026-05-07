@@ -76,6 +76,15 @@ class Generator:
         for decl in sorted(entity_decls, key=lambda d: (_depth(d), d.name())):
             lines.extend(self._emit_entity(decl))
 
+        # __all__ is required for `from .<schema> import *` in __init__.pyi
+        # to count as a re-export under PEP 484.
+        all_names = sorted([d.name() for d in enum_decls] + [d.name() for d in entity_decls])
+        lines.append("__all__ = [")
+        for name in all_names:
+            lines.append(f'    "{name}",')
+        lines.append("]")
+        lines.append("")
+
         with open(out_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
 

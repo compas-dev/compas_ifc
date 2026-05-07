@@ -1,7 +1,5 @@
 """Extension for ``IfcProduct`` entities — geometry and placement helpers."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from compas.geometry import Frame
@@ -13,7 +11,7 @@ from compas_ifc.entities.base import Base
 from compas_ifc.entities.base import extends
 
 if TYPE_CHECKING:
-    from compas_ifc.entities.generated.IFC4 import IfcProduct
+    from compas_ifc.entities.generated import IfcProduct
 
 
 @extends("IfcProduct")

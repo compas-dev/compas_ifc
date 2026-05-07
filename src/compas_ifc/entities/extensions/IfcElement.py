@@ -1,14 +1,12 @@
 """Extension for ``IfcElement`` entities — spatial-parent resolution."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from compas_ifc.entities.base import Base
 from compas_ifc.entities.base import extends
 
 if TYPE_CHECKING:
-    from compas_ifc.entities.generated.IFC4 import IfcElement
+    from compas_ifc.entities.generated import IfcElement
 
 
 @extends("IfcElement")

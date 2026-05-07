@@ -7,15 +7,13 @@ so this extension is automatically scoped to IFC4+ schemas without an
 explicit ``schemas=`` argument.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from compas_ifc.entities.base import Base
 from compas_ifc.entities.base import extends
 
 if TYPE_CHECKING:
-    from compas_ifc.entities.generated.IFC4 import IfcSpatialElement
+    from compas_ifc.entities.generated import IfcSpatialElement
 
 
 @extends("IfcSpatialElement")
