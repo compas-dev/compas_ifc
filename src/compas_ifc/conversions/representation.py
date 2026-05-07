@@ -28,7 +28,7 @@ from compas_ifc.conversions.shapes import box_to_IfcBlock
 from compas_ifc.conversions.shapes import cone_to_IfcRightCircularCone
 from compas_ifc.conversions.shapes import cylinder_to_IfcRightCircularCylinder
 from compas_ifc.conversions.shapes import sphere_to_IfcSphere
-from compas_ifc.entities.extensions import IfcProduct
+from compas_ifc.entities.base import Base as IfcProduct  # any entity that is_a("IfcProduct")
 from compas_ifc.representations import BooleanResult
 from compas_ifc.representations import ClippedExtrusion
 from compas_ifc.representations import Extrusion

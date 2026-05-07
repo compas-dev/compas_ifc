@@ -1,24 +1,23 @@
+"""Extension for ``IfcElement`` entities — spatial-parent resolution."""
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
+from compas_ifc.entities.base import Base
+from compas_ifc.entities.base import extends
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcElement
-else:
-    IfcElement = object
 
 
-class IfcElement(IfcElement):
-    """Extension class for :class:`IfcElement`.
-
-    Attributes
-    ----------
-    parent : :class:`IfcElement`
-        The parent element of the element.
-    """
+@extends("IfcElement")
+class IfcElementExtras(Base):
+    """Extras applied to entities of class :class:`IfcElement`."""
 
     @property
-    def parent(self):
+    def parent(self: "IfcElement"):
         relations = self.ContainedInStructure()
         if relations:
             return relations[0].RelatingStructure
-        else:
-            return super().parent
+        return super().parent

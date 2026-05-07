@@ -1,27 +1,22 @@
+"""Extension for ``IfcBuilding`` entities — building-level accessors."""
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
+from compas_ifc.entities.base import Base
+from compas_ifc.entities.base import extends
+
 if TYPE_CHECKING:
-    from compas_ifc.entities.generated.IFC4 import IfcBuilding
-    from compas_ifc.entities.generated.IFC4 import IfcBuildingElement
-    from compas_ifc.entities.generated.IFC4 import IfcBuildingStorey
-    from compas_ifc.entities.generated.IFC4 import IfcGeographicElement
-else:
-    IfcBuilding = object
+    from compas_ifc.entities.generated.IFC4 import IfcBuilding  # noqa: F401
+    from compas_ifc.entities.generated.IFC4 import IfcBuildingElement  # noqa: F401
+    from compas_ifc.entities.generated.IFC4 import IfcBuildingStorey  # noqa: F401
+    from compas_ifc.entities.generated.IFC4 import IfcGeographicElement  # noqa: F401
 
 
-class IfcBuilding(IfcBuilding):
-    """Extension class for :class:`IfcBuilding`.
-
-    Attributes
-    ----------
-    building_elements : list[:class:`IfcBuildingElement`]
-        The building elements of the building.
-    geographic_elements : list[:class:`IfcGeographicElement`]
-        The geographic elements of the building.
-    storeys : list[:class:`IfcBuildingStorey`]
-        The storeys of the building.
-
-    """
+@extends("IfcBuilding")
+class IfcBuildingExtras(Base):
+    """Extras applied to entities of class :class:`IfcBuilding`."""
 
     @property
     def building_elements(self) -> list["IfcBuildingElement"]:

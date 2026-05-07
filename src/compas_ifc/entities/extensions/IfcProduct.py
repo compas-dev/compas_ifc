@@ -1,3 +1,7 @@
+"""Extension for ``IfcProduct`` entities — geometry and placement helpers."""
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from compas.geometry import Frame
@@ -5,33 +9,19 @@ from compas.geometry import Frame
 from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
 from compas_ifc.conversions.frame import assign_entity_frame
 from compas_ifc.conversions.representation import assign_body_representation
+from compas_ifc.entities.base import Base
+from compas_ifc.entities.base import extends
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcProduct
-else:
-    IfcProduct = object
 
 
-class IfcProduct(IfcProduct):
-    """Extension class for :class:`IfcProduct`.
+@extends("IfcProduct")
+class IfcProductExtras(Base):
+    """Extras applied to entities of class :class:`IfcProduct`.
 
-    Attributes
-    ----------
-    style : dict
-        The style of the product.
-    visual_geometry : :class:`compas_ifc.brep.TessellatedBrep` or :class:`compas_occ.brep.OCCBrep`
-        The evaluated visual geometry of the product, produced by ifcopenshell.geom.iterator.
-        Suitable for display but does NOT preserve parametric information.
-    geometry : :class:`~compas.geometry.Geometry` or :class:`~compas.datastructures.Mesh` or None
-        Parsed COMPAS geometry from the IFC body representation.
-        Returns Box, Sphere, Cone, Cylinder, Extrusion, Mesh, etc.
-        Falls back to visual_geometry if parsing is not available.
-        Setter writes COMPAS geometry to the IFC file as a body representation.
-    axis : :class:`~compas.geometry.Polyline` or None
-        The axis (centerline) representation of the product, parsed from the
-        ``"Axis"`` representation.  Common for walls, beams, and columns.
-    frame : :class:`compas.geometry.Frame`
-        The frame of the product.
+    Adds ``style``, ``visual_geometry``, ``geometry``, ``volume``,
+    ``surface_area``, ``axis``, and ``frame`` accessors.
     """
 
     @property
@@ -39,7 +29,7 @@ class IfcProduct(IfcProduct):
         return self.file.get_preloaded_style(self)
 
     @property
-    def visual_geometry(self):
+    def visual_geometry(self: "IfcProduct"):
         """The evaluated visual geometry of the product.
 
         Produced by ifcopenshell.geom.iterator during ``load_geometries()``.
@@ -192,7 +182,7 @@ class IfcProduct(IfcProduct):
         assign_axis_representation(self, polyline)
 
     @property
-    def frame(self):
+    def frame(self: "IfcProduct"):
         if not getattr(self, "_frame", None):
             if self.ObjectPlacement:
                 transformation = IfcLocalPlacement_to_transformation(self.ObjectPlacement)

@@ -11,7 +11,7 @@ Branch: continue on `finalizing` (no new branch).
 ## Status
 
 - [x] Phase 1 — Runtime: make `Base` self-sufficient
-- [ ] Phase 2 — Extensions: refactor with `@extends`
+- [x] Phase 2 — Extensions: refactor with `@extends`
 - [ ] Phase 3 — Stub generator
 - [ ] Phase 4 — IDE / type-checker plumbing
 - [ ] Phase 5 — Cleanup (delete the 5,500 generated files)

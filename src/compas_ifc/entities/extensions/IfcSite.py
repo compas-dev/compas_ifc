@@ -1,27 +1,23 @@
+"""Extension for ``IfcSite`` entities — site-level accessors."""
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from compas_ifc.conversions.unit import IfcCompoundPlaneAngleMeasure_to_degrees
+from compas_ifc.entities.base import Base
+from compas_ifc.entities.base import extends
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcSite
-else:
-    IfcSite = object
 
 
-class IfcSite(IfcSite):
-    """Extension class for :class:`IfcSite`.
+@extends("IfcSite")
+class IfcSiteExtras(Base):
+    """Extras applied to entities of class :class:`IfcSite`.
 
-    Attributes
-    ----------
-    buildings : list[:class:`IfcBuilding`]
-        The buildings of the site.
-    building_elements : list[:class:`IfcBuildingElement`]
-        The building elements of the site.
-    geographic_elements : list[:class:`IfcGeographicElement`]
-        The geographic elements of the site.
-    location : tuple[float, float]
-        The location of the site. In degrees (latitude, longitude).
-
+    Adds ``buildings``, ``building_elements``, ``geographic_elements``,
+    and ``location`` accessors.
     """
 
     @property
@@ -37,8 +33,10 @@ class IfcSite(IfcSite):
         return self.children_by_type("IfcGeographicElement", recursive=True)
 
     @property
-    def location(self):
+    def location(self: "IfcSite"):
         if self.RefLatitude and self.RefLongitude:
-            return IfcCompoundPlaneAngleMeasure_to_degrees(self.RefLatitude), IfcCompoundPlaneAngleMeasure_to_degrees(self.RefLongitude)
-        else:
-            return None
+            return (
+                IfcCompoundPlaneAngleMeasure_to_degrees(self.RefLatitude),
+                IfcCompoundPlaneAngleMeasure_to_degrees(self.RefLongitude),
+            )
+        return None

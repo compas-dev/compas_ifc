@@ -1,36 +1,23 @@
+"""Extension for ``IfcProject`` entities — top-level model accessors."""
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
+from compas_ifc.entities.base import Base
+from compas_ifc.entities.base import extends
 
 if TYPE_CHECKING:
     from compas_ifc.entities.generated.IFC4 import IfcProject
-else:
-    IfcProject = object
 
 
-class IfcProject(IfcProject):
-    """Extension class for :class:`IfcProject`.
+@extends("IfcProject")
+class IfcProjectExtras(Base):
+    """Extras applied to entities of class :class:`IfcProject`.
 
-    Attributes
-    ----------
-    sites : list[:class:`IfcSite`]
-        The sites of the project.
-    buildings : list[:class:`IfcBuilding`]
-        The buildings of the project.
-    building_elements : list[:class:`IfcBuildingElement`]
-        The building elements of the project.
-    geographic_elements : list[:class:`IfcGeographicElement`]
-        The geographic elements of the project.
-    contexts : list[:class:`IfcContext`]
-        The contexts of the project.
-    units : list[:class:`IfcUnit`]
-        The units of the project.
-    length_unit : :class:`IfcUnit`
-        The length unit of the project.
-    length_scale : float
-        The length scale of the project.
-    frame : :class:`compas.geometry.Frame`
-        The frame of the project.
-    north : :class:`compas.geometry.Vector`
-        The north vector of the project.
+    Adds ``sites``, ``buildings``, ``building_elements``,
+    ``geographic_elements``, ``contexts``, ``units``, ``length_unit``,
+    ``length_scale``, ``frame``, and ``north`` accessors.
     """
 
     @property
@@ -50,7 +37,7 @@ class IfcProject(IfcProject):
         return self.children_by_type("IfcGeographicElement", recursive=True)
 
     @property
-    def contexts(self):
+    def contexts(self: "IfcProject"):
         from compas.geometry import Vector
 
         from compas_ifc.conversions.frame import IfcAxis2Placement3D_to_frame
@@ -73,7 +60,7 @@ class IfcProject(IfcProject):
         return contexts
 
     @property
-    def units(self):
+    def units(self: "IfcProject"):
         units = []
         units_in_context = self.UnitsInContext or self.file.get_entities_by_type("IfcUnitAssignment")[0]
         for unit in units_in_context.Units:

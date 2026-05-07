@@ -1,26 +1,25 @@
+"""Extension for ``IfcContext`` entities — property accessors."""
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import ifcopenshell.guid
 from ifcopenshell.api import run
 from ifcopenshell.util.element import get_psets
 
+from compas_ifc.entities.base import Base
+from compas_ifc.entities.base import extends
+
 if TYPE_CHECKING:
-    from compas_ifc.entities.generated.IFC4 import IfcContext
-else:
-    IfcContext = object
+    from compas_ifc.entities.generated.IFC4 import IfcContext  # noqa: F401
 
 
-class IfcContext(IfcContext):
-    """Extension class for :class:`IfcContext`.
+@extends("IfcContext")
+class IfcContextExtras(Base):
+    """Extras applied to entities of class :class:`IfcContext`."""
 
-    Attributes
-    ----------
-    properties : dict
-        The properties of the context.
-
-    """
-
-    _psetsmap = {}
+    _psetsmap: dict = {}
 
     @property
     def properties(self):
