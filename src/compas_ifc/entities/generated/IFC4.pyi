@@ -3959,8 +3959,6 @@ class IfcSpatialElementType(IfcTypeProduct):
 class IfcSpatialStructureElement(IfcSpatialElement):
     """Wrapper class for IfcSpatialStructureElement."""
     CompositionType: Optional["IfcElementCompositionEnum"]
-    @property
-    def children(self) -> object: ...
 
 
 class IfcSphericalSurface(IfcElementarySurface):

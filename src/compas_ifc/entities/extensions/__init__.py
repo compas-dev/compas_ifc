@@ -13,5 +13,4 @@ from .IfcObjectDefinition import IfcObjectDefinitionExtras  # noqa: F401
 from .IfcProduct import IfcProductExtras  # noqa: F401
 from .IfcProject import IfcProjectExtras  # noqa: F401
 from .IfcSite import IfcSiteExtras  # noqa: F401
-from .IfcSpatialElement import IfcSpatialElementExtras  # noqa: F401
-from .IfcSpatialStructureElement import IfcSpatialStructureElementExtras  # noqa: F401
+from .IfcSpatialElement import IfcSpatialContainerExtras  # noqa: F401

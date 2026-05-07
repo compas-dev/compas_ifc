@@ -18,6 +18,7 @@ Branch: continue on `finalizing` (no new branch).
 - [x] Phase 6 — Verification gates
 - [x] Phase 7 — Docs & changelog
 - [x] Phase 8 — Extension import cleanup (drop unused TYPE_CHECKING imports, redundant `from __future__ import annotations`, and the hardcoded `IFC4` schema reference in every import path)
+- [x] Phase 9 — Merge IfcSpatialElement and IfcSpatialStructureElement extensions into a single `IfcSpatialContainerExtras` with stacked `@extends` decorators
 
 ---
 

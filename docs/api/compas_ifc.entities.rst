@@ -54,8 +54,7 @@ Python-friendly properties to entities of a particular IFC class.
     extensions.IfcProjectExtras
     extensions.IfcProductExtras
     extensions.IfcElementExtras
-    extensions.IfcSpatialElementExtras
-    extensions.IfcSpatialStructureElementExtras
+    extensions.IfcSpatialContainerExtras
     extensions.IfcSiteExtras
     extensions.IfcBuildingExtras
 
