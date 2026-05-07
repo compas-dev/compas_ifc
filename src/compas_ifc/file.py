@@ -1,5 +1,4 @@
 import difflib
-import importlib
 import multiprocessing
 import os
 import time
@@ -79,7 +78,10 @@ class IFCFile(object):
 
         self.extensions = extensions
         self.verbose = verbose
-        self.ensure_classes_generated()
+        # Importing the extensions package registers the hand-written
+        # extensions in ``compas_ifc.entities.base._extension_registry``.
+        import compas_ifc.entities.extensions  # noqa: F401
+
         self._entitymap = {}
         self._geometrymap = {}  # entity_id → visual geometry (TessellatedBrep or OCCBrep)
         self._stylemap = {}  # entity_id → visual style dict (facecolors or shellcolors)
@@ -122,34 +124,15 @@ class IFCFile(object):
         return self.schema.name()
 
     @property
-    def classes(self) -> list[Base]:
+    def classes(self) -> list:
+        """List of IFC entity class names defined in the active schema."""
         if not self._classes:
-            module = importlib.import_module(f"compas_ifc.entities.generated.{self.schema_name}")
-            classes = [x for x in dir(module) if x.startswith("Ifc") and x != "IfcRoot"]
-            self._classes = classes
+            self._classes = sorted(
+                d.name()
+                for d in self._schema.declarations()
+                if d.as_entity() and d.name().startswith("Ifc") and d.name() != "IfcRoot"
+            )
         return self._classes
-
-    def ensure_classes_generated(self):
-        """Check if the IFC classes are generated and generate them if not."""
-        try:
-            from compas_ifc.entities.generated import IFC2X3  # noqa: F401
-            from compas_ifc.entities.generated import IFC4  # noqa: F401
-            from compas_ifc.entities.generated import IFC4X3  # noqa: F401
-        except ImportError:
-            if self.verbose:
-                print("IFC classes not found. Generating classes...")
-            from compas_ifc.entities.generator import Generator
-
-            generator = Generator(schema="IFC2X3")
-            generator.generate()
-
-            generator = Generator(schema="IFC4")
-            generator.generate()
-
-            generator = Generator(schema="IFC4X3")
-            generator.generate()
-            if self.verbose:
-                print("IFC classes generated.\n\n")
 
     def file_size(self) -> float:
         """Get the size of the IFC file in MB."""

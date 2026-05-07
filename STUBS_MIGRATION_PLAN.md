@@ -10,8 +10,8 @@ Branch: continue on `finalizing` (no new branch).
 
 ## Status
 
-- [ ] Phase 1 — Runtime: make `Base` self-sufficient
-- [ ] Phase 2 — Extensions: re-parent to `Base`
+- [x] Phase 1 — Runtime: make `Base` self-sufficient
+- [ ] Phase 2 — Extensions: refactor with `@extends`
 - [ ] Phase 3 — Stub generator
 - [ ] Phase 4 — IDE / type-checker plumbing
 - [ ] Phase 5 — Cleanup (delete the 5,500 generated files)
@@ -235,7 +235,20 @@ Make `Base` work without the generated subclasses present. After this phase, the
   - In `print_properties`: `isinstance(self, IfcObject)` → `self.entity.is_a("IfcObject")`.
   - Drop both `importlib.import_module` calls.
 
-- [ ] **Initialize the inverse-attribute cache** as a class-level dict: `Base._inverse_cache: dict[tuple[str, str], frozenset[str]] = {}`.
+- [ ] **Initialize the inverse-attribute cache** as a module-level dict: `_inverse_cache: dict[tuple[str, str], frozenset[str]] = {}`.
+
+- [ ] **Add a derived-attribute cache and skip writes to derived attrs.**
+  IFC EXPRESS marks some attributes as DERIVED (computed from other fields, not directly settable — e.g. `IfcSIUnit.Dimensions`). The old generator emitted no-op setters for these via `TEMPLATE_DERIVED`. Without that, `setattr(entity, "Dimensions", value)` raises `TypeError: Unable to set derived attribute` from ifcopenshell. `_set_attribute` must early-return when the attribute is derived. Cache lookup is the same shape as the inverse-attribute cache:
+  ```python
+  def _derived_attribute_names(self):
+      ...  # cached frozenset, populated from
+           # decl.derived() + decl.all_attributes()
+
+  def _set_attribute(self, name, value):
+      if name in self._derived_attribute_names():
+          return
+      ...
+  ```
 
 **File: `src/compas_ifc/file.py`**
 

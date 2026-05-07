@@ -1,7 +1,8 @@
-import importlib
 from typing import TYPE_CHECKING
+from typing import Optional
 from typing import Union
 
+import ifcopenshell
 from compas.data import Data
 from compas.datastructures import Tree
 from compas.datastructures import TreeNode
@@ -10,6 +11,84 @@ from ifcopenshell import entity_instance
 if TYPE_CHECKING:
     from compas_ifc.bim import BuildingInformationModel
     from compas_ifc.file import IFCFile
+
+
+# ============================================================================
+# Extension registry
+# ============================================================================
+#
+# The runtime layer composes a small synthetic class per IFC entity at
+# instantiation time, mixing :class:`Base` with any extension classes whose
+# target IFC class matches `entity.is_a(...)`. The registry maps an IFC class
+# name to a list of `(extension_class, schemas_or_None)` pairs.
+#
+# Extensions register themselves through the :func:`extends` decorator
+# (Phase 2). During Phase 1 of the migration to PEP 561 stubs, the existing
+# hand-written extensions are bootstrapped into the registry by their class
+# name in ``compas_ifc/entities/extensions/__init__.py``.
+
+_extension_registry: dict = {}
+_depth_cache: dict = {}
+_inverse_cache: dict = {}
+_derived_cache: dict = {}
+
+
+def extends(*ifc_classes: str, schemas: Optional[set] = None):
+    """Register a class as an extension of one or more IFC classes.
+
+    The decorated class becomes part of the synthetic class composed by
+    :meth:`Base.__new__` whenever the underlying IFC entity satisfies
+    ``entity.is_a(<ifc_class>)``. When ``schemas`` is provided, the
+    extension is only applied for entities loaded from a file that uses one
+    of the listed schemas.
+
+    Parameters
+    ----------
+    *ifc_classes : str
+        One or more IFC class names this extension applies to.
+    schemas : set of str, optional
+        Restrict the extension to specific IFC schemas (for example
+        ``{"IFC4", "IFC4X3"}``). Defaults to all schemas.
+
+    Examples
+    --------
+    >>> from compas_ifc.entities.base import Base, extends
+    >>> @extends("IfcElement")
+    ... class IfcElementExtras(Base):
+    ...     pass
+    """
+
+    def wrap(cls):
+        for ifc_class in ifc_classes:
+            _extension_registry.setdefault(ifc_class, []).append((cls, schemas))
+        return cls
+
+    return wrap
+
+
+def _ifc_depth(schema, ifc_class: str) -> int:
+    """Compute the depth of an IFC class in its inheritance chain (cached)."""
+    if schema is None:
+        return 0
+    key = (schema.name(), ifc_class)
+    cache = _depth_cache
+    if key not in cache:
+        try:
+            decl = schema.declaration_by_name(ifc_class)
+        except Exception:
+            cache[key] = 0
+            return 0
+        depth = 0
+        while decl.supertype():
+            depth += 1
+            decl = decl.supertype()
+        cache[key] = depth
+    return cache[key]
+
+
+# ============================================================================
+# TypeDefinition
+# ============================================================================
 
 
 class TypeDefinition:
@@ -47,9 +126,21 @@ class TypeDefinition:
         return "<{} {}>".format(self.entity.is_a(), self.value)
 
 
+# ============================================================================
+# Base
+# ============================================================================
+
+
 class Base(Data):
     """
-    Root class for all IFC classes.
+    Root class for all IFC entity wrappers.
+
+    Every entity in a loaded IFC file is wrapped in a :class:`Base` (or a
+    synthetic ``Extended<IfcClass>`` subclass that mixes in matched
+    extensions). Direct attribute access is proxied to the underlying
+    ``ifcopenshell.entity_instance`` through :meth:`__getattr__`. Inverse
+    attributes are exposed as zero-argument callables to mark the syntactic
+    distinction from direct attributes.
 
     Attributes
     ----------
@@ -60,35 +151,45 @@ class Base(Data):
     """
 
     def __new__(cls, entity: entity_instance, file: "IFCFile" = None, extensions: dict = None):
-        if file is None:
-            schema = "IFC4"
-        else:
-            schema = file._schema.name()
-
-        try:
-            classes = importlib.import_module(f"compas_ifc.entities.generated.{schema}")
-        except ImportError:
-            raise ImportError(f"compas_ifc classes for schema {schema} was not generated. Run `python -m compas_ifc.entities.generator`")
-
-        cls_name = entity.is_a()
-        ifc_cls = getattr(classes, cls_name, None)
-        if ifc_cls:
-            matched_extensions = []
-            if extensions:
-                for name, extension_class in extensions.items():
-                    if entity.is_a(name):
-                        matched_extensions.append(extension_class)
-            if matched_extensions:
-                # Create a new class that inherits from the original IFC class and all matched extensions
-                extension_name = f"Extended{cls_name}"
-                bases = tuple([ifc_cls] + matched_extensions)
-                extended_cls = type(extension_name, bases, {})
-                return super(Base, extended_cls).__new__(extended_cls)
-            else:
-                # If no extensions matched, use the original IFC class
-                return super(Base, ifc_cls).__new__(ifc_cls)
-        elif hasattr(entity, "wrappedValue"):
+        # TypeDefinition fallback for simple-type wrappers (IfcLengthMeasure etc).
+        if hasattr(entity, "wrappedValue") and not entity.is_a("IfcRoot"):
             return TypeDefinition(entity, file)
+
+        schema = file._schema if file is not None else None
+        schema_name = schema.name() if schema is not None else "IFC4"
+
+        # Collect (depth, ifc_class, ext_cls) triples; de-dupe on ext_cls.
+        matched: list = []
+        seen_classes = set()
+
+        # 1. Registered extensions
+        for ifc_class, registered in _extension_registry.items():
+            if entity.is_a(ifc_class):
+                for ext_cls, ext_schemas in registered:
+                    if ext_cls in seen_classes:
+                        continue
+                    if ext_schemas is not None and schema_name not in ext_schemas:
+                        continue
+                    seen_classes.add(ext_cls)
+                    matched.append((_ifc_depth(schema, ifc_class), ifc_class, ext_cls))
+
+        # 2. User-supplied extensions via `extensions=` kwarg
+        if extensions:
+            for ifc_class, ext_cls in extensions.items():
+                if entity.is_a(ifc_class) and ext_cls not in seen_classes:
+                    seen_classes.add(ext_cls)
+                    matched.append((_ifc_depth(schema, ifc_class), ifc_class, ext_cls))
+
+        if matched:
+            # Sort deepest-first so super() walks parents toward IfcRoot.
+            matched.sort(key=lambda triple: -triple[0])
+            ordered_exts = [ext_cls for _, _, ext_cls in matched]
+            extension_name = f"Extended{entity.is_a()}"
+            bases = tuple(ordered_exts + [Base])
+            extended_cls = type(extension_name, bases, {})
+            return object.__new__(extended_cls)
+
+        return object.__new__(Base)
 
     def __init__(self, entity: entity_instance = None, file=None, **kwargs):
         super().__init__()
@@ -96,7 +197,9 @@ class Base(Data):
         self.entity = entity
 
     def __repr__(self):
-        return "<#{} {}>".format(self.entity.id(), self.__class__.__name__)
+        # Use the IFC class name rather than the synthetic ``Extended<X>``
+        # subclass name produced by :meth:`__new__`.
+        return "<#{} {}>".format(self.entity.id(), self.entity.is_a())
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -104,41 +207,100 @@ class Base(Data):
     def __iter__(self):
         return iter(self.all_attribute_names())
 
+    # ------------------------------------------------------------------
+    # Dynamic attribute access
+    # ------------------------------------------------------------------
+
+    def __getattr__(self, name):
+        # Avoid recursion during partial initialisation.
+        if name.startswith("_") or name in {"entity", "file"}:
+            raise AttributeError(name)
+        try:
+            entity = object.__getattribute__(self, "entity")
+        except AttributeError:
+            raise AttributeError(name)
+        if entity is None:
+            raise AttributeError(name)
+        # Inverse attribute: return a zero-arg callable (preserves the parens
+        # convention that distinguishes inverse from direct access).
+        if name in self._inverse_attribute_names():
+            return lambda: self._get_inverse_attribute(name)
+        try:
+            return self._get_attribute(name)
+        except (AttributeError, RuntimeError):
+            raise AttributeError(name)
+
+    def __setattr__(self, name, value):
+        # IFC schema attributes are PascalCase; route them to ifcopenshell.
+        # Internal/runtime fields use snake_case or underscore prefix and
+        # fall through to the normal attribute setter.
+        if name and name[0].isupper():
+            entity = self.__dict__.get("entity")
+            if entity is not None:
+                self._set_attribute(name, value)
+                return
+        super().__setattr__(name, value)
+
+    # ------------------------------------------------------------------
+    # Schema introspection
+    # ------------------------------------------------------------------
+
+    def _inverse_attribute_names(self):
+        """Set of inverse attribute names defined on this entity's IFC class."""
+        if self.file is None:
+            return frozenset()
+        schema = self.file._schema
+        key = (schema.name(), self.entity.is_a())
+        cache = _inverse_cache
+        if key not in cache:
+            try:
+                decl = schema.declaration_by_name(self.entity.is_a())
+                cache[key] = frozenset(ia.name() for ia in decl.all_inverse_attributes())
+            except Exception:
+                cache[key] = frozenset()
+        return cache[key]
+
+    def _derived_attribute_names(self):
+        """Set of derived attribute names defined on this entity's IFC class.
+
+        Derived attributes are computed from other fields and cannot be set
+        directly. Writes to them are silently ignored to match the behaviour
+        of the previous generator-driven layer.
+        """
+        if self.file is None:
+            return frozenset()
+        schema = self.file._schema
+        key = (schema.name(), self.entity.is_a())
+        cache = _derived_cache
+        if key not in cache:
+            try:
+                decl = schema.declaration_by_name(self.entity.is_a())
+                derived_flags = decl.derived()
+                attrs = decl.all_attributes()
+                cache[key] = frozenset(
+                    a.name() for a, is_derived in zip(attrs, derived_flags) if is_derived
+                )
+            except Exception:
+                cache[key] = frozenset()
+        return cache[key]
+
     def _get_attribute(self, name=None, entity: entity_instance = None):
         if name is not None:
             attr = getattr(self.entity, name)
         else:
             attr = entity
         if isinstance(attr, entity_instance):
-            # NOTE: Double check.
-            # if hasattr(attr, "wrappedValue"):
-            #     return attr.wrappedValue
             return self.file.from_entity(attr)
         if isinstance(attr, (list, tuple)):
             return [self._get_attribute(entity=item) for item in attr]
-        else:
-            return attr
+        return attr
 
     def _set_attribute(self, name, value):
-        # TODO: re-enable strong type checking
-        # cls = self.__class__
-        # getter_type_hints = get_type_hints(getattr(cls, name).fget)
-        # value_type = getter_type_hints["return"]
-
-        # if hasattr(value_type, "__origin__"):
-        #     # deal parameterized generic types
-        #     origin = value_type.__origin__
-        #     if origin == list:
-        #         if not isinstance(value, (list, tuple)):
-        #             raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
-        #         value_type = getter_type_hints["return"].__args__[0]
-        #         if not all(isinstance(item, value_type) for item in value):
-        #             raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
-        #     else:
-        #         raise NotImplementedError(f"Unsupported generic type {origin}")
-
-        # elif not isinstance(value, value_type):
-        #     raise TypeError(f"Expected {value_type}, got {type(value)} for {cls.__name__}.{name}")
+        # Derived attributes are computed from other fields; matching the
+        # behaviour of the old generator's TEMPLATE_DERIVED, writes are
+        # silently ignored.
+        if name in self._derived_attribute_names():
+            return
 
         def prepare_value(value):
             if isinstance(value, Base):
@@ -165,9 +327,13 @@ class Base(Data):
     def _get_inverse_attribute(self, name):
         return [self.file.from_entity(attr) for attr in getattr(self.entity, name)]
 
+    # ------------------------------------------------------------------
+    # Convenience properties
+    # ------------------------------------------------------------------
+
     @property
     def model(self) -> "BuildingInformationModel":
-        return self.file.model  # TODO: rather convoluted.
+        return self.file.model
 
     @property
     def schema(self):
@@ -183,15 +349,6 @@ class Base(Data):
             return self.entity.is_a()
 
     def all_attribute_names(self):
-        # all_attributes = []
-        # def get_attr_names(cls):
-        #     if cls.__name__ == "Base":
-        #         return
-        #     all_attributes.extend(cls.attributes)
-        #     for base in cls.__bases__:
-        #         get_attr_names(base)
-        # get_attr_names(self.__class__)
-        # return all_attributes
         info = self.entity.get_info(include_identifier=False)
         del info["type"]
         return list(info.keys())
@@ -260,9 +417,7 @@ class Base(Data):
         raise NotImplementedError
 
     def print_spatial_hierarchy(self, max_depth=5):
-        IfcObjectDefinition = getattr(importlib.import_module(f"compas_ifc.entities.generated.{self.schema}"), "IfcObjectDefinition")
-
-        if not isinstance(self, IfcObjectDefinition):
+        if not self.entity.is_a("IfcObjectDefinition"):
             raise TypeError("Only IfcObjectDefinition has spatial hierarchy")
 
         top = self
@@ -289,9 +444,7 @@ class Base(Data):
         print("")
 
     def print_properties(self, max_depth=2):
-        IfcObject = getattr(importlib.import_module(f"compas_ifc.entities.generated.{self.schema}"), "IfcObject")
-
-        if not isinstance(self, IfcObject):
+        if not self.entity.is_a("IfcObject"):
             raise TypeError("Only IfcObject has properties")
 
         def add_property(item, parent_node):
@@ -369,3 +522,8 @@ class Base(Data):
 class EntityNode(TreeNode):
     def __repr__(self):
         return self.name
+
+
+# Force ifcopenshell symbol to be present at module-import time so that
+# `isinstance(x, entity_instance)` checks work without re-importing.
+__all__ = ["Base", "TypeDefinition", "EntityNode", "extends", "ifcopenshell"]
