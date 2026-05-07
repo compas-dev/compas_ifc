@@ -62,8 +62,8 @@ class Generator:
         lines.append("    python -m compas_ifc.entities.generator")
         lines.append('"""')
         lines.append("")
-        lines.append("from typing import Optional, Union")
-        lines.append("")
+        lines.append("from typing import Optional")
+        lines.append("from typing import Union")
         lines.append("")
 
         # Enums first — they're terminal (no inheritance to other entities).

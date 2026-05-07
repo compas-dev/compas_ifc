@@ -4,8 +4,8 @@ Do not edit by hand. Regenerate with:
     python -m compas_ifc.entities.generator
 """
 
-from typing import Optional, Union
-
+from typing import Optional
+from typing import Union
 
 class IfcActionRequestTypeEnum(str):
     items: tuple = ('EMAIL', 'FAX', 'PHONE', 'POST', 'VERBAL', 'USERDEFINED', 'NOTDEFINED')

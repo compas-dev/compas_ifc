@@ -4,8 +4,8 @@ Do not edit by hand. Regenerate with:
     python -m compas_ifc.entities.generator
 """
 
-from typing import Optional, Union
-
+from typing import Optional
+from typing import Union
 
 class IfcActionSourceTypeEnum(str):
     items: tuple = ('DEAD_LOAD_G', 'COMPLETION_G1', 'LIVE_LOAD_Q', 'SNOW_S', 'WIND_W', 'PRESTRESSING_P', 'SETTLEMENT_U', 'TEMPERATURE_T', 'EARTHQUAKE_E', 'FIRE', 'IMPULSE', 'IMPACT', 'TRANSPORT', 'ERECTION', 'PROPPING', 'SYSTEM_IMPERFECTION', 'SHRINKAGE', 'CREEP', 'LACK_OF_FIT', 'BUOYANCY', 'ICE', 'CURRENT', 'WAVE', 'RAIN', 'BRAKES', 'USERDEFINED', 'NOTDEFINED')
