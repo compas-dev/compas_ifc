@@ -54,6 +54,7 @@ optional-dependencies = { dev = { file = "requirements-dev.txt" } }
 where = ["src"]
 
 [tool.setuptools.package-data]
+compas_ifc = ["py.typed", "**/*.pyi"]
 
 # ============================================================================
 # replace pytest.ini
