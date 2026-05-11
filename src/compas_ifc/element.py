@@ -1,5 +1,7 @@
+from typing import Generic
 from typing import Optional
 from typing import Type
+from typing import TypeVar
 from typing import Union
 
 from compas.datastructures import Mesh
@@ -14,8 +16,16 @@ from compas_model.interactions import Contact
 
 from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
 
+# Generic over the underlying IFC entity wrapper type. At runtime ``T`` is
+# erased; the parameterisation exists purely so that overloaded query and
+# factory methods can return ``GenericElement[IfcWall]`` and have IDEs
+# resolve ``element.ifc_entity`` to the precise IFC class. No upper bound
+# because the stub-side ``IfcXxx`` classes form their own EXPRESS-schema
+# hierarchy that does not include the runtime ``Base`` wrapper.
+T = TypeVar("T")
 
-class GenericElement(Element):
+
+class GenericElement(Generic[T], Element):
     """A unified element representing any building component in an IFC model.
 
     This class extends ``compas_model.Element`` to bridge IFC entity data
@@ -53,7 +63,7 @@ class GenericElement(Element):
     ) -> None:
         # Must initialize before super().__init__ because Data.__init__
         # calls self.name = name which triggers the name setter.
-        self._ifc_entity = None
+        self._ifc_entity: Optional[T] = None
         self._global_id = None
         self._properties = None
         self._style = None
@@ -86,6 +96,18 @@ class GenericElement(Element):
     @global_id.setter
     def global_id(self, value: str) -> None:
         self._global_id = value
+
+    @property
+    def ifc_entity(self) -> Optional[T]:
+        """The underlying IFC entity wrapper.
+
+        Read-only accessor for the typed IFC entity. The parameterisation of
+        :class:`GenericElement` flows through here so that, for example,
+        ``model.create_wall().ifc_entity`` is statically known to be an
+        ``IfcWall`` and exposes schema attributes like ``OverallHeight`` to
+        the IDE.
+        """
+        return self._ifc_entity
 
     @property
     def name(self):

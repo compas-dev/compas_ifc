@@ -112,6 +112,12 @@ select = ["E", "F", "I"]
 "__init__.py" = ["I001"]
 "tests/*" = ["I001"]
 "tasks.py" = ["I001"]
+# Auto-generated @overload chains reference IFC class names pulled in via a
+# ``from compas_ifc.entities.generated.IFC4 import *`` inside an
+# ``if TYPE_CHECKING:`` block, which trips F405 (may-be-undefined-from-star).
+"src/compas_ifc/bim.py" = ["F405"]
+"src/compas_ifc/file.py" = ["F405"]
+"src/compas_ifc/factory.py" = ["F405"]
 
 [tool.ruff.lint.isort]
 force-single-line = true

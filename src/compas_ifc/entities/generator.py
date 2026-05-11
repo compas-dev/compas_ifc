@@ -369,6 +369,140 @@ def _annotation_str(annotation) -> str:
 
 
 # ----------------------------------------------------------------------
+# Overload-block injection
+# ----------------------------------------------------------------------
+#
+# The stub generator above gives IDEs schema-aware autocomplete on IFC
+# entities. The block below extends that to the *query and creation
+# methods* on ``BuildingInformationModel``, ``IFCFile``, and the factory
+# mixin: ``@overload`` chains keyed on ``Literal[<IfcClass>]`` argument
+# values let IDEs resolve the returned ``GenericElement`` (or raw entity)
+# to the precise IFC class. The chains live inline in the source files,
+# delimited by ``# region overloads:<method>`` / ``# endregion ...``
+# markers so this module can rewrite just that span without touching the
+# surrounding hand-written code.
+
+
+# Methods that take an ``Literal["IfcXxx"]`` and return a list of wrapped
+# elements or raw entities. Each entry maps to a marker pair in the
+# corresponding source file.
+_OVERLOAD_SPECS: list[dict] = [
+    {
+        "file": "bim.py",
+        "method": "get_elements_by_type",
+        "param_name": "ifc_type",
+        "return_template": "list[GenericElement[{name}]]",
+        "catchall_return": "list[GenericElement]",
+        "scope": "IfcProduct",  # only IfcProduct subclasses make sense for elements
+    },
+    {
+        "file": "file.py",
+        "method": "get_entities_by_type",
+        "param_name": "type_name",
+        "return_template": 'list["{name}"]',
+        "catchall_return": "list[Base]",
+        "scope": "IfcRoot",  # broader — any rooted entity is queryable here
+    },
+    {
+        "file": "file.py",
+        "method": "_create",
+        "param_name": "cls",
+        "return_template": '"{name}"',
+        "catchall_return": "Base",
+        "scope": "all",  # _create is used for arbitrary IFC entities, including geometric primitives
+    },
+    {
+        "file": "factory.py",
+        "method": "create_element",
+        "param_name": "ifc_type",
+        "return_template": "GenericElement[{name}]",
+        "catchall_return": "GenericElement",
+        "scope": "IfcProduct",
+    },
+]
+
+
+def _is_subclass_of(decl, ancestor_name: str) -> bool:
+    cur = decl
+    while cur:
+        if cur.name() == ancestor_name:
+            return True
+        cur = cur.supertype()
+    return False
+
+
+def _classes_for_scope(schema, scope: str) -> list[str]:
+    decls = [d for d in schema.declarations() if d.as_entity()]
+    if scope == "all":
+        names = [d.name() for d in decls]
+    else:
+        names = [d.name() for d in decls if _is_subclass_of(d, scope)]
+    return sorted(names)
+
+
+def _emit_overload_chain(spec: dict, class_names: list[str]) -> list[str]:
+    """Render the @overload chain for one method spec."""
+    method = spec["method"]
+    param = spec["param_name"]
+    return_template = spec["return_template"]
+    catchall_return = spec["catchall_return"]
+
+    lines: list[str] = []
+    for name in class_names:
+        lines.append("    @overload")
+        ret = return_template.format(name=name)
+        lines.append(f'    def {method}(self, {param}: Literal["{name}"]) -> {ret}: ...')
+    # Trailing catch-all so any non-Literal call still type-checks.
+    lines.append("    @overload")
+    lines.append(f"    def {method}(self, {param}: str) -> {catchall_return}: ...")
+    return lines
+
+
+def _rewrite_region(file_path: str, begin_marker: str, end_marker: str, new_body: list[str]) -> bool:
+    """Replace lines strictly between ``begin_marker`` and ``end_marker``.
+
+    The markers themselves are preserved. Returns ``True`` iff both markers
+    were located. The new body is inserted as-is — callers are responsible
+    for the appropriate indentation.
+    """
+    with open(file_path, "r", encoding="utf-8") as f:
+        original = f.read().splitlines()
+
+    try:
+        begin_idx = next(i for i, line in enumerate(original) if line.rstrip() == begin_marker)
+        end_idx = next(i for i, line in enumerate(original) if line.rstrip() == end_marker)
+    except StopIteration:
+        return False
+
+    if end_idx <= begin_idx:
+        raise RuntimeError(f"Markers out of order in {file_path}: begin={begin_idx}, end={end_idx}")
+
+    new_lines = original[: begin_idx + 1] + new_body + original[end_idx:]
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(new_lines))
+        f.write("\n")
+    return True
+
+
+def inject_overloads(schema_name: str = "IFC4") -> None:
+    """Rewrite the marker-delimited overload blocks in all target files."""
+    schema = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema_name)
+    src_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+
+    for spec in _OVERLOAD_SPECS:
+        path = os.path.join(src_root, spec["file"])
+        class_names = _classes_for_scope(schema, spec["scope"])
+        body = _emit_overload_chain(spec, class_names)
+        begin = f'    # region overloads:{spec["method"]}'
+        end = f'    # endregion overloads:{spec["method"]}'
+        ok = _rewrite_region(path, begin, end, body)
+        if not ok:
+            print(f"  WARN: markers not found in {path} for method {spec['method']!r} — skipped.")
+        else:
+            print(f"  Wrote {len(class_names)} overloads for {spec['file']}::{spec['method']}")
+
+
+# ----------------------------------------------------------------------
 # CLI entry point
 # ----------------------------------------------------------------------
 
@@ -376,6 +510,8 @@ def _annotation_str(annotation) -> str:
 def generate_all(schemas: Iterable[str] = ("IFC2X3", "IFC4", "IFC4X3")) -> None:
     for schema in schemas:
         Generator(schema=schema).generate()
+    print("Injecting @overload chains into bim.py / file.py / factory.py ...")
+    inject_overloads()
 
 
 if __name__ == "__main__":
