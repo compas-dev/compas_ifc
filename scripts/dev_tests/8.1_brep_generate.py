@@ -57,7 +57,7 @@ Known pitfalls with OCC geometry generation:
     a plain IfcAdvancedBrep instead.
 
 Run with:
-    python scripts/8.1_brep_generate.py
+    python scripts/dev_tests/8.1_brep_generate.py
 """
 
 import os
