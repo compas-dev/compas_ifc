@@ -31,6 +31,11 @@ _extension_registry: dict = {}
 _depth_cache: dict = {}
 _inverse_cache: dict = {}
 _derived_cache: dict = {}
+# Synthetic ``Extended<IfcClass>`` classes are reused across entities of the
+# same IFC class. Keyed by ``(schema_name, ifc_class_name)``; the entry is the
+# composed class returned from ``__new__``. The cache is only consulted when
+# the caller does not supply a custom ``extensions=`` kwarg.
+_class_cache: dict = {}
 
 
 def extends(*ifc_classes: str, schemas: Optional[set] = None):
@@ -157,6 +162,18 @@ class Base(Data):
 
         schema = file._schema if file is not None else None
         schema_name = schema.name() if schema is not None else "IFC4"
+        ifc_class_name = entity.is_a()
+
+        # Fast path: most calls use no custom ``extensions=`` kwarg, so the
+        # composed class depends only on ``(schema, ifc_class)`` and can be
+        # cached. This avoids creating a fresh ``type(...)`` object for every
+        # wrapped entity — files with thousands of walls/slabs would otherwise
+        # produce thousands of identical synthetic classes.
+        if not extensions:
+            cache_key = (schema_name, ifc_class_name)
+            cached = _class_cache.get(cache_key)
+            if cached is not None:
+                return object.__new__(cached)
 
         # Collect (depth, ifc_class, ext_cls) triples; de-dupe on ext_cls.
         matched: list = []
@@ -184,12 +201,15 @@ class Base(Data):
             # Sort deepest-first so super() walks parents toward IfcRoot.
             matched.sort(key=lambda triple: -triple[0])
             ordered_exts = [ext_cls for _, _, ext_cls in matched]
-            extension_name = f"Extended{entity.is_a()}"
+            extension_name = f"Extended{ifc_class_name}"
             bases = tuple(ordered_exts + [Base])
             extended_cls = type(extension_name, bases, {})
-            return object.__new__(extended_cls)
+        else:
+            extended_cls = Base
 
-        return object.__new__(Base)
+        if not extensions:
+            _class_cache[(schema_name, ifc_class_name)] = extended_cls
+        return object.__new__(extended_cls)
 
     def __init__(self, entity: entity_instance = None, file=None, **kwargs):
         super().__init__()

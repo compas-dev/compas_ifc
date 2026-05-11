@@ -36,17 +36,17 @@ class IFCFile(object):
         The IFC schema object.
     schema_name : str
         The name of the IFC schema.
-    classes : list[:class:`compas_ifc.entities.base.Base`]
-        A list of all the classes for this schema version.
-    default_project : :class:`compas_ifc.entities.generated.IFC4.IfcProject`
+    classes : list[str]
+        IFC entity class names declared in the active schema.
+    default_project : :class:`compas_ifc.entities.generated.IfcProject`
         The default project in this file. Will be created if it does not exist.
-    default_units : :class:`compas_ifc.entities.generated.IFC4.IfcUnitAssignment`
+    default_units : :class:`compas_ifc.entities.generated.IfcUnitAssignment`
         The default units in this file. Will be created if it does not exist.
-    default_owner_history : :class:`compas_ifc.entities.generated.IFC4.IfcOwnerHistory`
+    default_owner_history : :class:`compas_ifc.entities.generated.IfcOwnerHistory`
         The default owner history in this file. Will be created if it does not exist.
-    default_context : :class:`compas_ifc.entities.generated.IFC4.IfcContext`
+    default_context : :class:`compas_ifc.entities.generated.IfcContext`
         The default context in this file. Will be created if it does not exist.
-    default_body_context : :class:`compas_ifc.entities.generated.IFC4.IfcContext`
+    default_body_context : :class:`compas_ifc.entities.generated.IfcContext`
         The default body context in this file. Will be created if it does not exist.
 
     """
@@ -865,9 +865,9 @@ class IFCFile(object):
         # Default case
         return self._create_entity("IfcRelAggregates", GlobalId=guid, RelatingObject=parent, RelatedObjects=[child])
 
-    def search_ifc_classes(self, name: str, n: int = 5) -> list[Type["Base"]]:
+    def search_ifc_classes(self, name: str, n: int = 5) -> list[str]:
         """
-        Search for IFC classes by name
+        Search for IFC classes by name.
 
         Parameters
         ----------
@@ -878,8 +878,8 @@ class IFCFile(object):
 
         Returns
         -------
-        list[Type[:class:`compas_ifc.entities.base.Base`]]
-            A list of IFC classes that match the search query.
+        list[str]
+            IFC class names matching the query, ordered by similarity.
 
         """
         classes_dict = {c.lower(): c for c in self.classes}
