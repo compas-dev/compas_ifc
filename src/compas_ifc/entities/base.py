@@ -66,6 +66,10 @@ def extends(*ifc_classes: str, schemas: Optional[set] = None):
     def wrap(cls):
         for ifc_class in ifc_classes:
             _extension_registry.setdefault(ifc_class, []).append((cls, schemas))
+        # Invalidate the synthetic-class cache so a script that registers an
+        # extension after wrapping some entities still picks it up on the next
+        # wrap.
+        _class_cache.clear()
         return cls
 
     return wrap
