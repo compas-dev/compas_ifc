@@ -3,3 +3,4 @@ compas_model >= 0.9.2
 ifcopenshell == 0.8.4.post1
 lark
 pydantic >= 2.0
+typer >= 0.12
