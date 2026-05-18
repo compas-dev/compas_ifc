@@ -1,0 +1,1093 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <link rel="icon" href="_static/compas.ico" type="image/x-icon">
+    <title>Command-line interface &#8212; COMPAS IFC</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/compas.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="_static/tabs.js"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js"></script>
+    <script src="_static/design-tabs.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'cli';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/compas-dev/compas_ifc/gh-pages/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'latest';
+        </script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Agent skill (Claude Code)" href="skill.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/compas_icon_white.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="_static/compas_icon_white.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+    <p class="title logo__title">COMPAS IFC</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <!-- <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="index.html">
+                        Introduction
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="architecture.html">
+                        Architecture
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        Command line
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="skill.html">
+                        Agent skill
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="tutorials.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="examples.html">
+                        Examples
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="api.html">
+                        API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="license.html">
+                        License
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+  </ul> -->
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      latest  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/compas-dev/compas_ifc" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="http://forum.compas-framework.org/" title="Discourse" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Discourse</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/compas_ifc/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python"></i></span>
+            <label class="sr-only">PyPI</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <!-- <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="index.html">
+                        Introduction
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="architecture.html">
+                        Architecture
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        Command line
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="skill.html">
+                        Agent skill
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="tutorials.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="examples.html">
+                        Examples
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="api.html">
+                        API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="license.html">
+                        License
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+  </ul> -->
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      latest  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/compas-dev/compas_ifc" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="http://forum.compas-framework.org/" title="Discourse" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Discourse</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/compas_ifc/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python"></i></span>
+            <label class="sr-only">PyPI</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="skill.html">Agent skill</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorials.html">Tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/01_open_a_model.html">Open a model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/02_create_a_model.html">Create a model from scratch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/03_validation.html">Validate custom properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/04_interactions.html">Work with interactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/05_granular_export.html">Granular export</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_ifc.bim.html">compas_ifc.bim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_ifc.element.html">compas_ifc.element</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_ifc.factory.html">compas_ifc.factory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_ifc.tree.html">compas_ifc.tree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_ifc.interactions.html">compas_ifc.interactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_ifc.validation.html">compas_ifc.validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_ifc.representations.html">compas_ifc.representations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_ifc.brep.html">compas_ifc.brep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_ifc.entities.html">compas_ifc.entities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="sidebar-primary-item"><div class="sidebar-primary-item">
+    <a href="https://compas.dev" target="_blank">
+        COMPAS.dev <i class="fa fa-external-link" aria-hidden="true"></i>
+    </a>
+</div></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">Command-line interface</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="command-line-interface">
+<h1>Command-line interface</h1>
+<p class="lead">A no-code surface for inspecting, querying, visualising, and exporting IFC
+files — and the contract that AI coding agents use through the bundled
+skill.</p>
+<p>The CLI is invoked as <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">compas_ifc</span> <span class="pre">&lt;command&gt;</span></code>. Every command
+accepts <code class="docutils literal notranslate"><span class="pre">--json</span></code> for structured output that downstream tools (or agents)
+can parse without screen-scraping. The human-readable default is
+intentionally compact so the same commands stay friendly at a terminal.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>summary<span class="w"> </span>data/Duplex_A_20110907.ifc
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>list<span class="w">   </span>data/Duplex_A_20110907.ifc<span class="w"> </span>--type<span class="w"> </span>IfcWindow<span class="w"> </span>--json
+</pre></div>
+</div>
+<p>Two design rules run through every command:</p>
+<ul class="simple">
+<li><p><strong>Selection grammar is shared.</strong> <code class="docutils literal notranslate"><span class="pre">list</span></code>, <code class="docutils literal notranslate"><span class="pre">query</span></code>, <code class="docutils literal notranslate"><span class="pre">visualize</span></code>,
+<code class="docutils literal notranslate"><span class="pre">export-ifc</span></code>, and <code class="docutils literal notranslate"><span class="pre">export</span></code> accept the same <code class="docutils literal notranslate"><span class="pre">--type</span></code>, <code class="docutils literal notranslate"><span class="pre">--where</span></code>,
+<code class="docutils literal notranslate"><span class="pre">--in</span></code>, <code class="docutils literal notranslate"><span class="pre">--ids</span></code> filters, so a selection developed at the terminal
+carries unchanged into a visualisation or an export.</p></li>
+<li><p><strong>Geometry is opt-in.</strong> Inspection commands open the file with
+<code class="docutils literal notranslate"><span class="pre">load_geometries=False</span></code> and <code class="docutils literal notranslate"><span class="pre">rectify_placements=False</span></code>, which keeps
+startup under a second even on large files. Commands that need geometry
+(<code class="docutils literal notranslate"><span class="pre">visualize</span></code>, <code class="docutils literal notranslate"><span class="pre">clash</span></code>, <code class="docutils literal notranslate"><span class="pre">export</span></code>) enable it automatically.</p></li>
+</ul>
+<section id="quick-reference">
+<h2>Quick reference</h2>
+<table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Command</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">info</span></code></p></td>
+<td><p>Schema, units, project, entity count, byte size.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">summary</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">info</span></code> plus IfcSite location and spatial hierarchy.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tree</span></code></p></td>
+<td><p>Spatial hierarchy alone.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">list</span></code></p></td>
+<td><p>Entities matching a selection.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">query</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">list</span></code> plus inlined attributes via <code class="docutils literal notranslate"><span class="pre">--select</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">find</span></code></p></td>
+<td><p>GlobalId exact / fuzzy name search.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">show</span></code></p></td>
+<td><p>Attribute dump for one entity (recursive with <code class="docutils literal notranslate"><span class="pre">--depth</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">psets</span></code></p></td>
+<td><p>Property sets for one entity.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">visualize</span></code></p></td>
+<td><p>Open the spatial scene in <code class="docutils literal notranslate"><span class="pre">compas_viewer</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">clash</span></code></p></td>
+<td><p>Detect volumetric interferences between elements.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">export-ifc</span></code></p></td>
+<td><p>Export a subset as a standalone IFC file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">export</span></code></p></td>
+<td><p>Export geometry as <code class="docutils literal notranslate"><span class="pre">.obj</span></code> or <code class="docutils literal notranslate"><span class="pre">.json</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">docs</span></code></p></td>
+<td><p>Introspect <code class="docutils literal notranslate"><span class="pre">compas_ifc</span></code> symbols.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">schema</span></code></p></td>
+<td><p>Introspect IFC classes from the bundled stubs.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tutorials</span></code></p></td>
+<td><p>List or print bundled tutorial scripts.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">install-skill</span></code></p></td>
+<td><p>Install the bundled agent skill.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="output-modes">
+<h2>Output modes</h2>
+<p>The default rendering is a compact terminal layout — single-line entity
+summaries, tree-style hierarchies, key/value blocks for entities. Adding
+<code class="docutils literal notranslate"><span class="pre">--json</span></code> switches to a stable structured shape:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>list<span class="w"> </span>building.ifc<span class="w"> </span>--type<span class="w"> </span>IfcWindow<span class="w"> </span>--limit<span class="w"> </span><span class="m">2</span><span class="w"> </span>--json
+</pre></div>
+</div>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;filter&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;IfcWindow&quot;</span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;entities&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;global_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0u4w...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;IfcWindow&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Window:36in...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2841</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;global_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1Pj7...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;IfcWindow&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Window:24in...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2872</span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The JSON shape is the contract the bundled agent skill relies on; do not
+rely on the human output for parsing.</p>
+</section>
+<section id="selection-grammar">
+<h2>Selection grammar</h2>
+<p>The same four flags select entities across every command that operates on
+a subset. They compose with AND:</p>
+<table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Flag</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--type</span></code></p></td>
+<td><p>IFC class name. Matches subclasses (<code class="docutils literal notranslate"><span class="pre">IfcWall</span></code> returns
+<code class="docutils literal notranslate"><span class="pre">IfcWallStandardCase</span></code> too).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--where</span></code></p></td>
+<td><dl class="simple">
+<dt>A simple predicate <code class="docutils literal notranslate"><span class="pre">&lt;key&gt;</span> <span class="pre">&lt;op&gt;</span> <span class="pre">&lt;value&gt;</span></code>. Operators:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">=</span></code>, <code class="docutils literal notranslate"><span class="pre">!=</span></code>, <code class="docutils literal notranslate"><span class="pre">&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&gt;=</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;=</span></code>, <code class="docutils literal notranslate"><span class="pre">~</span></code>
+(case-insensitive substring).</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--in</span></code></p></td>
+<td><p>GlobalId of a spatial container (storey, building, site).
+Restricts to its transitive contents.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--ids</span></code></p></td>
+<td><p>Comma-separated GlobalIds. Overrides <code class="docutils literal notranslate"><span class="pre">--type</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">--where</span></code> and <code class="docutils literal notranslate"><span class="pre">--select</span></code> accept dotted attribute paths
+(<code class="docutils literal notranslate"><span class="pre">OwnerHistory.Owner.ThePerson.GivenName</span></code>), so values nested behind
+<code class="docutils literal notranslate"><span class="pre">IfcOwnerHistory</span></code> / <code class="docutils literal notranslate"><span class="pre">IfcPersonAndOrganization</span></code> etc. are reachable in
+one step.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># All windows on a specific storey, taller than 2 metres, projecting</span>
+<span class="c1"># height + width onto each row.</span>
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>query<span class="w"> </span>building.ifc<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--type<span class="w"> </span>IfcWindow<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--in<span class="w"> </span>0u4wQrR2X9aOPmZRSh8aBd<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--where<span class="w"> </span><span class="s2">&quot;OverallHeight&gt;2&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--select<span class="w"> </span>OverallHeight,OverallWidth
+</pre></div>
+</div>
+</section>
+<section id="inspection">
+<h2>Inspection</h2>
+<section id="info">
+<h3><code class="docutils literal notranslate"><span class="pre">info</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>info<span class="w"> </span>building.ifc
+</pre></div>
+</div>
+<p>Schema version, units, project metadata, total entity count, byte size.
+Used as a fast “what is this file?” probe.</p>
+</section>
+<section id="summary">
+<h3><code class="docutils literal notranslate"><span class="pre">summary</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>summary<span class="w"> </span>building.ifc
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>summary<span class="w"> </span>building.ifc<span class="w"> </span>--depth<span class="w"> </span><span class="m">5</span>
+</pre></div>
+</div>
+<p>Same fields as <code class="docutils literal notranslate"><span class="pre">info</span></code> plus the IfcSite’s geographic location (when
+present) and the spatial hierarchy down to a configurable depth (default
+3 stops at storey level). Best single command for getting oriented in
+an unfamiliar file.</p>
+</section>
+<section id="tree">
+<h3><code class="docutils literal notranslate"><span class="pre">tree</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>tree<span class="w"> </span>building.ifc<span class="w"> </span>--depth<span class="w"> </span><span class="m">4</span>
+</pre></div>
+</div>
+<p>The spatial hierarchy alone. <code class="docutils literal notranslate"><span class="pre">--depth</span></code> defaults to 10; raise it to walk
+deeper into nested aggregates.</p>
+</section>
+</section>
+<section id="search-and-listing">
+<h2>Search and listing</h2>
+<section id="list">
+<h3><code class="docutils literal notranslate"><span class="pre">list</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>list<span class="w"> </span>building.ifc<span class="w">                          </span><span class="c1"># everything</span>
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>list<span class="w"> </span>building.ifc<span class="w"> </span>--type<span class="w"> </span>IfcWall
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>list<span class="w"> </span>building.ifc<span class="w"> </span>--type<span class="w"> </span>IfcWindow<span class="w"> </span>--in<span class="w"> </span>&lt;storey_id&gt;
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>list<span class="w"> </span>building.ifc<span class="w"> </span>--where<span class="w"> </span><span class="s2">&quot;Name~partition&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="query">
+<h3><code class="docutils literal notranslate"><span class="pre">query</span></code></h3>
+<p>The structured-output sibling of <code class="docutils literal notranslate"><span class="pre">list</span></code>. Accepts the same filters plus
+<code class="docutils literal notranslate"><span class="pre">--select</span></code> for inlining specific attribute values on each row:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>query<span class="w"> </span>building.ifc<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--type<span class="w"> </span>IfcWindow<span class="w"> </span>--where<span class="w"> </span><span class="s2">&quot;OverallHeight&gt;2&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--select<span class="w"> </span>OverallHeight,OverallWidth<span class="w"> </span>--json
+</pre></div>
+</div>
+</section>
+<section id="find">
+<h3><code class="docutils literal notranslate"><span class="pre">find</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>find<span class="w"> </span>building.ifc<span class="w"> </span>3cUkl32yn9qRSPvBJZ3dB2<span class="w">   </span><span class="c1"># exact GlobalId</span>
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>find<span class="w"> </span>building.ifc<span class="w"> </span><span class="s2">&quot;Casement&quot;</span><span class="w">               </span><span class="c1"># name substring</span>
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>find<span class="w"> </span>building.ifc<span class="w"> </span><span class="s2">&quot;Level 1&quot;</span><span class="w">                </span><span class="c1"># fuzzy ranking</span>
+</pre></div>
+</div>
+<p>GlobalId matches return immediately. Other patterns scan <code class="docutils literal notranslate"><span class="pre">IfcRoot</span></code>
+names case-insensitively, with a fuzzy-ratio tiebreaker for near misses.</p>
+</section>
+</section>
+<section id="entity-detail">
+<h2>Entity detail</h2>
+<section id="show">
+<h3><code class="docutils literal notranslate"><span class="pre">show</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>show<span class="w"> </span>building.ifc<span class="w"> </span>&lt;global_id&gt;
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>show<span class="w"> </span>building.ifc<span class="w"> </span>&lt;global_id&gt;<span class="w"> </span>--depth<span class="w"> </span><span class="m">3</span>
+</pre></div>
+</div>
+<p>Dump one entity’s attributes. <code class="docutils literal notranslate"><span class="pre">--depth</span> <span class="pre">1</span></code> (default) renders nested
+entity references as <code class="docutils literal notranslate"><span class="pre">{&quot;$ref&quot;:</span> <span class="pre">&lt;id&gt;,</span> <span class="pre">&quot;type&quot;:</span> <span class="pre">&lt;IfcClass&gt;}</span></code> stubs;
+raising the depth inlines each referenced entity recursively, with cycle
+breaking, so a single command can walk <code class="docutils literal notranslate"><span class="pre">ObjectPlacement</span> <span class="pre">→</span>
+<span class="pre">RelativePlacement</span> <span class="pre">→</span> <span class="pre">RelPlacement</span> <span class="pre">→</span> <span class="pre">...</span></code> without blowing up.</p>
+</section>
+<section id="psets">
+<h3><code class="docutils literal notranslate"><span class="pre">psets</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>psets<span class="w"> </span>building.ifc<span class="w"> </span>&lt;global_id&gt;<span class="w"> </span>--json
+</pre></div>
+</div>
+<p>Property sets attached to one entity, including type-inherited psets and
+quantity sets.</p>
+</section>
+</section>
+<section id="visualisation">
+<h2>Visualisation</h2>
+<section id="visualize">
+<h3><code class="docutils literal notranslate"><span class="pre">visualize</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>visualize<span class="w"> </span>building.ifc<span class="w"> </span>--detach
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>visualize<span class="w"> </span>building.ifc<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--type<span class="w"> </span>IfcWindow<span class="w"> </span>--in<span class="w"> </span>&lt;storey_id&gt;<span class="w"> </span>--detach
+</pre></div>
+</div>
+<p>Opens the spatial scene in <code class="docutils literal notranslate"><span class="pre">compas_viewer</span></code>. The default mode preserves
+spatial hierarchy so each selected element appears at its real world
+position; pass <code class="docutils literal notranslate"><span class="pre">--no-keep-hierarchy</span></code> for a parts-library view at the
+origin instead.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--detach</span></code> flag spawns the viewer in a background process and
+returns immediately — essential when the CLI is being driven by an
+agent or a script, since the viewer’s event loop would otherwise block.</p>
+<p><code class="docutils literal notranslate"><span class="pre">compas_viewer</span></code> is a lazy dependency. If it isn’t installed, the
+command exits with an install hint rather than a traceback.</p>
+</section>
+<section id="clash">
+<h3><code class="docutils literal notranslate"><span class="pre">clash</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>clash<span class="w"> </span>building.ifc
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>clash<span class="w"> </span>building.ifc<span class="w"> </span>--type<span class="w"> </span>IfcBeam,IfcColumn,IfcWall
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>clash<span class="w"> </span>building.ifc<span class="w"> </span>--show<span class="w"> </span>--detach
+</pre></div>
+</div>
+<p>Volumetric interference detection. Two-stage broadphase (BVH + tight
+AABB) plus ray-cast narrowphase. By default skips spatially-related
+pairs like <code class="docutils literal notranslate"><span class="pre">wall</span> <span class="pre">→</span> <span class="pre">opening</span> <span class="pre">→</span> <span class="pre">window/door</span></code> where overlap is expected
+by construction; pass <code class="docutils literal notranslate"><span class="pre">--include-related</span></code> to keep them.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">--show</span></code>, <code class="docutils literal notranslate"><span class="pre">compas_viewer</span></code> opens with each clashing pair drawn
+in a unique colour and penetration points marked. Combine with
+<code class="docutils literal notranslate"><span class="pre">--detach</span></code> so the viewer runs in the background.</p>
+<p>Tunables: <code class="docutils literal notranslate"><span class="pre">--tolerance</span></code> (numerical), <code class="docutils literal notranslate"><span class="pre">--min-depth</span></code> (excludes
+touching pairs), <code class="docutils literal notranslate"><span class="pre">--limit</span></code> (cap the text listing).</p>
+</section>
+</section>
+<section id="export">
+<h2>Export</h2>
+<section id="export-ifc">
+<h3><code class="docutils literal notranslate"><span class="pre">export-ifc</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>export-ifc<span class="w"> </span>building.ifc<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--type<span class="w"> </span>IfcWindow<span class="w"> </span>--out<span class="w"> </span>windows.ifc
+
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>export-ifc<span class="w"> </span>building.ifc<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--type<span class="w"> </span>IfcWindow<span class="w"> </span>--out<span class="w"> </span>windows.ifc<span class="w"> </span>--flat
+</pre></div>
+</div>
+<p>Writes the selected entities as a standalone, valid IFC file. The
+default (<code class="docutils literal notranslate"><span class="pre">--preserve-hierarchy</span></code>) keeps each entity anchored under its
+original <code class="docutils literal notranslate"><span class="pre">IfcProject</span> <span class="pre">/</span> <span class="pre">IfcSite</span> <span class="pre">/</span> <span class="pre">IfcBuilding</span> <span class="pre">/</span> <span class="pre">IfcBuildingStorey</span></code>
+ancestors. <code class="docutils literal notranslate"><span class="pre">--flat</span></code> instead builds a placeholder Project/Site/
+Building/Storey in the output and anchors the selection under it.
+Either mode preserves world positions.</p>
+<p><code class="docutils literal notranslate"><span class="pre">export-ifc</span></code> refuses to export the whole file — pass at least one
+selection flag.</p>
+</section>
+<section id="id1">
+<h3><code class="docutils literal notranslate"><span class="pre">export</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span><span class="nb">export</span><span class="w"> </span>building.ifc<span class="w"> </span>--type<span class="w"> </span>IfcWall<span class="w"> </span>--to<span class="w"> </span>walls.obj
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span><span class="nb">export</span><span class="w"> </span>building.ifc<span class="w"> </span>--in<span class="w"> </span>&lt;storey_id&gt;<span class="w"> </span>--to<span class="w"> </span>level.json
+</pre></div>
+</div>
+<p>Exports the geometry of the selected elements as a single mesh file
+(<code class="docutils literal notranslate"><span class="pre">.obj</span></code> or COMPAS <code class="docutils literal notranslate"><span class="pre">.json</span></code>).</p>
+</section>
+</section>
+<section id="library-introspection">
+<h2>Library introspection</h2>
+<p>The next three commands are designed to keep agents (and people)
+honest about the API surface: instead of guessing attribute names or
+class hierarchies, ask the installed library directly.</p>
+<section id="docs">
+<h3><code class="docutils literal notranslate"><span class="pre">docs</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>docs<span class="w"> </span>BuildingInformationModel<span class="w"> </span>--brief
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>docs<span class="w"> </span>--list<span class="w"> </span>BuildingInformationModel<span class="w"> </span>--brief
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>docs<span class="w"> </span>get_element_by_global_id
+</pre></div>
+</div>
+<p>A pydoc-style introspector for the installed <code class="docutils literal notranslate"><span class="pre">compas_ifc</span></code>. <code class="docutils literal notranslate"><span class="pre">--brief</span></code>
+returns <code class="docutils literal notranslate"><span class="pre">signature</span> <span class="pre">→</span> <span class="pre">return</span> <span class="pre">:</span> <span class="pre">first_docstring_line</span></code> for quick scans;
+<code class="docutils literal notranslate"><span class="pre">--list</span> <span class="pre">&lt;parent&gt;</span></code> enumerates public members.</p>
+</section>
+<section id="schema">
+<h3><code class="docutils literal notranslate"><span class="pre">schema</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>schema<span class="w"> </span>IfcWindow
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>schema<span class="w"> </span>IfcWindow<span class="w"> </span>--depth<span class="w"> </span><span class="m">3</span>
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>schema<span class="w"> </span>IfcWall<span class="w"> </span>--schema<span class="w"> </span>IFC4X3
+</pre></div>
+</div>
+<p>Pretty-prints an IFC class: supertype chain, attributes (annotated with
+the ancestor they came from), and inverse attributes. The data comes
+from the bundled PEP 561 stubs, so <code class="docutils literal notranslate"><span class="pre">&#64;extends</span></code>-added members
+(<code class="docutils literal notranslate"><span class="pre">parent</span></code>, <code class="docutils literal notranslate"><span class="pre">frame</span></code>, <code class="docutils literal notranslate"><span class="pre">property_sets</span></code>) appear alongside the
+EXPRESS-defined attributes. <code class="docutils literal notranslate"><span class="pre">--depth</span></code> recurses into each entity-typed
+attribute’s referenced class, with cycle breaking.</p>
+</section>
+<section id="tutorials">
+<h3><code class="docutils literal notranslate"><span class="pre">tutorials</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>tutorials<span class="w"> </span>list
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>tutorials<span class="w"> </span>show<span class="w"> </span><span class="m">0</span>.1_overview
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">scripts/tutorials/</span></code> directory is shipped as package data. The
+<code class="docutils literal notranslate"><span class="pre">list</span></code> subcommand surfaces every tutorial with its one-line summary;
+<code class="docutils literal notranslate"><span class="pre">show</span></code> prints the source of a named tutorial so it can be pasted into
+a new script or copied to disk.</p>
+</section>
+</section>
+<section id="skill-management">
+<h2>Skill management</h2>
+<section id="install-skill">
+<h3><code class="docutils literal notranslate"><span class="pre">install-skill</span></code></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>install-skill<span class="w">                          </span><span class="c1"># claude</span>
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>install-skill<span class="w"> </span>--target<span class="w"> </span>both<span class="w"> </span>--force
+python<span class="w"> </span>-m<span class="w"> </span>compas_ifc<span class="w"> </span>install-skill<span class="w"> </span>--uninstall
+</pre></div>
+</div>
+<p>Copies the bundled agent skill (<code class="docutils literal notranslate"><span class="pre">src/compas_ifc/skill/</span></code>) into the
+target agent’s skill folder. The Claude Code target installs to
+<code class="docutils literal notranslate"><span class="pre">~/.claude/skills/compas_ifc</span></code>. See <a class="reference internal" href="skill.html"><span class="doc">Agent skill (Claude Code)</span></a> for what the skill
+contains and how it’s used.</p>
+</section>
+</section>
+<section id="working-with-the-json-contract">
+<h2>Working with the JSON contract</h2>
+<p>The JSON shape is intended to be stable enough to script against. Two
+conventions help here:</p>
+<ul class="simple">
+<li><p><strong>Counts and filters echo the request.</strong> Every command that selects
+entities returns a top-level <code class="docutils literal notranslate"><span class="pre">count</span></code> and a <code class="docutils literal notranslate"><span class="pre">filter</span></code> block
+reflecting which flags were applied. This makes it trivial to compare
+two runs or to confirm that a filter wasn’t silently dropped.</p></li>
+<li><p><strong>Nested entities resolve as ``$ref`` stubs.</strong> <code class="docutils literal notranslate"><span class="pre">show</span></code> and <code class="docutils literal notranslate"><span class="pre">schema</span></code>
+use <code class="docutils literal notranslate"><span class="pre">{&quot;$ref&quot;:</span> <span class="pre">&lt;id&gt;,</span> <span class="pre">&quot;type&quot;:</span> <span class="pre">&lt;IfcClass&gt;}</span></code> for cross-references at
+the depth limit. Raise the depth to inline them, but expect the
+output size to grow super-linearly on heavily-referenced classes.</p></li>
+</ul>
+<p>Errors are written to stderr with a non-zero exit code; the agent
+skill reads stderr and surfaces the message verbatim. Where a command
+needs a dependency that isn’t installed (e.g. <code class="docutils literal notranslate"><span class="pre">compas_viewer</span></code>), the
+error message includes the install hint.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-reference">Quick reference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#output-modes">Output modes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#selection-grammar">Selection grammar</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inspection">Inspection</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#info"><code class="docutils literal notranslate"><span class="pre">info</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#summary"><code class="docutils literal notranslate"><span class="pre">summary</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tree"><code class="docutils literal notranslate"><span class="pre">tree</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#search-and-listing">Search and listing</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#list"><code class="docutils literal notranslate"><span class="pre">list</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#query"><code class="docutils literal notranslate"><span class="pre">query</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#find"><code class="docutils literal notranslate"><span class="pre">find</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#entity-detail">Entity detail</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#show"><code class="docutils literal notranslate"><span class="pre">show</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#psets"><code class="docutils literal notranslate"><span class="pre">psets</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualisation">Visualisation</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#visualize"><code class="docutils literal notranslate"><span class="pre">visualize</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clash"><code class="docutils literal notranslate"><span class="pre">clash</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export">Export</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#export-ifc"><code class="docutils literal notranslate"><span class="pre">export-ifc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">export</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#library-introspection">Library introspection</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#docs"><code class="docutils literal notranslate"><span class="pre">docs</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#schema"><code class="docutils literal notranslate"><span class="pre">schema</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tutorials"><code class="docutils literal notranslate"><span class="pre">tutorials</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#skill-management">Skill management</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#install-skill"><code class="docutils literal notranslate"><span class="pre">install-skill</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#working-with-the-json-contract">Working with the JSON contract</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright COMPAS Association.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.2.1.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

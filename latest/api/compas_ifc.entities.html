@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
     <link rel="icon" href="../_static/compas.ico" type="image/x-icon">
-    <title>Entities &#8212; COMPAS IFC</title>
+    <title>compas_ifc.entities &#8212; COMPAS IFC</title>
   
   
   
@@ -60,7 +60,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Base" href="generated/compas_ifc.entities.base.Base.html" />
-    <link rel="prev" title="IFCFile.search_ifc_classes" href="generated/compas_ifc.file.IFCFile.search_ifc_classes.html" />
+    <link rel="prev" title="TessellatedBrep.validate_data" href="generated/compas_ifc.brep.TessellatedBrep.validate_data.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -172,6 +172,25 @@
                 
 
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../cli.html">
+                        Command line
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../skill.html">
+                        Agent skill
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="../tutorials.html">
                         Tutorials
                       </a>
@@ -184,12 +203,7 @@
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="../api.html">
                         API
@@ -360,6 +374,25 @@ document.write(`
                 
 
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../cli.html">
+                        Command line
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../skill.html">
+                        Agent skill
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="../tutorials.html">
                         Tutorials
                       </a>
@@ -372,12 +405,7 @@ document.write(`
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="../api.html">
                         API
@@ -480,28 +508,27 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">Command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../skill.html">Agent skill</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials.html">Tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/basics.hello_world.html">Hello World - Model Basics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials/basics.entity_apis.html">Basics - Entity APIs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/01_open_a_model.html">Open a model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/02_create_a_model.html">Create a model from scratch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/03_validation.html">Validate custom properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/04_interactions.html">Work with interactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/05_granular_export.html">Granular export</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.1_overview.html">Basics.1 Project Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.2_query_entities.html">Basics.2 Query Entities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.3_spatial_hierarchy.html">Basics.3 Spatial Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.4_element_info.html">Basics.4 Element info</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.5_visualization.html">Basics.5 Visualization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.6_edit_export.html">Basics.6 Edit and Export</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/Basics.7_create_new.html">Basics.7 Create New IFC Model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/Advanced.1_units.html">Advanced.1 Units</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/Advanced.2_sessions.html">Advanced.1 Sessions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../examples/Advanced.3_custom_extensions.html">Advanced.3 Custom Class Extensions</a></li>
-</ul>
-</li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../api.html">API</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="compas_ifc.model.html">Model</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Entities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compas_ifc.entities.generated.html">Generated</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../api.html">API</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="compas_ifc.bim.html">compas_ifc.bim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_ifc.element.html">compas_ifc.element</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_ifc.factory.html">compas_ifc.factory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_ifc.tree.html">compas_ifc.tree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_ifc.interactions.html">compas_ifc.interactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_ifc.validation.html">compas_ifc.validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_ifc.representations.html">compas_ifc.representations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compas_ifc.brep.html">compas_ifc.brep</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">compas_ifc.entities</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
@@ -551,7 +578,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API Reference</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">Entities</li>
+    <li class="breadcrumb-item active" aria-current="page">compas_ifc.entities</li>
   </ul>
 </nav>
 </div>
@@ -568,80 +595,92 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="entities">
-<h1>Entities</h1>
-<p>Generated IFC class wrappers.</p>
-<section id="base-class">
-<h2>Base Class</h2>
+  <section id="compas-ifc-entities">
+<h1>compas_ifc.entities</h1>
+<p>Internal IFC entity wrappers. The user-facing API does not require touching
+these directly — see <a class="reference internal" href="compas_ifc.bim.html"><span class="doc">compas_ifc.bim</span></a> and <a class="reference internal" href="compas_ifc.element.html"><span class="doc">compas_ifc.element</span></a> —
+but they are documented for contributors and for advanced workflows that
+need raw IFC entity access through <code class="docutils literal notranslate"><span class="pre">element._ifc_entity</span></code>.</p>
+<section id="architecture">
+<h2>Architecture</h2>
+<p>Every IFC entity loaded through <code class="docutils literal notranslate"><span class="pre">compas_ifc</span></code> is wrapped in a
+<a class="reference internal" href="generated/compas_ifc.entities.base.Base.html" title="compas_ifc.entities.base.Base"><code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></a>. Direct attribute access proxies
+through <code class="xref py py-meth docutils literal notranslate"><span class="pre">__getattr__()</span></code> to the
+underlying <code class="docutils literal notranslate"><span class="pre">ifcopenshell.entity_instance</span></code>. Inverse attributes are
+exposed as zero-argument callables (<code class="docutils literal notranslate"><span class="pre">wall.ContainedInStructure()</span></code>) to
+mark the syntactic distinction from direct attributes (<code class="docutils literal notranslate"><span class="pre">wall.Name</span></code>).</p>
+<p>Type information for the IFC class hierarchy is provided through PEP 561
+stubs at <code class="docutils literal notranslate"><span class="pre">compas_ifc/entities/generated/{IFC2X3,IFC4,IFC4X3}.pyi</span></code>.
+These stubs are consumed by IDEs and type checkers; there is no runtime
+class per IFC type. Schema-class attributes added by hand-written
+extensions are merged into the matching stub class so they appear in
+autocomplete alongside the EXPRESS-defined attributes.</p>
+</section>
+<section id="base">
+<h2>Base</h2>
 <table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.base.Base.html" title="compas_ifc.entities.base.Base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.Base</span></code></a></p></td>
-<td><p>Root class for all IFC classes.</p></td>
+<td><p>Root class for all IFC entity wrappers.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.base.TypeDefinition.html" title="compas_ifc.entities.base.TypeDefinition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.TypeDefinition</span></code></a></p></td>
 <td><p>Root class for all IFC type definitions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.base.extends.html" title="compas_ifc.entities.base.extends"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.extends</span></code></a></p></td>
+<td><p>Register a class as an extension of one or more IFC classes.</p></td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="extensions">
 <h2>Extensions</h2>
+<p>Hand-written extensions registered via the
+<a class="reference internal" href="generated/compas_ifc.entities.base.extends.html" title="compas_ifc.entities.base.extends"><code class="xref py py-func docutils literal notranslate"><span class="pre">extends()</span></code></a> decorator. Each adds
+Python-friendly properties to entities of a particular IFC class.</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcBuilding.html" title="compas_ifc.entities.extensions.IfcBuilding"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcBuilding</span></code></a></p></td>
-<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcBuilding</span></code>.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcObjectDefinitionExtras.html" title="compas_ifc.entities.extensions.IfcObjectDefinitionExtras"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcObjectDefinitionExtras</span></code></a></p></td>
+<td><p>Extras applied to entities of class <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcObjectDefinition</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcContext.html" title="compas_ifc.entities.extensions.IfcContext"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcContext</span></code></a></p></td>
-<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcContext</span></code>.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcObjectExtras.html" title="compas_ifc.entities.extensions.IfcObjectExtras"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcObjectExtras</span></code></a></p></td>
+<td><p>Extras applied to entities of class <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcObject</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcElement.html" title="compas_ifc.entities.extensions.IfcElement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcElement</span></code></a></p></td>
-<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcElement</span></code>.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcContextExtras.html" title="compas_ifc.entities.extensions.IfcContextExtras"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcContextExtras</span></code></a></p></td>
+<td><p>Extras applied to entities of class <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcContext</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcObject.html" title="compas_ifc.entities.extensions.IfcObject"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcObject</span></code></a></p></td>
-<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcObject</span></code>.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcProjectExtras.html" title="compas_ifc.entities.extensions.IfcProjectExtras"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcProjectExtras</span></code></a></p></td>
+<td><p>Extras applied to entities of class <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcProject</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcObjectDefinition.html" title="compas_ifc.entities.extensions.IfcObjectDefinition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcObjectDefinition</span></code></a></p></td>
-<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcObjectDefinition</span></code>.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcProductExtras.html" title="compas_ifc.entities.extensions.IfcProductExtras"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcProductExtras</span></code></a></p></td>
+<td><p>Extras applied to entities of class <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcProduct</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcProduct.html" title="compas_ifc.entities.extensions.IfcProduct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcProduct</span></code></a></p></td>
-<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcProduct</span></code>.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcElementExtras.html" title="compas_ifc.entities.extensions.IfcElementExtras"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcElementExtras</span></code></a></p></td>
+<td><p>Extras applied to entities of class <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcElement</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcProject.html" title="compas_ifc.entities.extensions.IfcProject"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcProject</span></code></a></p></td>
-<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcProject</span></code>.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcSpatialContainerExtras.html" title="compas_ifc.entities.extensions.IfcSpatialContainerExtras"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcSpatialContainerExtras</span></code></a></p></td>
+<td><p>Extras applied to IFC entities that act as spatial containers.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcSite.html" title="compas_ifc.entities.extensions.IfcSite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcSite</span></code></a></p></td>
-<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcSite</span></code>.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcSiteExtras.html" title="compas_ifc.entities.extensions.IfcSiteExtras"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcSiteExtras</span></code></a></p></td>
+<td><p>Extras applied to entities of class <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcSite</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcSpatialElement.html" title="compas_ifc.entities.extensions.IfcSpatialElement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcSpatialElement</span></code></a></p></td>
-<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcSpatialElement</span></code>.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcSpatialStructureElement.html" title="compas_ifc.entities.extensions.IfcSpatialStructureElement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcSpatialStructureElement</span></code></a></p></td>
-<td><p>Extension class for <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcSpatialStructureElement</span></code>.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.extensions.IfcBuildingExtras.html" title="compas_ifc.entities.extensions.IfcBuildingExtras"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extensions.IfcBuildingExtras</span></code></a></p></td>
+<td><p>Extras applied to entities of class <code class="xref py py-class docutils literal notranslate"><span class="pre">IfcBuilding</span></code>.</p></td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="generators">
-<h2>Generators</h2>
+<section id="stub-generator">
+<h2>Stub generator</h2>
+<p>The stub generator under <code class="docutils literal notranslate"><span class="pre">compas_ifc.entities.generator</span></code> writes one
+<code class="docutils literal notranslate"><span class="pre">.pyi</span></code> file per supported schema. Run by maintainers when adding
+support for a new IFC schema version; not typically invoked by users.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>compas_ifc.entities.generator
+</pre></div>
+</div>
 <table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.Generator.html" title="compas_ifc.entities.generator.Generator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.Generator</span></code></a></p></td>
-<td><p>Generator class for generating all IFC classes and type definitions as strongly typed Python classes.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.EntityGenerator.html" title="compas_ifc.entities.generator.EntityGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.EntityGenerator</span></code></a></p></td>
-<td><p>Generator class for generating a single IFC entityclass.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.AttributeGenerator.html" title="compas_ifc.entities.generator.AttributeGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.AttributeGenerator</span></code></a></p></td>
-<td><p>Generator class for generating a single IFC attribute.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.InverseAttributeGenerator.html" title="compas_ifc.entities.generator.InverseAttributeGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.InverseAttributeGenerator</span></code></a></p></td>
-<td><p>Generator class for generating a single IFC inverse attribute.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.TypeDeclarationGenerator.html" title="compas_ifc.entities.generator.TypeDeclarationGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.TypeDeclarationGenerator</span></code></a></p></td>
-<td><p>Generator class for generating a single IFC type declaration.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/compas_ifc.entities.generator.EnumGenerator.html" title="compas_ifc.entities.generator.EnumGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generator.EnumGenerator</span></code></a></p></td>
-<td><p>Generator class for generating a single IFC enumeration type.</p></td>
+<td><p>Generate a <code class="docutils literal notranslate"><span class="pre">.pyi</span></code> stub for a single IFC schema.</p></td>
 </tr>
 </tbody>
 </table>
@@ -669,9 +708,10 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#base-class">Base Class</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture">Architecture</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#base">Base</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extensions">Extensions</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generators">Generators</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stub-generator">Stub generator</a></li>
 </ul>
   </nav></div>
 
