@@ -65,8 +65,15 @@ python -m compas_ifc find building.ifc "Level 1"
 
 ```
 python -m compas_ifc show building.ifc <global_id>
+python -m compas_ifc show building.ifc <global_id> --depth 3
 python -m compas_ifc psets building.ifc <global_id>
 ```
+
+Default `show` is one level deep — nested entities (`OwnerHistory`,
+`ObjectPlacement`, `Representation`, ...) appear as `{"$ref": <id>,
+"type": <IfcClass>}` stubs. Raise `--depth` to inline successive levels
+of the attribute tree; cycles are broken so depth doesn't blow up on
+recursive placement chains.
 
 ## Visualise
 
@@ -137,8 +144,15 @@ python -m compas_ifc docs get_element_by_global_id
 
 ```
 python -m compas_ifc schema IfcWindow
+python -m compas_ifc schema IfcWindow --depth 5
 python -m compas_ifc schema IfcWall --schema IFC4X3
 ```
+
+`schema` reads the bundled `.pyi` stubs, so its attribute list already
+includes Python members added by `@extends` (e.g. `parent`, `frame`,
+`property_sets`). Default `--depth 1` lists this class's own + inherited
+attributes flat; raise depth to recurse into each entity-typed attribute
+(stops at primitives, enums, and cycle hits).
 
 ## When CLI isn't enough — fall back to Python
 

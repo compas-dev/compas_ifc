@@ -10,8 +10,11 @@ Heavy imports (``compas_ifc.bim``) are deferred to command bodies so the
 
 from __future__ import annotations
 
+import ast
 import json
 import os
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Optional
@@ -474,9 +477,26 @@ def find(
 def show(
     file: str = typer.Argument(..., help="Path to an IFC file."),
     global_id: str = typer.Argument(..., help="IFC GlobalId of the entity to dump."),
+    depth: int = typer.Option(
+        1,
+        "--depth",
+        help=(
+            "How many levels deep to expand referenced entities. 1 (default) "
+            "shows direct attributes only — nested entities appear as "
+            "$ref pointers. Raise to inline successive levels of the "
+            "attribute tree."
+        ),
+    ),
     json_output: bool = typer.Option(False, "--json", help="Emit structured JSON."),
 ) -> None:
-    """Dump a single entity's attributes by GlobalId."""
+    """Dump a single entity's attributes by GlobalId.
+
+    With ``--depth 1`` (default), nested entity attributes are returned as
+    ``{"$ref": <id>, "type": <IfcClass>}`` stubs. Raising ``--depth`` inlines
+    each referenced entity's own attributes, recursively, up to the limit.
+    Cycles are broken: any entity already on the current expansion path is
+    rendered as a ``$ref`` regardless of remaining depth.
+    """
     _check_file(file)
     model = _open_model(file)
 
@@ -487,29 +507,45 @@ def show(
 
     raw = getattr(entity, "entity", entity)
     info_dict = raw.get_info(include_identifier=True, recursive=False)
-    # Convert ifcopenshell wrapper values to JSON-friendly forms.
-    attrs = {k: _scalar(v) for k, v in info_dict.items() if k != "type"}
+    seen = frozenset([raw.id()])
+    attrs = {k: _scalar(v, depth=depth - 1, seen=seen) for k, v in info_dict.items() if k != "type"}
 
     payload = {
         "type": raw.is_a(),
         "global_id": getattr(entity, "GlobalId", None),
         "id": raw.id(),
+        "depth": depth,
         "attributes": attrs,
     }
     _emit(payload, json_output)
 
 
-def _scalar(value):
-    """Coerce an ifcopenshell value to something JSON can serialise."""
+def _scalar(value, depth: int = 0, seen: frozenset = frozenset()):
+    """Coerce an ifcopenshell value to something JSON can serialise.
+
+    When ``depth > 0`` and ``value`` is an ``entity_instance`` not yet on
+    the current expansion path, recursively inlines its attributes; the
+    children get ``depth - 1`` and an extended ``seen`` set.
+    """
     import ifcopenshell
 
     if isinstance(value, ifcopenshell.entity_instance):
         try:
-            return {"$ref": value.id(), "type": value.is_a()}
+            eid = value.id()
         except Exception:
             return str(value)
+        if depth <= 0 or eid in seen:
+            return {"$ref": eid, "type": value.is_a()}
+        child_seen = seen | {eid}
+        info = value.get_info(include_identifier=True, recursive=False)
+        expanded = {"type": value.is_a(), "id": eid}
+        for k, v in info.items():
+            if k in ("type", "id"):
+                continue
+            expanded[k] = _scalar(v, depth=depth - 1, seen=child_seen)
+        return expanded
     if isinstance(value, (list, tuple)):
-        return [_scalar(v) for v in value]
+        return [_scalar(v, depth=depth, seen=seen) for v in value]
     if isinstance(value, (str, int, float, bool)) or value is None:
         return value
     return str(value)
@@ -1145,80 +1181,258 @@ def _list_members(target, brief: bool = False) -> list:
 def schema(
     ifc_class: str = typer.Argument(..., help="IFC class name (e.g. IfcWall)."),
     schema_version: str = typer.Option("IFC4", "--schema", help="IFC schema: IFC2X3, IFC4, or IFC4X3."),
+    depth: int = typer.Option(
+        1,
+        "--depth",
+        help=(
+            "How many levels deep to expand entity-typed attributes. 1 "
+            "(default) lists this class's attributes only. Raise to inline "
+            "each attribute's referenced class — and its attributes, "
+            "recursively. Cycles are broken automatically."
+        ),
+    ),
     json_output: bool = typer.Option(False, "--json", help="Emit structured JSON."),
 ) -> None:
-    """Show schema information for an IFC class — attributes, inverses, supertype chain.
+    """Show schema information for an IFC class — supertype chain, attributes, inverses.
 
-    Reads directly from ifcopenshell's schema, so the answer is authoritative
-    for the requested schema version.
+    Reads from the bundled PEP 561 stubs at ``compas_ifc.entities.generated``,
+    so the attribute set includes members added by ``@extends`` extensions in
+    addition to the raw EXPRESS schema. Available schemas: ``IFC2X3``,
+    ``IFC4``, ``IFC4X3``.
     """
-    import ifcopenshell
-
-    try:
-        schema_obj = ifcopenshell.ifcopenshell_wrapper.schema_by_name(schema_version)
-    except (RuntimeError, Exception) as exc:
-        typer.echo(f"error: unknown schema: {schema_version} ({exc})", err=True)
+    index = _load_schema_stub(schema_version)
+    if not index:
+        typer.echo(f"error: stub not found for schema: {schema_version}", err=True)
         raise typer.Exit(code=1)
 
-    try:
-        declaration = schema_obj.declaration_by_name(ifc_class)
-    except RuntimeError:
+    if ifc_class not in index:
         typer.echo(f"error: {ifc_class!r} not declared in {schema_version}", err=True)
         raise typer.Exit(code=1)
 
-    if not declaration.as_entity():
-        typer.echo(f"error: {ifc_class!r} is not an entity declaration", err=True)
-        raise typer.Exit(code=1)
-
-    entity = declaration.as_entity()
-    attributes = []
-    for attr in entity.attributes():
-        attributes.append(
-            {
-                "name": attr.name(),
-                "type": str(attr.type_of_attribute()),
-                "optional": attr.optional(),
-            }
-        )
-
-    inverse_attrs = []
-    for inv in entity.all_inverse_attributes():
-        inverse_attrs.append(
-            {
-                "name": inv.name(),
-                "of_entity": inv.entity_reference().name(),
-            }
-        )
-
-    supertypes = []
-    parent = entity.supertype()
-    while parent is not None:
-        supertypes.append(parent.name())
-        parent = parent.supertype()
+    supertypes = _mro(ifc_class, index)[1:]  # skip self
+    tree = _class_tree(ifc_class, index, depth=depth, seen=frozenset())
 
     payload = {
         "schema": schema_version,
-        "class": entity.name(),
-        "abstract": entity.is_abstract(),
+        "class": ifc_class,
+        "depth": depth,
         "supertypes": supertypes,
-        "attributes": attributes,
-        "inverses": inverse_attrs,
+        **tree,
     }
 
     def human(_):
-        typer.echo(f"{payload['class']} ({schema_version})" + ("  [abstract]" if payload["abstract"] else ""))
+        typer.echo(f"{ifc_class}  ({schema_version})")
         if supertypes:
-            typer.echo("  ← " + " ← ".join(supertypes))
-        typer.echo(f"\nattributes ({len(attributes)}):")
-        for attr in attributes:
-            opt = " optional" if attr["optional"] else ""
-            typer.echo(f"  {attr['name']:<25} {attr['type']}{opt}")
-        if inverse_attrs:
-            typer.echo(f"\ninverses ({len(inverse_attrs)}):")
-            for inv in inverse_attrs:
-                typer.echo(f"  {inv['name']:<25} of {inv['of_entity']}")
+            typer.echo("  ↑ " + " → ".join(reversed(supertypes)) + f" → {ifc_class}")
+        typer.echo(f"\nattributes ({len(payload['attributes'])}):")
+        name_w = min(_max_name_width(payload["attributes"]), 30)
+        _render_attr_tree(payload["attributes"], prefix="", self_class=ifc_class, name_w=name_w)
+        if payload["inverses"]:
+            typer.echo(f"\ninverses ({len(payload['inverses'])}):")
+            inv_w = max((len(inv["name"]) for inv in payload["inverses"]), default=0)
+            for inv in payload["inverses"]:
+                origin = "" if inv["from"] == ifc_class else f"  · {inv['from']}"
+                typer.echo(f"  {inv['name']:<{inv_w}}  → {_pretty_type(inv['return_type'])}{origin}")
 
     _emit(payload, json_output, human)
+
+
+def _pretty_type(ann: str) -> str:
+    """Compress a Python type annotation string for human display.
+
+    Drops the ``Optional[...]`` wrapper for a trailing ``?``, strips the
+    forward-ref quotes around class names, collapses ``list[X]`` to
+    ``[X]``, ``tuple[X, ...]`` to ``(X…)``, and renders ``Union[A, B]``
+    as ``A | B``.
+    """
+    s = ann.strip()
+    if s.startswith("Optional[") and s.endswith("]"):
+        return _pretty_type(s[9:-1]) + "?"
+    if s.startswith("Union["):
+        parts = _split_top_level(s[6:-1], ",")
+        return " | ".join(_pretty_type(p.strip()) for p in parts)
+    if s.startswith("list[") and s.endswith("]"):
+        return "[" + _pretty_type(s[5:-1]) + "]"
+    if s.startswith("tuple[") and s.endswith("]"):
+        inner = s[6:-1]
+        if inner.endswith(", ..."):
+            return "(" + _pretty_type(inner[:-5].strip()) + "…)"
+        return "(" + ", ".join(_pretty_type(p.strip()) for p in _split_top_level(inner, ",")) + ")"
+    if len(s) >= 2 and ((s[0] == "'" and s[-1] == "'") or (s[0] == '"' and s[-1] == '"')):
+        return s[1:-1]
+    return s
+
+
+def _split_top_level(s: str, sep: str) -> list:
+    """Split ``s`` on ``sep`` ignoring delimiters inside brackets."""
+    parts, depth, current = [], 0, []
+    for ch in s:
+        if ch in "[({":
+            depth += 1
+        elif ch in "])}":
+            depth -= 1
+        if ch == sep and depth == 0:
+            parts.append("".join(current))
+            current = []
+        else:
+            current.append(ch)
+    parts.append("".join(current))
+    return parts
+
+
+def _max_name_width(attrs: list) -> int:
+    """Walk the attribute tree once to find the longest name (for column alignment)."""
+    w = 0
+    for attr in attrs:
+        w = max(w, len(attr["name"]))
+        inline = attr.get("inline")
+        if inline and inline.get("expanded"):
+            w = max(w, _max_name_width(inline["attributes"]))
+    return w
+
+
+def _render_attr_tree(attrs: list, prefix: str, self_class: str, name_w: int) -> None:
+    """Render an attribute tree with ├── / └── / │   connectors and a consistent name column."""
+    if not attrs:
+        return
+    last_idx = len(attrs) - 1
+    for i, attr in enumerate(attrs):
+        is_last = i == last_idx
+        connector = "└── " if is_last else "├── "
+        type_str = _pretty_type(attr["type"])
+        origin = ""
+        if "from" in attr and attr["from"] != self_class:
+            origin = f"  · {attr['from']}"
+        typer.echo(f"{prefix}{connector}{attr['name']:<{name_w}}  {type_str}{origin}")
+
+        inline = attr.get("inline")
+        if not inline:
+            continue
+        child_prefix = prefix + ("    " if is_last else "│   ")
+        if inline.get("expanded"):
+            _render_attr_tree(inline["attributes"], child_prefix, self_class=inline["class"], name_w=name_w)
+        elif inline.get("reason") == "cycle":
+            typer.echo(f"{child_prefix}↻ {inline['class']}  [cycle]")
+
+
+# ---------------------------------------------------------------------------
+# schema stub parsing
+# ---------------------------------------------------------------------------
+
+
+@lru_cache(maxsize=4)
+def _load_schema_stub(schema_version: str) -> dict:
+    """Parse the bundled .pyi stub for ``schema_version`` and index classes by name."""
+    import compas_ifc
+
+    stub_path = Path(compas_ifc.__file__).parent / "entities" / "generated" / f"{schema_version}.pyi"
+    if not stub_path.exists():
+        return {}
+    tree = ast.parse(stub_path.read_text(encoding="utf-8"))
+    return {n.name: n for n in tree.body if isinstance(n, ast.ClassDef)}
+
+
+def _mro(class_name: str, index: dict) -> list:
+    """Return ``[self, parent, grandparent, ...]`` walking the first base class.
+
+    Single-inheritance assumption — true of the IFC stubs.
+    """
+    chain = []
+    cur = class_name
+    while cur and cur in index:
+        chain.append(cur)
+        bases = index[cur].bases
+        if bases and isinstance(bases[0], ast.Name):
+            cur = bases[0].id
+        else:
+            cur = None
+    return chain
+
+
+def _extract_entity_ref(annotation, index: dict) -> Optional[str]:
+    """Walk a type annotation AST and return the first referenced class name in ``index``.
+
+    Examples:
+        Optional["IfcOwnerHistory"]                       -> "IfcOwnerHistory"
+        tuple["IfcProduct", ...]                          -> "IfcProduct"
+        Optional[float]                                   -> None
+        Optional["IfcWindowTypeEnum"]                     -> "IfcWindowTypeEnum"
+    """
+    if isinstance(annotation, ast.Subscript):
+        return _extract_entity_ref(annotation.slice, index)
+    if isinstance(annotation, ast.Tuple):
+        for elt in annotation.elts:
+            ref = _extract_entity_ref(elt, index)
+            if ref:
+                return ref
+        return None
+    if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
+        return annotation.value if annotation.value in index else None
+    if isinstance(annotation, ast.Name):
+        return annotation.id if annotation.id in index else None
+    return None
+
+
+def _class_tree(class_name: str, index: dict, depth: int, seen: frozenset) -> dict:
+    """Recursively build an attribute tree for an IFC class.
+
+    Walks the MRO root-first so attributes appear in supertype-then-self order
+    — same as ifcopenshell's all_attributes().
+    """
+    if class_name in seen:
+        return {"class": class_name, "expanded": False, "reason": "cycle"}
+    if depth <= 0:
+        return {"class": class_name, "expanded": False, "reason": "max depth"}
+    if class_name not in index:
+        return {"class": class_name, "expanded": False, "reason": "unknown class"}
+
+    seen = seen | {class_name}
+    chain = _mro(class_name, index)
+
+    attrs = []
+    inverses = []
+    seen_inverses: set = set()  # dedupe property getter/setter overloads
+    for ancestor in reversed(chain):
+        cls = index.get(ancestor)
+        if cls is None:
+            continue
+        for item in cls.body:
+            if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
+                # Skip type-alias attributes like `items: tuple = (...)` on enums.
+                if item.target.id == "items":
+                    continue
+                ann_str = ast.unparse(item.annotation)
+                ref = _extract_entity_ref(item.annotation, index)
+                entry = {
+                    "name": item.target.id,
+                    "type": ann_str,
+                    "from": ancestor,
+                }
+                # Only inline when there is depth budget left — keeps depth=1 output
+                # identical to the pre-recursion shape (no "max depth" stubs).
+                if ref is not None and depth > 1:
+                    entry["inline"] = _class_tree(ref, index, depth=depth - 1, seen=seen)
+                attrs.append(entry)
+            elif isinstance(item, ast.FunctionDef) and item.returns is not None:
+                ret_type = ast.unparse(item.returns)
+                key = (item.name, ret_type)
+                if key in seen_inverses:
+                    continue
+                seen_inverses.add(key)
+                inverses.append(
+                    {
+                        "name": item.name,
+                        "return_type": ret_type,
+                        "from": ancestor,
+                    }
+                )
+
+    return {
+        "class": class_name,
+        "expanded": True,
+        "attributes": attrs,
+        "inverses": inverses,
+    }
 
 
 # ---------------------------------------------------------------------------

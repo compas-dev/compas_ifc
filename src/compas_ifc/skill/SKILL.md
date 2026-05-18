@@ -48,7 +48,7 @@ All commands: `python -m compas_ifc <command> [args] [--json]`.
 | `list FILE [SELECTION] [--limit N]` | Entities matching the selection |
 | `query FILE [SELECTION] [--select a,b,...]` | List + inline chosen attributes |
 | `find FILE PATTERN` | Exact GlobalId or fuzzy name search |
-| `show FILE GLOBAL_ID` | Full attribute dump for one entity |
+| `show FILE GLOBAL_ID [--depth N]` | Attribute dump for one entity. Default depth 1 leaves nested entities as `$ref` stubs; raise `--depth` to inline successive levels of the attribute tree (cycles are broken automatically) |
 | `psets FILE GLOBAL_ID` | Property sets for an entity |
 | `visualize FILE [SELECTION] --detach [--no-keep-hierarchy]` | Open the viewer (ALWAYS use `--detach`). Selections render at their world position by default; pass `--no-keep-hierarchy` for a parts-library view at the origin |
 | `clash FILE [--type T,T,...] [--show --detach] [--include-related]` | Find element interferences. Default filters out wall→opening→window/door chains. `--show --detach` opens the viewer with each pair in its own colour and penetration points marked |
@@ -56,7 +56,7 @@ All commands: `python -m compas_ifc <command> [args] [--json]`.
 | `export FILE [SELECTION] --to X.obj` | Export geometry as `.obj` or `.json` |
 | `docs SYMBOL [--brief]` | Introspect compas_ifc — signature + docstring |
 | `docs --list PARENT [--brief]` | List public members of a class/module |
-| `schema IFC_CLASS [--schema IFC4]` | IFC schema: attributes, inverses, supertypes |
+| `schema IFC_CLASS [--schema IFC4] [--depth N]` | IFC schema for one class: attributes (with `[from <ancestor>]` provenance), inverses, supertype chain. Raise `--depth` to recurse into each entity-typed attribute's referenced class (cycles broken automatically). Reads the bundled `.pyi` stubs so `@extends` members appear too |
 | `tutorials list` / `tutorials show NAME` | Bundled worked-example scripts |
 
 ### Shared selection grammar
