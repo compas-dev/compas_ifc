@@ -22,6 +22,50 @@ from compas.datastructures import Mesh
 from compas.geometry import Point
 
 
+def fast_mesh_mesh_collision_numpy(
+    verts_a: np.ndarray,
+    tris_a: np.ndarray,
+    verts_b: np.ndarray,
+    tris_b: np.ndarray,
+    tolerance: float = 1e-6,
+    min_depth: float = 1e-4,
+) -> list[Point]:
+    """Numpy-direct variant of :func:`fast_mesh_mesh_collision`.
+
+    Bypasses the :class:`compas.datastructures.Mesh` round-trip — callers
+    pass the vertex array and triangle-index array directly. Used by
+    :meth:`compas_ifc.element.GenericElement.compute_collisions` with
+    cached per-element arrays.
+
+    Parameters
+    ----------
+    verts_a, verts_b : np.ndarray
+        Shape ``(V, 3)`` — world-coord vertex arrays.
+    tris_a, tris_b : np.ndarray
+        Shape ``(F, 3)`` — triangle-vertex-index arrays (must already be
+        triangulated; quads/n-gons should be fan-triangulated upstream).
+    tolerance : float, optional
+    min_depth : float, optional
+        See :func:`fast_mesh_mesh_collision`.
+    """
+    if len(verts_a) == 0 or len(verts_b) == 0 or len(tris_a) == 0 or len(tris_b) == 0:
+        return []
+
+    a_tri_coords = verts_a[tris_a]  # (T, 3, 3)
+    b_tri_coords = verts_b[tris_b]  # (T, 3, 3)
+
+    penetrating = []
+    for verts, tri_coords in ((verts_a, b_tri_coords), (verts_b, a_tri_coords)):
+        inside, _ = _points_inside_mesh(verts, tri_coords, tolerance)
+        if not np.any(inside):
+            continue
+        surf_dist = _min_surface_distance(verts[inside], tri_coords)
+        for i, idx in enumerate(np.where(inside)[0]):
+            if surf_dist[i] > min_depth:
+                penetrating.append(Point(*verts[idx]))
+    return penetrating
+
+
 def fast_mesh_mesh_collision(
     a: Mesh,
     b: Mesh,
@@ -53,71 +97,18 @@ def fast_mesh_mesh_collision(
         Vertices of A inside B and vertices of B inside A.
 
     """
-    a_tris = _triangulate_mesh(a)
-    b_tris = _triangulate_mesh(b)
-
-    if len(a_tris) == 0 or len(b_tris) == 0:
-        return []
-
-    a_verts = np.array([a.vertex_coordinates(v) for v in a.vertices()], dtype=np.float64)
-    b_verts = np.array([b.vertex_coordinates(v) for v in b.vertices()], dtype=np.float64)
-
-    if len(a_verts) == 0 or len(b_verts) == 0:
-        return []
-
-    penetrating = []
-
-    # Check A vertices inside B
-    inside_b, _ = _points_inside_mesh(a_verts, b_tris, tolerance)
-    if np.any(inside_b):
-        inside_pts = a_verts[inside_b]
-        surf_dist = _min_surface_distance(inside_pts, b_tris)
-        for i, idx in enumerate(np.where(inside_b)[0]):
-            if surf_dist[i] > min_depth:
-                penetrating.append(Point(*a_verts[idx]))
-
-    # Check B vertices inside A
-    inside_a, _ = _points_inside_mesh(b_verts, a_tris, tolerance)
-    if np.any(inside_a):
-        inside_pts = b_verts[inside_a]
-        surf_dist = _min_surface_distance(inside_pts, a_tris)
-        for i, idx in enumerate(np.where(inside_a)[0]):
-            if surf_dist[i] > min_depth:
-                penetrating.append(Point(*b_verts[idx]))
-
-    return penetrating
+    verts_a, tris_a = _mesh_to_numpy(a)
+    verts_b, tris_b = _mesh_to_numpy(b)
+    return fast_mesh_mesh_collision_numpy(verts_a, tris_a, verts_b, tris_b, tolerance, min_depth)
 
 
-def _triangulate_mesh(mesh: Mesh) -> np.ndarray:
-    """Fan-triangulate a mesh into an (T, 3, 3) array of triangle vertices.
-
-    Each polygon face with *n* vertices is split into *n - 2* triangles
-    by fanning from the first vertex.
-
-    Parameters
-    ----------
-    mesh : Mesh
-
-    Returns
-    -------
-    np.ndarray
-        Shape ``(T, 3, 3)`` where ``T`` is the total number of triangles.
-
-    """
-    triangles = []
-    for face in mesh.faces():
-        coords = mesh.face_coordinates(face)
-        n = len(coords)
-        if n < 3:
-            continue
-        v0 = coords[0]
-        for i in range(1, n - 1):
-            triangles.append([v0, coords[i], coords[i + 1]])
-
-    if not triangles:
-        return np.empty((0, 3, 3), dtype=np.float64)
-
-    return np.array(triangles, dtype=np.float64)
+def _mesh_to_numpy(mesh: Mesh) -> tuple[np.ndarray, np.ndarray]:
+    """Convert a compas Mesh to (vertices, triangle_indices) numpy arrays."""
+    verts, faces = mesh.to_vertices_and_faces(triangulated=True)
+    return (
+        np.asarray(verts, dtype=np.float64),
+        np.asarray(faces, dtype=np.int64) if faces else np.empty((0, 3), dtype=np.int64),
+    )
 
 
 def _min_surface_distance(

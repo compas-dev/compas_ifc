@@ -104,6 +104,14 @@ class ClippedExtrusion(Geometry):
     # Geometric properties
     # ------------------------------------------------------------------
 
+    def compute_aabb(self):
+        # Half-space clipping only removes material, so the base extrusion's
+        # AABB is a valid (conservative) bound on the clipped result.
+        return self.extrusion.compute_aabb()
+
+    def compute_obb(self):
+        return self.compute_aabb()
+
     def volume(self):
         """Volume of the clipped extrusion.
 

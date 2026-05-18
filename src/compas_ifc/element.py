@@ -4,16 +4,21 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
+import numpy as np
+
 from compas.datastructures import Mesh
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Transformation
+from compas.geometry import bounding_box
+from compas.geometry import transform_points_numpy
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 from compas_model.interactions import Contact
 
+from compas_ifc.brep.tessellatedbrep import TessellatedBrep
 from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
 
 # Generic over the underlying IFC entity wrapper type. At runtime ``T`` is
@@ -306,26 +311,20 @@ class GenericElement(Generic[T], Element):
         return self.geometry
 
     def compute_aabb(self, inflate: float = 1.0) -> Optional[Box]:
-        geom = self.elementgeometry
-        if geom is None:
+        # Extrusion.transform leaves profile points local, so go through the
+        # tessellated visual_geometry rather than self.elementgeometry.
+        verts, _ = self._world_triangles()
+        if verts is None or len(verts) == 0:
             return None
-        if hasattr(geom, "aabb"):
-            return geom.aabb
-        if isinstance(geom, Mesh):
-            from compas.geometry import bounding_box
-
-            pts = geom.vertices_attributes("xyz")
-            bb = bounding_box(pts)
-            return Box.from_bounding_box(bb)
-        return None
+        return Box.from_bounding_box(bounding_box(verts))
 
     def compute_obb(self, inflate: float = 1.0) -> Optional[Box]:
-        geom = self.elementgeometry
-        if geom is None:
+        from compas.geometry import oriented_bounding_box_numpy
+
+        verts, _ = self._world_triangles()
+        if verts is None or len(verts) == 0:
             return None
-        if hasattr(geom, "obb"):
-            return geom.obb
-        return self.compute_aabb(inflate)
+        return Box.from_bounding_box(oriented_bounding_box_numpy(verts))
 
     def compute_collision_mesh(self, inflate: float = 1.0) -> Optional[Mesh]:
         geom = self.elementgeometry
@@ -361,6 +360,63 @@ class GenericElement(Generic[T], Element):
     def compute_volumetric_mesh(self, meshsize_min=None, meshsize_max=None):
         return None
 
+    def _world_triangles(self) -> tuple:
+        """Return cached ``(vertices, triangle_indices)`` numpy arrays in world coords.
+
+        ``vertices`` has shape ``(V, 3)``; ``triangle_indices`` has shape ``(F, 3)``.
+
+        Cache keyed on the identity of ``self.modeltransformation``. Invalidated
+        because ``reset_computed`` (in ``compas_model``) clears the underlying
+        ``_modeltransformation`` to None whenever transformation/geometry change,
+        and the next access lazily produces a fresh ``Transformation`` instance
+        that fails the ``is``-identity check here.
+        """
+        xform = self.modeltransformation
+        cache = getattr(self, "_world_triangles_cache", None)
+        if cache is not None and cache[0] is xform:
+            return cache[1], cache[2]
+
+        vg = self._visual_geometry
+        if vg is None:
+            self._world_triangles_cache = (xform, None, None)
+            return None, None
+
+        if isinstance(vg, TessellatedBrep):
+            verts_local = np.asarray(vg.vertices, dtype=np.float64)
+            tris = np.asarray(vg.faces, dtype=np.int64)
+        elif hasattr(vg, "to_mesh"):
+            from compas_ifc.algorithms.collisions import _mesh_to_numpy
+
+            verts_local, tris = _mesh_to_numpy(vg.to_mesh())
+        else:
+            self._world_triangles_cache = (xform, None, None)
+            return None, None
+
+        if xform is not None and len(verts_local) > 0:
+            verts_world = transform_points_numpy(verts_local, xform)
+        else:
+            # Copy so the cache doesn't alias the source TessellatedBrep array.
+            verts_world = verts_local.copy()
+
+        self._world_triangles_cache = (xform, verts_world, tris)
+        self._world_mesh_cache = None
+        return verts_world, tris
+
+    def _world_mesh(self) -> Optional[Mesh]:
+        """Return a cached world-coord ``Mesh`` for callers that need the compas Mesh API.
+
+        Prefer :meth:`_world_triangles` directly for numerical work.
+        """
+        verts, tris = self._world_triangles()
+        if verts is None:
+            return None
+        cached = getattr(self, "_world_mesh_cache", None)
+        if cached is not None:
+            return cached
+        mesh = Mesh.from_vertices_and_faces(verts.tolist(), tris.tolist())
+        self._world_mesh_cache = mesh
+        return mesh
+
     def compute_contacts(
         self,
         other: "GenericElement",
@@ -370,8 +426,8 @@ class GenericElement(Generic[T], Element):
     ) -> list:
         """Compute contacts between this element and another element.
 
-        Extends the base implementation to handle ``TessellatedBrep`` geometry
-        by converting it to ``Mesh`` before computing contacts.
+        Operates on world-coord meshes derived from the tessellated
+        ``visual_geometry`` (see :meth:`_world_mesh`).
 
         Parameters
         ----------
@@ -390,29 +446,12 @@ class GenericElement(Generic[T], Element):
 
         """
         from compas_ifc.algorithms.contacts import fast_mesh_mesh_contacts
-        from compas_ifc.brep.tessellatedbrep import TessellatedBrep
 
-        a = self.modelgeometry
-        b = other.modelgeometry
+        a = self._world_mesh()
+        b = other._world_mesh()
         if a is None or b is None:
             return []
-
-        # Convert TessellatedBrep to Mesh for contact detection
-        if isinstance(a, TessellatedBrep):
-            a = a.to_mesh()
-        if isinstance(b, TessellatedBrep):
-            b = b.to_mesh()
-
-        if isinstance(a, Mesh) and isinstance(b, Mesh):
-            return fast_mesh_mesh_contacts(a, b, tolerance=tolerance, minimum_area=minimum_area, contacttype=contacttype)
-        elif isinstance(a, Brep) and isinstance(b, Brep):
-            try:
-                from compas_model.algorithms.contacts import brep_brep_contacts
-            except ImportError:
-                return []
-            return brep_brep_contacts(a, b, tolerance=tolerance, minimum_area=minimum_area, contacttype=contacttype)
-
-        return []
+        return fast_mesh_mesh_contacts(a, b, tolerance=tolerance, minimum_area=minimum_area, contacttype=contacttype)
 
     def compute_collisions(
         self,
@@ -421,9 +460,8 @@ class GenericElement(Generic[T], Element):
     ) -> list:
         """Detect volumetric collision between this element and another.
 
-        Uses ray-casting to find vertices of one mesh that lie inside the
-        other.  Handles ``TessellatedBrep`` geometry by converting to
-        ``Mesh`` first.
+        Operates on world-coord meshes derived from the tessellated
+        ``visual_geometry`` (see :meth:`_world_mesh`).
 
         Parameters
         ----------
@@ -438,24 +476,13 @@ class GenericElement(Generic[T], Element):
             Penetrating vertices (empty if no collision).
 
         """
-        from compas_ifc.algorithms.collisions import fast_mesh_mesh_collision
-        from compas_ifc.brep.tessellatedbrep import TessellatedBrep
+        from compas_ifc.algorithms.collisions import fast_mesh_mesh_collision_numpy
 
-        a = self.modelgeometry
-        b = other.modelgeometry
-        if a is None or b is None:
+        verts_a, tris_a = self._world_triangles()
+        verts_b, tris_b = other._world_triangles()
+        if verts_a is None or verts_b is None:
             return []
-
-        # Convert TessellatedBrep to Mesh for collision detection
-        if isinstance(a, TessellatedBrep):
-            a = a.to_mesh()
-        if isinstance(b, TessellatedBrep):
-            b = b.to_mesh()
-
-        if isinstance(a, Mesh) and isinstance(b, Mesh):
-            return fast_mesh_mesh_collision(a, b, tolerance=tolerance)
-
-        return []
+        return fast_mesh_mesh_collision_numpy(verts_a, tris_a, verts_b, tris_b, tolerance=tolerance)
 
     # ==========================================================================
     # Construction

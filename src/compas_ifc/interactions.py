@@ -6,6 +6,8 @@ computing connections (contacts) and collisions (interferences).
 
 from __future__ import annotations
 
+import ifcopenshell.guid
+
 from compas_ifc.element import GenericElement
 
 
@@ -421,11 +423,7 @@ class InteractionMixin:
             Number of new connection edges created.
 
         """
-        from compas.geometry import Box
-        from compas.geometry import bounding_box
         from compas_model.models.bvh import ElementBVH
-
-        from compas_ifc.brep.tessellatedbrep import TessellatedBrep
 
         # ---- collect candidates ------------------------------------------------
         candidates = []
@@ -443,15 +441,7 @@ class InteractionMixin:
         bvh = ElementBVH.from_elements(candidates)
 
         # ---- pre-compute world AABBs for tight filter ---------------------------
-        world_aabbs = {}
-        for e in candidates:
-            mg = e.modelgeometry
-            if isinstance(mg, TessellatedBrep):
-                world_aabbs[id(e)] = Box.from_bounding_box(bounding_box(list(mg.vertices)))
-            elif hasattr(mg, "aabb"):
-                world_aabbs[id(e)] = mg.aabb
-            else:
-                world_aabbs[id(e)] = None
+        world_aabbs = {id(e): e.aabb for e in candidates}
 
         def _aabb_overlap(box_a, box_b, tol=0.01):
             """Return True if two AABBs overlap within tolerance."""
@@ -511,10 +501,7 @@ class InteractionMixin:
 
                 new_connections += 1
 
-                # persist as IFC relationship
                 if create_ifc_relations and element._ifc_entity and neighbour._ifc_entity:
-                    import ifcopenshell.guid
-
                     self._file._file.create_entity(
                         "IfcRelConnectsElements",
                         GlobalId=ifcopenshell.guid.new(),
@@ -563,11 +550,7 @@ class InteractionMixin:
             Number of new interference edges created.
 
         """
-        from compas.geometry import Box
-        from compas.geometry import bounding_box
         from compas_model.models.bvh import ElementBVH
-
-        from compas_ifc.brep.tessellatedbrep import TessellatedBrep
 
         # ---- collect candidates ------------------------------------------------
         candidates = []
@@ -585,15 +568,7 @@ class InteractionMixin:
         bvh = ElementBVH.from_elements(candidates)
 
         # ---- pre-compute world AABBs for tight filter ---------------------------
-        world_aabbs = {}
-        for e in candidates:
-            mg = e.modelgeometry
-            if isinstance(mg, TessellatedBrep):
-                world_aabbs[id(e)] = Box.from_bounding_box(bounding_box(list(mg.vertices)))
-            elif hasattr(mg, "aabb"):
-                world_aabbs[id(e)] = mg.aabb
-            else:
-                world_aabbs[id(e)] = None
+        world_aabbs = {id(e): e.aabb for e in candidates}
 
         def _aabb_overlap(box_a, box_b, tol=0.01):
             """Return True if two AABBs overlap within tolerance."""
@@ -653,10 +628,13 @@ class InteractionMixin:
 
                 new_collisions += 1
 
-                # persist as IFC relationship
-                if create_ifc_relations and element._ifc_entity and neighbour._ifc_entity:
-                    import ifcopenshell.guid
-
+                # IfcRelInterferesElements is IFC4+
+                if (
+                    create_ifc_relations
+                    and element._ifc_entity
+                    and neighbour._ifc_entity
+                    and "IfcRelInterferesElements" in self._file.classes
+                ):
                     self._file._file.create_entity(
                         "IfcRelInterferesElements",
                         GlobalId=ifcopenshell.guid.new(),
