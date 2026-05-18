@@ -80,6 +80,29 @@ python -m compas_ifc visualize building.ifc --type IfcWindow --in <storey_id> --
 python -m compas_ifc visualize building.ifc --type IfcWindow --no-keep-hierarchy --detach
 ```
 
+## Clash / interference detection
+
+Find pairs of elements that volumetrically overlap. The default filter
+excludes expected overlaps (wall → opening → window/door).
+
+```
+python -m compas_ifc clash building.ifc
+python -m compas_ifc clash building.ifc --type IfcBeam,IfcWall,IfcWallStandardCase
+python -m compas_ifc clash building.ifc --json
+```
+
+Visualise: each pair gets a unique colour, penetration points are marked.
+Always pair `--show` with `--detach`:
+
+```
+python -m compas_ifc clash building.ifc --show --detach
+python -m compas_ifc clash building.ifc --type IfcBeam,IfcColumn,IfcWall --show --detach
+```
+
+Useful tunables: `--tolerance` (numerical), `--min-depth` (excludes
+touching pairs), `--include-related` (keep the wall→opening→filler
+chains the default filter strips), `--limit N` (cap text listing).
+
 ## Export a subset as standalone IFC
 
 ```

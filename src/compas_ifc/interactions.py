@@ -518,8 +518,10 @@ class InteractionMixin:
     def compute_collisions(
         self,
         tolerance: float = 1e-6,
+        min_depth: float = 1e-4,
         element_types: list = None,
         create_ifc_relations: bool = True,
+        skip_related: bool = True,
     ):
         """Detect volumetric collisions (interferences) between building elements.
 
@@ -537,12 +539,21 @@ class InteractionMixin:
         tolerance : float, optional
             Numerical tolerance for the ray-triangle intersection test.
             Default ``1e-6``.
+        min_depth : float, optional
+            Minimum penetration depth to count as a collision (excludes
+            touching pairs). Default ``1e-4``.
         element_types : list[str], optional
             IFC type names to include (e.g. ``["IfcWall", "IfcColumn"]``).
             If ``None``, all non-spatial elements with geometry are considered.
         create_ifc_relations : bool, optional
             If ``True`` (default), also create ``IfcRelInterferesElements`` entities
             in the IFC file so that discovered interferences persist on save/reload.
+        skip_related : bool, optional
+            If ``True`` (default), skip pairs where one element is an ancestor
+            of the other in the spatial tree. This filters out expected
+            overlaps such as ``wall → opening → window/door`` (the void/fill
+            chain), where the opening and its filler share the same volume
+            by construction.
 
         Returns
         -------
@@ -569,6 +580,18 @@ class InteractionMixin:
 
         # ---- pre-compute world AABBs for tight filter ---------------------------
         world_aabbs = {id(e): e.aabb for e in candidates}
+
+        # ---- pre-compute ancestor id-sets so the narrowphase relatedness check
+        # ---- is O(1) instead of two parent-chain walks per pair ----------------
+        ancestors = {}
+        if skip_related:
+            for e in candidates:
+                chain = set()
+                cur = e.parent
+                while cur is not None:
+                    chain.add(id(cur))
+                    cur = cur.parent
+                ancestors[id(e)] = chain
 
         def _aabb_overlap(box_a, box_b, tol=0.01):
             """Return True if two AABBs overlap within tolerance."""
@@ -601,8 +624,13 @@ class InteractionMixin:
                 if not _aabb_overlap(world_aabbs[id(element)], world_aabbs[id(neighbour)], tol=tolerance):
                     continue
 
+                if skip_related and (
+                    id(neighbour) in ancestors[id(element)] or id(element) in ancestors[id(neighbour)]
+                ):
+                    continue
+
                 # narrowphase: ray-casting collision detection
-                penetrating = element.compute_collisions(neighbour, tolerance=tolerance)
+                penetrating = element.compute_collisions(neighbour, tolerance=tolerance, min_depth=min_depth)
                 if not penetrating:
                     continue
 
@@ -894,4 +922,141 @@ class InteractionMixin:
         viewer.ui.sidebar.sceneform.action = on_scene_selected
 
         print(f"Showing {len(collision_data)} collision(s) in viewer.")
+        viewer.show()
+
+    def show_collision_pairs(
+        self,
+        tolerance: float = 1e-6,
+        min_depth: float = 1e-4,
+        element_types: list = None,
+        skip_related: bool = True,
+        show_points: bool = True,
+        pointsize: int = 20,
+    ):
+        """Visualize all collision pairs at once, each pair in its own colour.
+
+        Runs collision detection (if not already done), then opens
+        compas_viewer with every colliding element coloured by its pair.
+        Non-colliding subtrees are hidden. Penetration points are shown
+        as a Pointcloud per pair in the matching colour.
+
+        Elements appearing in multiple pairs take the colour of the first
+        pair they appear in.
+
+        Parameters
+        ----------
+        tolerance, min_depth, element_types, skip_related
+            See :meth:`compute_collisions`.
+        show_points : bool, optional
+            If ``True`` (default), draw a Pointcloud per pair for the
+            penetration samples.
+        pointsize : int, optional
+            Pixel size for penetration-point markers.
+        """
+        try:
+            from compas_viewer import Viewer
+        except ImportError:
+            raise ImportError("The show_collision_pairs method requires compas_viewer to be installed.")
+
+        import colorsys
+
+        from compas.colors import Color
+        from compas.geometry import Pointcloud
+
+        if not self.interferences:
+            print("Running collision detection...")
+            n = self.compute_collisions(
+                tolerance=tolerance,
+                min_depth=min_depth,
+                element_types=element_types,
+                skip_related=skip_related,
+            )
+            print(f"Found {n} collisions.")
+
+        edges = self.interferences
+        if not edges:
+            print("No collisions to visualize.")
+            return
+
+        # Distinct hues via golden-ratio rotation — neighbouring pair indices
+        # land on far-apart hues so legend overlap is rare.
+        GOLDEN = 0.6180339887498949
+        pair_colors = []
+        for i in range(len(edges)):
+            r, g, b = colorsys.hsv_to_rgb((i * GOLDEN) % 1.0, 0.85, 0.95)
+            pair_colors.append(Color(r, g, b))
+
+        elem_color = {}  # global_id → first-pair color
+        pair_points = []  # list of (Color, list[Point])
+        for i, edge in enumerate(edges):
+            a, b = self._edge_elements(edge)
+            color = pair_colors[i]
+            if a.global_id and a.global_id not in elem_color:
+                elem_color[a.global_id] = color
+            if b.global_id and b.global_id not in elem_color:
+                elem_color[b.global_id] = color
+            pts = self.graph.edge_attribute(edge, "penetrating_points") or []
+            if pts:
+                pair_points.append((color, pts))
+
+        viewer = Viewer()
+        viewer.ui.sidebar.show_objectsetting = False
+        if self.unit:
+            viewer.unit = self.unit
+
+        # Mark ancestors of every colliding element — non-colliding subtrees
+        # are skipped entirely; non-colliding ancestors remain as groups so
+        # the parent-relative transformation chain stays intact.
+        needed = set()
+
+        def _mark(element):
+            has_collision = element.global_id in elem_color
+            for child in element.children:
+                if _mark(child):
+                    has_collision = True
+            if has_collision and element.global_id:
+                needed.add(element.global_id)
+            return has_collision
+
+        for node in self.tree.root.children:
+            _mark(node.element)
+
+        def _add_element(element, parent=None):
+            if element.global_id not in needed:
+                return
+            label = f"[{element.ifc_type}] {element.name}"
+            visual = element._visual_geometry
+            color = elem_color.get(element.global_id)
+            has_geometry = visual is not None and color is not None
+
+            if has_geometry:
+                style_kwargs = element._resolve_style() or {}
+                obj = viewer.scene.add(
+                    visual,
+                    name=label,
+                    parent=parent,
+                    hide_coplanaredges=True,
+                    **style_kwargs,
+                )
+                if hasattr(obj, "facecolors"):
+                    obj.facecolors = [color] * len(obj.facecolors)
+                else:
+                    obj.facecolor = color
+            else:
+                obj = viewer.scene.add_group(name=label, parent=parent)
+
+            obj.transformation = element.transformation
+            obj.attributes["element"] = element
+
+            for child in element.children:
+                _add_element(child, parent=obj)
+
+        for node in self.tree.root.children:
+            _add_element(node.element)
+
+        if show_points:
+            for color, pts in pair_points:
+                viewer.scene.add(Pointcloud(pts), pointcolor=color, pointsize=pointsize)
+
+        print(f"Showing {len(edges)} collision pair(s) in viewer.")
         viewer.show()

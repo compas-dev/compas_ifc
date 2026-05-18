@@ -51,6 +51,7 @@ All commands: `python -m compas_ifc <command> [args] [--json]`.
 | `show FILE GLOBAL_ID` | Full attribute dump for one entity |
 | `psets FILE GLOBAL_ID` | Property sets for an entity |
 | `visualize FILE [SELECTION] --detach [--no-keep-hierarchy]` | Open the viewer (ALWAYS use `--detach`). Selections render at their world position by default; pass `--no-keep-hierarchy` for a parts-library view at the origin |
+| `clash FILE [--type T,T,...] [--show --detach] [--include-related]` | Find element interferences. Default filters out wall→opening→window/door chains. `--show --detach` opens the viewer with each pair in its own colour and penetration points marked |
 | `export-ifc FILE [SELECTION] --out X.ifc [--flat]` | Export subset as a standalone IFC. Default keeps the source's spatial ancestors; `--flat` builds a placeholder Project/Site/Building/Storey and anchors the selection under it (world positions preserved either way) |
 | `export FILE [SELECTION] --to X.obj` | Export geometry as `.obj` or `.json` |
 | `docs SYMBOL [--brief]` | Introspect compas_ifc — signature + docstring |
@@ -72,10 +73,10 @@ Dotted paths work in `--where` and `--select` (e.g. `--select OwnerHistory.Owner
 
 ## Critical rules
 
-1. **`visualize` must always be invoked with `--detach`.** Without it, the
-   viewer GUI blocks the conversation until the user closes the window.
-   After detaching, tell the user the viewer is open and you'll keep
-   working.
+1. **`visualize` and `clash --show` must always be invoked with `--detach`.**
+   Without it, the viewer GUI blocks the conversation until the user closes
+   the window. After detaching, tell the user the viewer is open and you'll
+   keep working.
 2. **`compas_viewer` is a lazy dependency.** If `visualize` reports it's
    missing, walk the user through installing it (`pip install compas_viewer`).
    Mention it's heavy (Qt + freetype) and not strictly required for

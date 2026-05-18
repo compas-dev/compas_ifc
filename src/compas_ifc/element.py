@@ -457,6 +457,7 @@ class GenericElement(Generic[T], Element):
         self,
         other: "GenericElement",
         tolerance: float = 1e-6,
+        min_depth: float = 1e-4,
     ) -> list:
         """Detect volumetric collision between this element and another.
 
@@ -469,6 +470,9 @@ class GenericElement(Generic[T], Element):
             The other element.
         tolerance : float, optional
             Numerical tolerance for the ray-triangle intersection test.
+        min_depth : float, optional
+            Minimum penetration depth to count as a collision (excludes
+            touching pairs).
 
         Returns
         -------
@@ -482,7 +486,7 @@ class GenericElement(Generic[T], Element):
         verts_b, tris_b = other._world_triangles()
         if verts_a is None or verts_b is None:
             return []
-        return fast_mesh_mesh_collision_numpy(verts_a, tris_a, verts_b, tris_b, tolerance=tolerance)
+        return fast_mesh_mesh_collision_numpy(verts_a, tris_a, verts_b, tris_b, tolerance=tolerance, min_depth=min_depth)
 
     # ==========================================================================
     # Construction

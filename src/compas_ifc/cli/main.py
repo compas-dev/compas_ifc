@@ -112,6 +112,51 @@ def _entity_summary(entity) -> dict:
     }
 
 
+def _require_compas_viewer() -> None:
+    """Probe compas_viewer and exit cleanly with an install hint if missing.
+
+    Some environments have a half-installed compas_viewer (e.g. the freetype
+    binding bug noted in MEMORY.md) that imports raise on; catch both cases.
+    """
+    try:
+        import compas_viewer  # noqa: F401
+    except ImportError:
+        typer.echo("error: compas_viewer is not installed.", err=True)
+        typer.echo("install with: pip install compas_viewer", err=True)
+        raise typer.Exit(code=1)
+    except Exception as exc:
+        typer.echo(f"error: compas_viewer failed to import: {exc}", err=True)
+        raise typer.Exit(code=1)
+
+
+def _detach_relay(subcommand: str, file: str, extra_args: list, json_output: bool, message: str) -> None:
+    """Spawn `python -m compas_ifc <subcommand> <file> <extra_args...>` detached.
+
+    Used by every command that opens a viewer so the CLI returns immediately
+    and the GUI doesn't block the parent shell or an agent session.
+    """
+    import subprocess
+    import sys
+
+    relay = [sys.executable, "-m", "compas_ifc", subcommand, file, *extra_args]
+
+    kwargs: dict = {}
+    if sys.platform == "win32":
+        # CREATE_NEW_PROCESS_GROUP + DETACHED_PROCESS: child runs without a console
+        # and survives the parent exiting.
+        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | 0x00000008  # DETACHED_PROCESS
+        kwargs["stdout"] = subprocess.DEVNULL
+        kwargs["stderr"] = subprocess.DEVNULL
+    else:
+        kwargs["start_new_session"] = True
+        kwargs["stdout"] = subprocess.DEVNULL
+        kwargs["stderr"] = subprocess.DEVNULL
+
+    proc = subprocess.Popen(relay, **kwargs)
+    payload = {"detached": True, "pid": proc.pid, "filepath": os.path.abspath(file)}
+    _emit(payload, json_output, lambda _: typer.echo(message.format(pid=proc.pid)))
+
+
 # ---------------------------------------------------------------------------
 # info
 # ---------------------------------------------------------------------------
@@ -561,56 +606,24 @@ def visualize(
     ``compas_viewer`` is a lazy dependency. If it's not installed, this
     command exits with an install hint rather than a traceback.
     """
-    import subprocess
-    import sys
-
     _check_file(file)
 
     if detach:
-        relay = [sys.executable, "-m", "compas_ifc", "visualize", file]
+        extra = []
         if type_:
-            relay += ["--type", type_]
+            extra += ["--type", type_]
         if where:
-            relay += ["--where", where]
+            extra += ["--where", where]
         if in_:
-            relay += ["--in", in_]
+            extra += ["--in", in_]
         if ids:
-            relay += ["--ids", ids]
+            extra += ["--ids", ids]
         if not keep_hierarchy:
-            relay += ["--no-keep-hierarchy"]
-
-        kwargs: dict = {}
-        if sys.platform == "win32":
-            # CREATE_NEW_PROCESS_GROUP + DETACHED_PROCESS: child runs without a console
-            # and survives the parent exiting.
-            kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | 0x00000008  # DETACHED_PROCESS
-            kwargs["stdout"] = subprocess.DEVNULL
-            kwargs["stderr"] = subprocess.DEVNULL
-        else:
-            kwargs["start_new_session"] = True
-            kwargs["stdout"] = subprocess.DEVNULL
-            kwargs["stderr"] = subprocess.DEVNULL
-
-        proc = subprocess.Popen(relay, **kwargs)
-        payload = {"detached": True, "pid": proc.pid, "filepath": os.path.abspath(file)}
-        _emit(
-            payload,
-            json_output,
-            lambda _: typer.echo(f"viewer launched in background (pid={proc.pid})"),
-        )
+            extra += ["--no-keep-hierarchy"]
+        _detach_relay("visualize", file, extra, json_output, "viewer launched in background (pid={pid})")
         return
 
-    # Probe for compas_viewer first so we exit with a useful message rather
-    # than a deep traceback when it's missing.
-    try:
-        import compas_viewer  # noqa: F401
-    except ImportError:
-        typer.echo("error: compas_viewer is not installed.", err=True)
-        typer.echo("install with: pip install compas_viewer", err=True)
-        raise typer.Exit(code=1)
-    except Exception as exc:  # e.g. broken freetype binding noted in MEMORY.md
-        typer.echo(f"error: compas_viewer failed to import: {exc}", err=True)
-        raise typer.Exit(code=1)
+    _require_compas_viewer()
 
     # Geometry is required for visualisation; placement rectification keeps
     # the scene's transforms aligned with the spatial hierarchy.
@@ -640,6 +653,123 @@ def visualize(
             raise typer.Exit(code=1)
 
     model.show(elements=elements, keep_hierarchy=keep_hierarchy)
+
+
+# ---------------------------------------------------------------------------
+# clash
+# ---------------------------------------------------------------------------
+
+
+@app.command()
+def clash(
+    file: str = typer.Argument(..., help="Path to an IFC file."),
+    type_: str = typer.Option(
+        None,
+        "--type",
+        help="IFC class(es) to include — single name or comma-separated list (e.g. 'IfcBeam,IfcWall').",
+    ),
+    tolerance: float = typer.Option(1e-6, "--tolerance", help="Numerical tolerance for ray-triangle intersection."),
+    min_depth: float = typer.Option(1e-4, "--min-depth", help="Minimum penetration depth to count as a clash (excludes touching pairs)."),
+    include_related: bool = typer.Option(
+        False,
+        "--include-related",
+        help="Include spatially-related pairs (wall→opening→window/door etc.). Filtered out by default.",
+    ),
+    show: bool = typer.Option(False, "--show", help="Open compas_viewer with each clash pair in a unique colour."),
+    detach: bool = typer.Option(
+        False,
+        "--detach",
+        help="With --show, launch the viewer in a background process and return immediately. The skill should always use this.",
+    ),
+    limit: int = typer.Option(20, "--limit", help="Max pairs to list in human-readable output. 0 = unlimited."),
+    json_output: bool = typer.Option(False, "--json", help="Emit structured JSON."),
+) -> None:
+    """Detect volumetric collisions (interferences) between building elements.
+
+    Two-stage broadphase (BVH + tight AABB) plus ray-cast narrowphase. By
+    default skips spatially-related pairs like ``wall → opening → window/door``
+    where overlap is expected by construction.
+
+    With ``--show``, opens compas_viewer with each pair in a unique colour
+    and penetration points marked. Combine with ``--detach`` so the viewer
+    runs in the background and the CLI returns.
+    """
+    _check_file(file)
+    if detach and not show:
+        raise typer.BadParameter("--detach requires --show")
+
+    element_types = [t.strip() for t in type_.split(",") if t.strip()] if type_ else None
+
+    if show and detach:
+        extra = ["--show"]
+        if type_:
+            extra += ["--type", type_]
+        if tolerance != 1e-6:
+            extra += ["--tolerance", str(tolerance)]
+        if min_depth != 1e-4:
+            extra += ["--min-depth", str(min_depth)]
+        if include_related:
+            extra += ["--include-related"]
+        _detach_relay("clash", file, extra, json_output, "clash viewer launched in background (pid={pid})")
+        return
+
+    if show:
+        _require_compas_viewer()
+
+    model = _open_model(file, load_geometries=True, rectify_placements=True)
+
+    if show:
+        model.show_collision_pairs(
+            tolerance=tolerance,
+            min_depth=min_depth,
+            element_types=element_types,
+            skip_related=not include_related,
+        )
+        return
+
+    model.compute_collisions(
+        tolerance=tolerance,
+        min_depth=min_depth,
+        element_types=element_types,
+        skip_related=not include_related,
+        create_ifc_relations=False,
+    )
+
+    pairs = []
+    for edge in model.interferences:
+        a, b = model._edge_elements(edge)
+        pts = model.graph.edge_attribute(edge, "penetrating_points") or []
+        pairs.append(
+            {
+                "a": {"ifc_type": a.ifc_type, "name": a.name, "global_id": a.global_id},
+                "b": {"ifc_type": b.ifc_type, "name": b.name, "global_id": b.global_id},
+                "penetrating_points": len(pts),
+            }
+        )
+
+    payload = {
+        "count": len(pairs),
+        "candidate_types": element_types,
+        "tolerance": tolerance,
+        "min_depth": min_depth,
+        "skip_related": not include_related,
+        "pairs": pairs,
+    }
+
+    def _human(data):
+        typer.echo(f"Found {data['count']} clash pair(s).")
+        if not data["pairs"]:
+            return
+        shown = data["pairs"] if limit == 0 else data["pairs"][:limit]
+        for p in shown:
+            typer.echo(
+                f"  {p['a']['ifc_type']} '{p['a']['name']}'  <->  "
+                f"{p['b']['ifc_type']} '{p['b']['name']}'  ({p['penetrating_points']} pts)"
+            )
+        if len(shown) < len(data["pairs"]):
+            typer.echo(f"  ... and {len(data['pairs']) - len(shown)} more (use --limit 0 to see all)")
+
+    _emit(payload, json_output, _human)
 
 
 # ---------------------------------------------------------------------------
