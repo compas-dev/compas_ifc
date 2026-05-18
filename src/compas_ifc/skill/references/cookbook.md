@@ -3,11 +3,24 @@
 Short, copy-pasteable recipes for the most common tasks. Every command takes
 `--json` if you want to parse the output.
 
-## File overview
+## File summary (use this for "what is this file?")
+
+```
+python -m compas_ifc summary building.ifc
+```
+
+Bundles project name + description, IfcSite geographic location (when
+available), file size, schema, units, and the spatial hierarchy down to
+storey level. One call answers the most common opening question.
+
+## Lightweight info
 
 ```
 python -m compas_ifc info building.ifc
 ```
+
+Smaller surface than `summary` — schema, units, project name, total
+entity count, byte size. No hierarchy, no location.
 
 ## Spatial hierarchy
 
@@ -158,9 +171,29 @@ attributes flat; raise depth to recurse into each entity-typed attribute
 
 ```python
 from compas_ifc.bim import BuildingInformationModel
-model = BuildingInformationModel("building.ifc")
+
+# For attribute / pset / relationship work, mirror the CLI's defaults:
+# disable both geometry loading and placement rectification.
+# Enable them only when the work needs geometry (bbox, mesh export,
+# viewer rendering, clash detection).
+model = BuildingInformationModel(
+    "building.ifc",
+    load_geometries=False,
+    rectify_placements=False,
+)
 
 walls = model.get_elements_by_type("IfcWall")
 for wall in walls:
-    print(wall.name, wall.geometry)
+    # .name, .ifc_type, .global_id are on the GenericElement wrapper.
+    # The Base-wrapped IFC entity is at wall._ifc_entity — that's where
+    # the @extends mixins live: .property_sets, .parent (storey), .frame,
+    # plus any EXPRESS attribute on the class.
+    psets = wall._ifc_entity.property_sets
+    storey = wall._ifc_entity.parent  # IfcBuildingStorey wrapper
+    print(wall.name, storey.Name, psets.get("Pset_WallCommon", {}))
 ```
+
+**Don't drop to raw `ifcopenshell` to "skip geometry loading."** The
+`load_geometries=False` flag above does exactly that, and going through
+`BuildingInformationModel` keeps `@extends` mixins (`.property_sets`,
+`.parent`, `.frame`, unit scaling) available.

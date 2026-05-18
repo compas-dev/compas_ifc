@@ -43,8 +43,9 @@ All commands: `python -m compas_ifc <command> [args] [--json]`.
 
 | Command | Purpose |
 |---|---|
-| `info FILE` | Schema, units, project name, entity counts, byte size |
-| `tree FILE [--depth N]` | Spatial hierarchy: Project → Site → Building → Storey → Elements |
+| `summary FILE [--depth N]` | **Go-to overview** when asked "what is this IFC file?" — project name + description, IfcSite geographic location, file size, schema, units, and the spatial hierarchy (default depth 3 stops at storey level) |
+| `info FILE` | Schema, units, project name, entity counts, byte size — lighter sibling of `summary`, no hierarchy or location |
+| `tree FILE [--depth N]` | Spatial hierarchy alone: Project → Site → Building → Storey → Elements |
 | `list FILE [SELECTION] [--limit N]` | Entities matching the selection |
 | `query FILE [SELECTION] [--select a,b,...]` | List + inline chosen attributes |
 | `find FILE PATTERN` | Exact GlobalId or fuzzy name search |
@@ -101,8 +102,25 @@ when a direct API exists. The canonical entry point is:
 
 ```python
 from compas_ifc.bim import BuildingInformationModel
-model = BuildingInformationModel("file.ifc")
+
+# For attribute/pset/relationship work (no visuals, no mesh export),
+# disable geometry + placement rectification — the CLI uses exactly
+# this pair by default, and it cuts startup from seconds to milliseconds.
+model = BuildingInformationModel(
+    "file.ifc",
+    load_geometries=False,
+    rectify_placements=False,
+)
 ```
+
+Enable `load_geometries=True` (and usually `rectify_placements=True`) only
+when the work needs geometry: bounding boxes, mesh export, viewer
+rendering, clash detection.
+
+**Don't drop to raw `ifcopenshell` to "skip geometry loading."** The library
+already has the flag above, and bypassing `compas_ifc` loses the `@extends`
+mixins (`.property_sets`, `.parent` storey, `.frame`, unit-scaled values,
+schema-aware attribute access). Use the BIM with `load_geometries=False`.
 
 ## References
 

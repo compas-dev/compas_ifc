@@ -11,6 +11,16 @@ import ifcopenshell.guid
 from compas_ifc.element import GenericElement
 
 
+def _matches_any_type(element, ifc_types) -> bool:
+    """Return True if ``element`` is an instance of any class in ``ifc_types``.
+
+    Uses ifcopenshell's ``is_a()`` so subclass matching works — passing
+    ``"IfcWall"`` matches ``IfcWallStandardCase``. Mirrors what
+    ``raw_file.by_type(name)`` does for the rest of the selection grammar.
+    """
+    return any(element._ifc_entity.is_a(t) for t in ifc_types)
+
+
 class InteractionMixin:
     """Mixin that adds interaction-graph capabilities to a Model subclass.
 
@@ -410,9 +420,9 @@ class InteractionMixin:
         minimum_area : float, optional
             Minimum area of a valid contact polygon (m²). Default ``1e-2``.
         element_types : list[str], optional
-            IFC type names to include (e.g. ``["IfcWall", "IfcWallStandardCase",
-            "IfcSlab"]``).  If ``None``, all non-spatial elements with geometry
-            are considered.
+            IFC type names to include (e.g. ``["IfcWall", "IfcSlab"]``). Subclass
+            matching applies, so ``"IfcWall"`` includes ``IfcWallStandardCase``.
+            If ``None``, all non-spatial elements with geometry are considered.
         create_ifc_relations : bool, optional
             If ``True`` (default), also create ``IfcRelConnectsElements`` entities
             in the IFC file so that discovered connections persist on save/reload.
@@ -430,7 +440,7 @@ class InteractionMixin:
         for e in self.elements():
             if e._is_spatial or e.geometry is None or e.treenode is None:
                 continue
-            if element_types is not None and e.ifc_type not in element_types:
+            if element_types is not None and not _matches_any_type(e, element_types):
                 continue
             candidates.append(e)
 
@@ -544,7 +554,9 @@ class InteractionMixin:
             touching pairs). Default ``1e-4``.
         element_types : list[str], optional
             IFC type names to include (e.g. ``["IfcWall", "IfcColumn"]``).
-            If ``None``, all non-spatial elements with geometry are considered.
+            Subclass matching applies, so ``"IfcWall"`` includes
+            ``IfcWallStandardCase``. If ``None``, all non-spatial elements with
+            geometry are considered.
         create_ifc_relations : bool, optional
             If ``True`` (default), also create ``IfcRelInterferesElements`` entities
             in the IFC file so that discovered interferences persist on save/reload.
@@ -568,7 +580,7 @@ class InteractionMixin:
         for e in self.elements():
             if e._is_spatial or e.geometry is None or e.treenode is None:
                 continue
-            if element_types is not None and e.ifc_type not in element_types:
+            if element_types is not None and not _matches_any_type(e, element_types):
                 continue
             candidates.append(e)
 

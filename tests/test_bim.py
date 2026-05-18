@@ -96,6 +96,25 @@ def test_get_elements_by_type_filters_correctly():
 
 
 # ---------------------------------------------------------------------------
+# Clash detection — type filter must honour IFC subclass matching
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(not os.path.exists(DUPLEX_PATH), reason="Duplex IFC missing")
+def test_compute_collisions_type_filter_matches_subclasses():
+    # Duplex's walls are IfcWallStandardCase (a subclass of IfcWall), so an
+    # exact-match filter on "IfcWall" would silently skip them all and report
+    # zero pairs. Subclass-aware matching should reach the same 15 structural+
+    # envelope clashes whether you list the subclass explicitly or not.
+    model = BuildingInformationModel(DUPLEX_PATH, rectify_placements=True)
+    n = model.compute_collisions(
+        element_types=["IfcBeam", "IfcSlab", "IfcWall"],
+        create_ifc_relations=False,
+    )
+    assert n == 15
+
+
+# ---------------------------------------------------------------------------
 # Save/extract behaviour
 # ---------------------------------------------------------------------------
 

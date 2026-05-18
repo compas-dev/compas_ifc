@@ -198,19 +198,88 @@ def info(
 
 
 # ---------------------------------------------------------------------------
-# tree
+# summary
 # ---------------------------------------------------------------------------
 
 
 @app.command()
-def tree(
+def summary(
     file: str = typer.Argument(..., help="Path to an IFC file."),
-    depth: int = typer.Option(10, "--depth", help="Maximum spatial-hierarchy depth."),
+    depth: int = typer.Option(
+        3,
+        "--depth",
+        help="Maximum spatial-hierarchy depth (default 3 stops at storey level).",
+    ),
     json_output: bool = typer.Option(False, "--json", help="Emit structured JSON."),
 ) -> None:
-    """Print the spatial hierarchy: Project → Site → Building → Storey → Elements."""
+    """High-level overview: project, location, file size, and spatial hierarchy.
+
+    The go-to command for the question 'what is this IFC file?'. Bundles
+    project name + description, geographic location (when present on
+    IfcSite), file size, schema, units, and the spatial hierarchy down to
+    a configurable depth.
+    """
     _check_file(file)
     model = _open_model(file)
+
+    project = model.project
+    project_data: Optional[dict] = None
+    if project is not None:
+        project_data = {
+            "global_id": getattr(project, "GlobalId", None),
+            "name": getattr(project, "Name", None),
+            "description": getattr(project, "Description", None),
+        }
+
+    sites_data: list[dict] = []
+    for site in model.sites:
+        # Geographic location lives on the IFC entity (extension property).
+        ifc_site = getattr(site, "_ifc_entity", None)
+        location = getattr(ifc_site, "location", None) if ifc_site is not None else None
+        sites_data.append(
+            {
+                "global_id": getattr(site, "global_id", None),
+                "name": getattr(site, "name", None),
+                "location": list(location) if location else None,
+            }
+        )
+
+    roots = _build_hierarchy(model, depth)
+
+    payload = {
+        "filepath": os.path.abspath(file),
+        "size_mb": model._file.file_size(),
+        "schema": model.schema_name,
+        "unit": model.unit,
+        "project": project_data,
+        "sites": sites_data,
+        "hierarchy": roots,
+    }
+
+    def human(_):
+        typer.echo(f"File:        {payload['filepath']}")
+        typer.echo(f"Size:        {payload['size_mb']} MB")
+        typer.echo(f"Schema:      {payload['schema']}")
+        typer.echo(f"Units:       {payload['unit']}")
+        if project_data:
+            typer.echo("")
+            typer.echo(f"Project:     {project_data.get('name') or '(unnamed)'}")
+            typer.echo(f"Description: {project_data.get('description') or '(none)'}")
+        for site in sites_data:
+            loc = site.get("location")
+            loc_str = f"{loc[0]:.6f}, {loc[1]:.6f}  (lat, lng)" if loc else "(not specified)"
+            typer.echo("")
+            typer.echo(f"Site:        {site.get('name') or '(unnamed)'}")
+            typer.echo(f"Location:    {loc_str}")
+        typer.echo("")
+        typer.echo("Spatial hierarchy:")
+        _render_tree(roots, level=1)
+
+    _emit(payload, json_output, human)
+
+
+def _build_hierarchy(model, depth: int) -> list:
+    """Walk ``model.tree`` and emit nested dicts up to ``depth`` levels deep."""
 
     def node_dict(element, current_depth):
         if current_depth > depth:
@@ -232,6 +301,24 @@ def tree(
         rendered = node_dict(node.element, 1)
         if rendered is not None:
             roots.append(rendered)
+    return roots
+
+
+# ---------------------------------------------------------------------------
+# tree
+# ---------------------------------------------------------------------------
+
+
+@app.command()
+def tree(
+    file: str = typer.Argument(..., help="Path to an IFC file."),
+    depth: int = typer.Option(10, "--depth", help="Maximum spatial-hierarchy depth."),
+    json_output: bool = typer.Option(False, "--json", help="Emit structured JSON."),
+) -> None:
+    """Print the spatial hierarchy: Project → Site → Building → Storey → Elements."""
+    _check_file(file)
+    model = _open_model(file)
+    roots = _build_hierarchy(model, depth)
 
     payload = {"model": model.name, "roots": roots}
 
