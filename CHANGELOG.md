@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [2.0.0] 2026-05-18
 
 This release aligns the package with the front-end data model described in
 chapter 4 of the underlying PhD thesis. The user-facing API now consists of

@@ -37,7 +37,7 @@ __author__ = ["Li Chen", "Tom Van Mele"]
 __copyright__ = "ETH Zurich"
 __license__ = "MIT License"
 __email__ = "li.chen@arch.ethz.ch"
-__version__ = "1.7.0"
+__version__ = "2.0.0"
 
 
 HERE = os.path.dirname(__file__)
