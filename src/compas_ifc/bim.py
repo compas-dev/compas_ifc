@@ -710,7 +710,7 @@ class BuildingInformationModel(ElementFactoryMixin, InteractionMixin, TreeMixin,
     # Display
     # ==========================================================================
 
-    def show(self, elements=None):
+    def show(self, elements=None, keep_hierarchy=True):
         """Show the model (or specific elements and their children) in compas_viewer.
 
         Parameters
@@ -718,6 +718,14 @@ class BuildingInformationModel(ElementFactoryMixin, InteractionMixin, TreeMixin,
         elements : :class:`GenericElement` or list[:class:`GenericElement`], optional
             One or more elements to show. Each element and its children are
             included. If ``None``, the entire model is shown.
+        keep_hierarchy : bool, optional
+            Only applies when ``elements`` is given. If ``True`` (default),
+            each element's spatial ancestors are added to the scene as empty
+            groups so that the element renders at its real world position
+            and the treeform sidebar reflects the IFC spatial hierarchy.
+            If ``False``, elements are attached directly to the scene root
+            using only their local transformation — useful for inspecting
+            components side-by-side at the origin, like a parts library.
 
         """
         try:
@@ -756,11 +764,42 @@ class BuildingInformationModel(ElementFactoryMixin, InteractionMixin, TreeMixin,
             for child in elem.children:
                 _add_element(child, parent=obj)
 
+        def _add_ancestor_group(ancestor, parent_obj):
+            label = f"[{ancestor.ifc_type}] {ancestor.name}"
+            obj = viewer.scene.add_group(name=label, parent=parent_obj)
+            obj.transformation = ancestor.transformation
+            obj.attributes["element"] = ancestor
+            return obj
+
         if elements is not None:
             if not isinstance(elements, (list, tuple)):
                 elements = [elements]
-            for elem in elements:
-                _add_element(elem)
+
+            if keep_hierarchy:
+                # Build per-element ancestor chains and dedupe groups across selection,
+                # so e.g. all four Level-1 windows share one Site/Building/Storey/Wall.
+                ancestor_objs: dict = {}
+                for elem in elements:
+                    chain = []
+                    cur = elem.parent
+                    while cur is not None:
+                        chain.append(cur)
+                        cur = cur.parent
+                    chain.reverse()
+
+                    parent_obj = None
+                    for anc in chain:
+                        key = id(anc)
+                        if key in ancestor_objs:
+                            parent_obj = ancestor_objs[key]
+                        else:
+                            parent_obj = _add_ancestor_group(anc, parent_obj)
+                            ancestor_objs[key] = parent_obj
+
+                    _add_element(elem, parent=parent_obj)
+            else:
+                for elem in elements:
+                    _add_element(elem)
         else:
             for node in self.tree.root.children:
                 _add_element(node.element)

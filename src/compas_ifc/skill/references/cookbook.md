@@ -70,11 +70,14 @@ python -m compas_ifc psets building.ifc <global_id>
 
 ## Visualise
 
-Always `--detach`:
+Always `--detach`. Selections preserve spatial hierarchy by default, so
+elements render at their real world position; add `--no-keep-hierarchy`
+for a parts-library view at the origin:
 
 ```
 python -m compas_ifc visualize building.ifc --detach
 python -m compas_ifc visualize building.ifc --type IfcWindow --in <storey_id> --detach
+python -m compas_ifc visualize building.ifc --type IfcWindow --no-keep-hierarchy --detach
 ```
 
 ## Export a subset as standalone IFC
@@ -82,10 +85,14 @@ python -m compas_ifc visualize building.ifc --type IfcWindow --in <storey_id> --
 ```
 python -m compas_ifc export-ifc building.ifc --type IfcWindow --out windows.ifc
 python -m compas_ifc export-ifc building.ifc --in <storey_id> --out level1.ifc
+python -m compas_ifc export-ifc building.ifc --type IfcWindow --out windows.ifc --flat
 ```
 
-`--flat` strips spatial parents — use sparingly; the result is harder to
-re-import in other tools.
+By default the source's real Project/Site/Building/Storey ancestors come
+along. `--flat` instead anchors the selection under a fresh placeholder
+Project/Site/Building/Storey ("Placeholder Project" etc.) — use it when
+you want a self-contained component snippet without dragging the original
+spatial metadata. World positions are preserved either way.
 
 ## Export geometry
 

@@ -541,6 +541,15 @@ def visualize(
         "--detach",
         help="Launch the viewer in a background process and return immediately. The skill should always use this.",
     ),
+    keep_hierarchy: bool = typer.Option(
+        True,
+        "--keep-hierarchy/--no-keep-hierarchy",
+        help=(
+            "Preserve the spatial hierarchy (Project/Site/Building/Storey/...) "
+            "so selected elements appear at their world position. Disable for a "
+            "parts-library view at the origin."
+        ),
+    ),
     json_output: bool = typer.Option(False, "--json", help="Emit structured JSON."),
 ) -> None:
     """Open the spatial scene (or a subset) in compas_viewer.
@@ -567,6 +576,8 @@ def visualize(
             relay += ["--in", in_]
         if ids:
             relay += ["--ids", ids]
+        if not keep_hierarchy:
+            relay += ["--no-keep-hierarchy"]
 
         kwargs: dict = {}
         if sys.platform == "win32":
@@ -628,7 +639,7 @@ def visualize(
             typer.echo("error: selection matched no displayable elements", err=True)
             raise typer.Exit(code=1)
 
-    model.show(elements=elements)
+    model.show(elements=elements, keep_hierarchy=keep_hierarchy)
 
 
 # ---------------------------------------------------------------------------
@@ -644,14 +655,17 @@ def export_ifc(
     where: str = typer.Option(None, "--where", help="Predicate: '<key> <op> <value>'."),
     in_: str = typer.Option(None, "--in", help="GlobalId of a spatial container."),
     ids: str = typer.Option(None, "--ids", help="Comma-separated GlobalIds."),
-    flat: bool = typer.Option(False, "--flat", help="Strip spatial parents (snippet-style)."),
+    flat: bool = typer.Option(False, "--flat", help="Anchor selected entities under a fresh placeholder Project/Site/Building/Storey instead of the source's real spatial hierarchy. The output is still a valid IFC; element world positions are preserved."),
     json_output: bool = typer.Option(False, "--json", help="Emit structured JSON."),
 ) -> None:
     """Export the selected entities as a standalone IFC file.
 
-    Parents (IfcProject / IfcSite / IfcBuilding / IfcBuildingStorey) are
-    preserved by default so the result is a valid, self-contained IFC.
-    Use ``--flat`` for a bare snippet without spatial ancestors.
+    By default, the entities' real spatial ancestors (IfcProject / IfcSite /
+    IfcBuilding / IfcBuildingStorey) are copied into the output so the result
+    stays anchored under the original hierarchy. With ``--flat``, a minimal
+    placeholder hierarchy is built in the output instead, and each selected
+    entity is contained under the placeholder storey with its world position
+    preserved. Either mode produces a valid, self-contained IFC file.
     """
     from compas_ifc.cli.selection import Selection
     from compas_ifc.cli.selection import apply_selection
@@ -687,7 +701,7 @@ def export_ifc(
     payload = {
         "output": os.path.abspath(out),
         "count": len(entities),
-        "mode": "flat" if flat else "with-parents",
+        "mode": "placeholder-hierarchy" if flat else "preserve-hierarchy",
         "filter": {k: v for k, v in {"type": type_, "where": where, "in": in_, "ids": ids}.items() if v},
     }
 

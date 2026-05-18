@@ -1216,7 +1216,13 @@ class IFCFile(object):
         entities : list[:class:`compas_ifc.entities.base.Base`]
             The entities to export.
         as_snippet : bool
-            Whether to export as a snippet, without the full spatial hierarchy. Default is False.
+            If False (default), the real spatial ancestors of each entity are
+            copied into the output so the elements stay anchored under their
+            original Project/Site/Building/Storey. If True, a placeholder
+            Project/Site/Building/Storey is created in the output instead;
+            each selected element is contained under the placeholder storey
+            and gets a fresh placement at its source-file world position.
+            The output is a valid, self-contained IFC in either mode.
         export_materials : bool
             Whether to export materials. Default is True.
         export_properties : bool
@@ -1231,7 +1237,16 @@ class IFCFile(object):
             Default is True.
 
         """
+        from compas.geometry import Frame
+
+        from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
+        from compas_ifc.conversions.frame import frame_to_ifc_axis2_placement_3d
+
         new_file = IFCFile(None, schema=self.schema_name)
+
+        placeholder_storey = None
+        if as_snippet:
+            placeholder_storey = self._build_placeholder_scaffold(new_file)
 
         exported = {}
 
@@ -1263,6 +1278,9 @@ class IFCFile(object):
             for key, attr in entity.attributes.items():
                 # Skip Representation and ObjectPlacement if not in the list of entities to export
                 if key in ["Representation", "ObjectPlacement"] and entity not in entities:
+                    continue
+                # In snippet mode, defer ObjectPlacement: we rebuild it below to anchor under the placeholder storey.
+                if as_snippet and key == "ObjectPlacement" and entity in entities:
                     continue
 
                 if isinstance(attr, Base):
@@ -1296,13 +1314,99 @@ class IFCFile(object):
             return new_entity
 
         for entity in entities:
-            export_entity(entity, new_file)
+            new_entity = export_entity(entity, new_file)
+
+            if as_snippet and placeholder_storey is not None:
+                # Anchor each selected element under the placeholder storey with a fresh
+                # placement that preserves its world position.
+                source_placement = getattr(entity, "ObjectPlacement", None)
+                if source_placement is not None:
+                    world_transformation = IfcLocalPlacement_to_transformation(source_placement)
+                    world_frame = Frame.from_transformation(world_transformation)
+                    rel_placement = frame_to_ifc_axis2_placement_3d(new_file, world_frame)
+                    new_entity.ObjectPlacement = new_file._create_entity(
+                        "IfcLocalPlacement",
+                        RelativePlacement=rel_placement,
+                        PlacementRelTo=placeholder_storey.ObjectPlacement,
+                    )
+                new_file._create_entity(
+                    "IfcRelContainedInSpatialStructure",
+                    GlobalId=ifcopenshell.guid.new(),
+                    OwnerHistory=new_file.default_owner_history,
+                    RelatingStructure=placeholder_storey,
+                    RelatedElements=[new_entity],
+                )
 
         # Export non-spatial relationships where both endpoints are in the exported set
         if export_relationships:
             self._export_mutual_relationships(new_file, exported)
 
         new_file.save(path)
+
+    def _build_placeholder_scaffold(self, new_file: "IFCFile") -> Base:
+        """Build a minimal Project/Site/Building/Storey scaffold in ``new_file``.
+
+        Each spatial container gets an identity placement so element placements
+        anchored under the returned storey compose to world position unchanged.
+        Returns the placeholder storey.
+        """
+        from compas.geometry import Frame
+
+        from compas_ifc.conversions.frame import frame_to_ifc_axis2_placement_3d
+
+        # Triggers project + units + body context + owner history creation
+        project = new_file.default_project
+        project.Name = "Placeholder Project"
+
+        identity_frame = Frame.worldXY()
+
+        def _identity_placement(parent_placement=None):
+            rel = frame_to_ifc_axis2_placement_3d(new_file, identity_frame)
+            kwargs = {"RelativePlacement": rel}
+            if parent_placement is not None:
+                kwargs["PlacementRelTo"] = parent_placement
+            return new_file._create_entity("IfcLocalPlacement", **kwargs)
+
+        site_placement = _identity_placement()
+        site = new_file._create_entity(
+            "IfcSite",
+            GlobalId=ifcopenshell.guid.new(),
+            OwnerHistory=new_file.default_owner_history,
+            Name="Placeholder Site",
+            ObjectPlacement=site_placement,
+            CompositionType="ELEMENT",
+        )
+
+        building_placement = _identity_placement(site_placement)
+        building = new_file._create_entity(
+            "IfcBuilding",
+            GlobalId=ifcopenshell.guid.new(),
+            OwnerHistory=new_file.default_owner_history,
+            Name="Placeholder Building",
+            ObjectPlacement=building_placement,
+            CompositionType="ELEMENT",
+        )
+
+        storey_placement = _identity_placement(building_placement)
+        storey = new_file._create_entity(
+            "IfcBuildingStorey",
+            GlobalId=ifcopenshell.guid.new(),
+            OwnerHistory=new_file.default_owner_history,
+            Name="Placeholder Storey",
+            ObjectPlacement=storey_placement,
+            CompositionType="ELEMENT",
+        )
+
+        for parent_obj, child_obj in ((project, site), (site, building), (building, storey)):
+            new_file._create_entity(
+                "IfcRelAggregates",
+                GlobalId=ifcopenshell.guid.new(),
+                OwnerHistory=new_file.default_owner_history,
+                RelatingObject=parent_obj,
+                RelatedObjects=[child_obj],
+            )
+
+        return storey
 
     def _export_mutual_relationships(self, new_file, exported):
         """Export non-spatial IFC relationships where both endpoints are already exported.

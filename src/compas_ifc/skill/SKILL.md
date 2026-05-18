@@ -50,8 +50,8 @@ All commands: `python -m compas_ifc <command> [args] [--json]`.
 | `find FILE PATTERN` | Exact GlobalId or fuzzy name search |
 | `show FILE GLOBAL_ID` | Full attribute dump for one entity |
 | `psets FILE GLOBAL_ID` | Property sets for an entity |
-| `visualize FILE [SELECTION] --detach` | Open the viewer (ALWAYS use `--detach`) |
-| `export-ifc FILE [SELECTION] --out X.ifc [--flat]` | Export subset as a standalone IFC |
+| `visualize FILE [SELECTION] --detach [--no-keep-hierarchy]` | Open the viewer (ALWAYS use `--detach`). Selections render at their world position by default; pass `--no-keep-hierarchy` for a parts-library view at the origin |
+| `export-ifc FILE [SELECTION] --out X.ifc [--flat]` | Export subset as a standalone IFC. Default keeps the source's spatial ancestors; `--flat` builds a placeholder Project/Site/Building/Storey and anchors the selection under it (world positions preserved either way) |
 | `export FILE [SELECTION] --to X.obj` | Export geometry as `.obj` or `.json` |
 | `docs SYMBOL [--brief]` | Introspect compas_ifc — signature + docstring |
 | `docs --list PARENT [--brief]` | List public members of a class/module |
