@@ -52,9 +52,15 @@ How it differs
 * **Lossless round-trip.** IFC2X3, IFC4, and IFC4X3 files survive a
   load → modify → save cycle without representational degradation.
 
+* **Three coherent surfaces.** The same data model is reachable from
+  Python, from a :doc:`command-line interface <cli>` with stable
+  ``--json`` output, and through an :doc:`agent skill <skill>` that
+  ships with the package — so AI coding agents drive the library
+  through real commands rather than synthesising scripts.
 
-Quick start
-===========
+
+Quick start — Python
+====================
 
 .. code-block:: python
 
@@ -70,6 +76,37 @@ Quick start
    model.save("modified.ifc")
 
 See :doc:`tutorials` and :doc:`examples` for more.
+
+
+Quick start — command line
+==========================
+
+Every command takes ``--json`` for parseable output; without it, the
+default is a compact terminal rendering.
+
+.. code-block:: bash
+
+   python -m compas_ifc summary data/Duplex_A_20110907.ifc
+   python -m compas_ifc list    data/Duplex_A_20110907.ifc --type IfcWindow
+   python -m compas_ifc visualize data/Duplex_A_20110907.ifc \
+       --type IfcWindow --detach
+
+See :doc:`cli` for the full command reference.
+
+
+Quick start — Claude Code skill
+===============================
+
+Install the bundled agent skill once, then any Claude Code session can
+drive ``compas_ifc`` on your behalf:
+
+.. code-block:: bash
+
+   python -m compas_ifc install-skill
+
+The skill ships inside the package, so the recipes Claude follows are
+always aligned with the library version you actually have installed.
+See :doc:`skill` for what the skill contains.
 
 
 Standing on giants' shoulders
@@ -112,6 +149,8 @@ Table of contents
    Introduction <self>
    Architecture <architecture>
    Installation <installation>
+   Command line <cli>
+   Agent skill <skill>
    Tutorials <tutorials>
    Examples <examples>
    API <api>

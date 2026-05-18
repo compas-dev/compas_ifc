@@ -7,12 +7,6 @@ separates *what users interact with* from *how IFC data is read, written, and
 kept consistent*. The architecture is described in detail in chapter 4 of the
 underlying thesis (*Data Model for Humans*); this page summarises it.
 
-.. figure:: _images/architecture.jpg
-   :alt: COMPAS IFC architecture
-   :align: center
-
-   The three layers of COMPAS IFC.
-
 Top layer — front-end API
 =========================
 

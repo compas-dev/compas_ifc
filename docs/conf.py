@@ -14,7 +14,7 @@ organization = "compas-dev"
 master_doc = "index"
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 templates_path = sphinx_compas2_theme.get_autosummary_templates_path() + ["templates"]
-exclude_patterns = sphinx_compas2_theme.default_exclude_patterns + ["reference/**"]
+exclude_patterns = sphinx_compas2_theme.default_exclude_patterns + ["reference/**", "plans/**"]
 add_module_names = True
 language = "en"
 
