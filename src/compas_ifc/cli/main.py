@@ -885,10 +885,7 @@ def clash(
             return
         shown = data["pairs"] if limit == 0 else data["pairs"][:limit]
         for p in shown:
-            typer.echo(
-                f"  {p['a']['ifc_type']} '{p['a']['name']}'  <->  "
-                f"{p['b']['ifc_type']} '{p['b']['name']}'  ({p['penetrating_points']} pts)"
-            )
+            typer.echo(f"  {p['a']['ifc_type']} '{p['a']['name']}'  <->  {p['b']['ifc_type']} '{p['b']['name']}'  ({p['penetrating_points']} pts)")
         if len(shown) < len(data["pairs"]):
             typer.echo(f"  ... and {len(data['pairs']) - len(shown)} more (use --limit 0 to see all)")
 
@@ -908,7 +905,15 @@ def export_ifc(
     where: str = typer.Option(None, "--where", help="Predicate: '<key> <op> <value>'."),
     in_: str = typer.Option(None, "--in", help="GlobalId of a spatial container."),
     ids: str = typer.Option(None, "--ids", help="Comma-separated GlobalIds."),
-    flat: bool = typer.Option(False, "--flat", help="Anchor selected entities under a fresh placeholder Project/Site/Building/Storey instead of the source's real spatial hierarchy. The output is still a valid IFC; element world positions are preserved."),
+    flat: bool = typer.Option(
+        False,
+        "--flat",
+        help=(
+            "Anchor selected entities under a fresh placeholder Project/Site/Building/Storey "
+            "instead of the source's real spatial hierarchy. The output is still a valid IFC; "
+            "element world positions are preserved."
+        ),
+    ),
     json_output: bool = typer.Option(False, "--json", help="Emit structured JSON."),
 ) -> None:
     """Export the selected entities as a standalone IFC file.

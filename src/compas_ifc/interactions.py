@@ -636,9 +636,7 @@ class InteractionMixin:
                 if not _aabb_overlap(world_aabbs[id(element)], world_aabbs[id(neighbour)], tol=tolerance):
                     continue
 
-                if skip_related and (
-                    id(neighbour) in ancestors[id(element)] or id(element) in ancestors[id(neighbour)]
-                ):
+                if skip_related and (id(neighbour) in ancestors[id(element)] or id(element) in ancestors[id(neighbour)]):
                     continue
 
                 # narrowphase: ray-casting collision detection
@@ -669,12 +667,7 @@ class InteractionMixin:
                 new_collisions += 1
 
                 # IfcRelInterferesElements is IFC4+
-                if (
-                    create_ifc_relations
-                    and element._ifc_entity
-                    and neighbour._ifc_entity
-                    and "IfcRelInterferesElements" in self._file.classes
-                ):
+                if create_ifc_relations and element._ifc_entity and neighbour._ifc_entity and "IfcRelInterferesElements" in self._file.classes:
                     self._file._file.create_entity(
                         "IfcRelInterferesElements",
                         GlobalId=ifcopenshell.guid.new(),

@@ -48,10 +48,7 @@ def parse_where(expr: str) -> tuple[str, str, str]:
     """
     match = WHERE_RE.match(expr)
     if not match:
-        raise ValueError(
-            f"invalid --where expression: {expr!r}. "
-            "Expected '<key> <op> <value>' with op in =, !=, >, <, >=, <=, ~."
-        )
+        raise ValueError(f"invalid --where expression: {expr!r}. Expected '<key> <op> <value>' with op in =, !=, >, <, >=, <=, ~.")
     key, op, value = match.group(1), match.group(2), match.group(3)
     if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
         value = value[1:-1]

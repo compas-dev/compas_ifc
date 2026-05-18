@@ -820,4 +820,3 @@ class BuildingInformationModel(ElementFactoryMixin, InteractionMixin, TreeMixin,
 
         viewer.ui.sidebar.sceneform.action = update_treeform
         viewer.show()
-

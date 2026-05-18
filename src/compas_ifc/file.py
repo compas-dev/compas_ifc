@@ -137,11 +137,7 @@ class IFCFile(object):
     def classes(self) -> list:
         """List of IFC entity class names defined in the active schema."""
         if not self._classes:
-            self._classes = sorted(
-                d.name()
-                for d in self._schema.declarations()
-                if d.as_entity() and d.name().startswith("Ifc") and d.name() != "IfcRoot"
-            )
+            self._classes = sorted(d.name() for d in self._schema.declarations() if d.as_entity() and d.name().startswith("Ifc") and d.name() != "IfcRoot")
         return self._classes
 
     def file_size(self) -> float:

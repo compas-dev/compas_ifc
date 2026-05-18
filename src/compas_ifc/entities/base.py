@@ -301,9 +301,7 @@ class Base(Data):
                 decl = schema.declaration_by_name(self.entity.is_a())
                 derived_flags = decl.derived()
                 attrs = decl.all_attributes()
-                cache[key] = frozenset(
-                    a.name() for a, is_derived in zip(attrs, derived_flags) if is_derived
-                )
+                cache[key] = frozenset(a.name() for a, is_derived in zip(attrs, derived_flags) if is_derived)
             except Exception:
                 cache[key] = frozenset()
         return cache[key]

@@ -141,9 +141,7 @@ class Generator:
             if ia.name() in parent_inverse:
                 continue
             target = ia.entity_reference().name()
-            inverse_lines.append(
-                f'    def {ia.name()}(self) -> tuple["{target}", ...]: ...'
-            )
+            inverse_lines.append(f'    def {ia.name()}(self) -> tuple["{target}", ...]: ...')
 
         # Extension members merged from `_extension_registry`.
         ext_lines = self._emit_extension_members(name)
@@ -493,8 +491,8 @@ def inject_overloads(schema_name: str = "IFC4") -> None:
         path = os.path.join(src_root, spec["file"])
         class_names = _classes_for_scope(schema, spec["scope"])
         body = _emit_overload_chain(spec, class_names)
-        begin = f'    # region overloads:{spec["method"]}'
-        end = f'    # endregion overloads:{spec["method"]}'
+        begin = f"    # region overloads:{spec['method']}"
+        end = f"    # endregion overloads:{spec['method']}"
         ok = _rewrite_region(path, begin, end, body)
         if not ok:
             print(f"  WARN: markers not found in {path} for method {spec['method']!r} — skipped.")
