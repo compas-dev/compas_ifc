@@ -447,6 +447,17 @@ class InteractionMixin:
         if not candidates:
             return 0
 
+        # ---- ensure tessellated geometry is available --------------------------
+        # Freshly created (not-yet-saved) elements have no ``visual_geometry``
+        # until the geometry iterator has run. Contact/collision detection needs
+        # it (exact B-Rep contacts prefer the ``OCCBrep`` visual geometry), so
+        # populate it once here for elements that are missing it.
+        if any(e._visual_geometry is None for e in candidates):
+            self._file.load_geometries()
+            for e in candidates:
+                e._world_triangles_cache = None
+                e._world_mesh_cache = None
+
         # ---- broadphase 1: BVH -------------------------------------------------
         bvh = ElementBVH.from_elements(candidates)
 
@@ -586,6 +597,17 @@ class InteractionMixin:
 
         if not candidates:
             return 0
+
+        # ---- ensure tessellated geometry is available --------------------------
+        # Freshly created (not-yet-saved) elements have no ``visual_geometry``
+        # until the geometry iterator has run. Contact/collision detection needs
+        # it (exact B-Rep contacts prefer the ``OCCBrep`` visual geometry), so
+        # populate it once here for elements that are missing it.
+        if any(e._visual_geometry is None for e in candidates):
+            self._file.load_geometries()
+            for e in candidates:
+                e._world_triangles_cache = None
+                e._world_mesh_cache = None
 
         # ---- broadphase 1: BVH -------------------------------------------------
         bvh = ElementBVH.from_elements(candidates)

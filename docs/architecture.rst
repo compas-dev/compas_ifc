@@ -64,11 +64,12 @@ directly — but understanding it helps when reading the source code:
 
 * **Representation conversion.** Each IFC geometric representation type is
   routed to the appropriate computational kernel: simple primitives and
-  meshes use the COMPAS core library, swept solids and freeform B-Reps go
-  through OpenCascade (via ``compas_occ``), and boolean operations dispatch
-  to CGAL (``compas_cgal``) or OpenCascade as appropriate. The mapping is
-  bidirectional: parametric definitions are preserved on round-trip rather
-  than collapsing to tessellated meshes.
+  meshes use the COMPAS core library, while swept solids and freeform B-Reps
+  go through OpenCascade (via ``compas_occ``). Boolean operations are
+  currently evaluated through OpenCascade and the COMPAS core/Shapely path;
+  routing to CGAL (``compas_cgal``) is planned. The mapping is bidirectional:
+  parametric definitions are preserved on round-trip rather than collapsing
+  to tessellated meshes.
 
 * **Type normalisation.** ``model.create_element(ifc_type=...)`` accepts
   ``"IfcWall"``, ``"Wall"``, ``"wall"``, or any custom string; the value is
@@ -115,9 +116,15 @@ IFC representation             COMPAS class                 Kernel
 ``IfcRationalBSplineCurve``    ``NurbsCurve``
 ============================= ============================ =====================
 
+.. note::
+
+   CGAL routing (via ``compas_cgal``) is part of the intended architecture
+   but is not yet wired in: the ``CGAL`` cells above are currently served by
+   OpenCascade and the COMPAS core mesh path. CGAL integration is planned.
+
 The user-facing API is uniform across kernels: ``element.volume``,
-``element.surface_area``, ``element.geometry.bounding_box`` work identically
-regardless of the underlying representation type.
+``element.surface_area``, and ``element.aabb`` work identically regardless
+of the underlying representation type.
 
 Validation engine
 =================

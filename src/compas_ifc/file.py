@@ -1131,7 +1131,11 @@ class IFCFile(object):
         if self.use_occ:
             settings.set(settings.USE_PYTHON_OPENCASCADE, True)
 
-        iterator = ifcopenshell.geom.iterator(settings, self._file, multiprocessing.cpu_count(), include=include, exclude=exclude)
+        # Worker count defaults to all cores. Set COMPAS_IFC_GEOM_WORKERS=1 for
+        # deterministic, reproducible geometry evaluation (parallel workers can
+        # otherwise produce small run-to-run variation in tessellated output).
+        num_workers = int(os.environ.get("COMPAS_IFC_GEOM_WORKERS", "0")) or multiprocessing.cpu_count()
+        iterator = ifcopenshell.geom.iterator(settings, self._file, num_workers, include=include, exclude=exclude)
         start = time.time()
         if iterator.initialize():
             while True:
@@ -1181,6 +1185,39 @@ class IFCFile(object):
 
                 if not iterator.next():
                     break
+
+        # The geometry iterator does not yield the definition-holder products of
+        # instanced geometry (their body representation is the source of an
+        # IfcRepresentationMap / IfcMappedItem); only the mapped instances are
+        # produced. Fill in any body-bearing product that was skipped so
+        # instanced definition-holders still receive visual geometry.
+        for product in self._file.by_type("IfcProduct"):
+            if product.id() in self._geometrymap:
+                continue
+            rep = getattr(product, "Representation", None)
+            if rep is None:
+                continue
+            if not any(getattr(r, "RepresentationIdentifier", None) == "Body" for r in rep.Representations):
+                continue
+            if include is not None and not any(product.is_a(t) for t in include):
+                continue
+            if exclude is not None and any(product.is_a(t) for t in exclude):
+                continue
+            try:
+                shape = ifcopenshell.geom.create_shape(settings, product)
+            except Exception:
+                continue
+            if self.use_occ:
+                from compas_occ.brep import OCCBrep
+
+                self._geometrymap[product.id()] = OCCBrep.from_shape(shape.geometry)
+                self._stylemap.setdefault(product.id(), {"shellcolors": []})
+            else:
+                from .brep import TessellatedBrep
+
+                geo = shape.geometry
+                self._geometrymap[product.id()] = TessellatedBrep(vertices=geo.verts, edges=geo.edges, faces=geo.faces)
+                self._stylemap.setdefault(product.id(), {"facecolors": []})
 
         if self.verbose:
             print(f"Time to load all {len(self._geometrymap)} visual geometries {(time.time() - start):.3f}s")

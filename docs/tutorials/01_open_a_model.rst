@@ -60,8 +60,8 @@ Each element owns a parametric geometry plus a transformation:
     print(wall.transformation)       # 4×4 placement
 
 The geometry is computed lazily on first access. ``volume`` and
-``surface_area`` route to the appropriate kernel (COMPAS core, OpenCascade,
-or CGAL) depending on representation type.
+``surface_area`` route to the appropriate kernel (COMPAS core or
+OpenCascade) depending on representation type.
 
 Visualising the model
 =====================
