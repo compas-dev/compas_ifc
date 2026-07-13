@@ -25,11 +25,12 @@ itself.
 * Materialises non-hierarchical relationships (structural connections, system
   flows, material associations, geometric dependencies) as a separate graph.
 * Couples geometric representations to executable kernels — the COMPAS core
-  library for primitives and meshes, OpenCascade (via
-  [compas_occ](https://github.com/compas-dev/compas_occ)) for B-Rep and NURBS,
-  and CGAL (via [compas_cgal](https://github.com/compas-dev/compas_cgal))
-  for boolean operations and predicates — so volumes, surface areas, and
-  bounding boxes can be computed without leaving Python.
+  library for primitives and meshes, and OpenCascade (via
+  [compas_occ](https://github.com/compas-dev/compas_occ)) for B-Rep and
+  NURBS — so volumes, surface areas, and bounding boxes can be computed
+  without leaving Python. Contact and collision detection between elements
+  is handled with a NumPy + [Shapely](https://shapely.readthedocs.io/)
+  broadphase/narrowphase.
 * Treats every product subclass uniformly through a single `GenericElement`
   type, falling back to `IfcBuildingElementProxy` (with the original type name
   preserved as `ObjectType`) for custom or domain-specific elements.

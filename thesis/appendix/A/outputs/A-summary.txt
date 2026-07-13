@@ -1,0 +1,2067 @@
+================================================================
+APPENDIX A — COMPAS IFC: EVALUATION RESULTS
+================================================================
+
+Run from: D:\Github\compas_ifc
+Python:   3.11.14
+
+----------------------------------------------------------------
+A.1  API Surface Measurement
+----------------------------------------------------------------
+compas_model.Element abstract stubs (9):
+  apply_features
+  compute_aabb
+  compute_collision_mesh
+  compute_contacts
+  compute_elementgeometry
+  compute_obb
+  compute_point
+  compute_surface_mesh
+  compute_volumetric_mesh
+
+======================================================================
+API Surface: BuildingInformationModel
+======================================================================
+
+Total public API surface: 92 members
+  Defined on BuildingInformationModel:  15
+  From ElementFactoryMixin:             9
+  From InteractionMixin:                11
+  From TreeMixin:                       3
+  Inherited from compas_model.Model:    32
+
+--- BuildingInformationModel own (15) ---
+  method        add_element
+  property      building_elements
+  property      buildings
+  method        get_element_by_global_id
+  method        get_elements_by_name
+  method        get_elements_by_type
+  property      project
+  method        remove_element
+  method        save
+  property      schema_name
+  method        show
+  property      sites
+  property      storeys
+  property      unit
+  method        validate
+
+--- ElementFactoryMixin (9) ---
+  method        create_beam
+  method        create_column
+  method        create_door
+  method        create_element
+  method        create_roof
+  method        create_slab
+  method        create_wall
+  method        create_window
+  classmethod   template
+
+--- InteractionMixin (11) ---
+  attribute     RELATIONSHIP_GROUPS
+  method        compute_collisions
+  method        compute_connections
+  property      connections
+  method        get_interactions_by_category
+  method        get_interactions_by_group
+  property      interferences
+  method        show_collision_pairs
+  method        show_collisions
+  property      space_boundaries
+  method        trace_connections
+
+--- TreeMixin (3) ---
+  method        export
+  method        extract
+  method        print_hierarchy
+
+======================================================================
+API Surface: GenericElement
+======================================================================
+
+Total public API surface: 52 members
+  Defined on GenericElement:            19
+    Novel (compas_ifc-specific):        11
+    Abstract overrides (compas_model):  8
+  Inherited from compas_model.Element:  33
+
+--- GenericElement novel API (11) ---
+  property      axis
+  method        compute_collisions
+  property      geometry
+  property      global_id
+  property      ifc_entity
+  property      name
+  property      properties
+  method        show
+  property      surface_area
+  property      transformation
+  property      volume
+
+--- Abstract overrides (8) ---
+  method        compute_aabb
+  method        compute_collision_mesh
+  method        compute_contacts
+  method        compute_elementgeometry
+  method        compute_obb
+  method        compute_point
+  method        compute_surface_mesh
+  method        compute_volumetric_mesh
+
+======================================================================
+SUMMARY TABLE
+======================================================================
+
+Class                                Novel API   Abstract  Inherited    Total
+---------------------------------------------------------------------------
+BuildingInformationModel                    38          0         54       92
+GenericElement                              11          8         33       52
+---------------------------------------------------------------------------
+TOTAL                                       49          8
+
+--- Novel compas_ifc API on BuildingInformationModel (38) ---
+  attribute     RELATIONSHIP_GROUPS                       [InteractionMixin]
+  method        add_element                               [bim]
+  property      building_elements                         [bim]
+  property      buildings                                 [bim]
+  method        compute_collisions                        [InteractionMixin]
+  method        compute_connections                       [InteractionMixin]
+  property      connections                               [InteractionMixin]
+  method        create_beam                               [ElementFactoryMixin]
+  method        create_column                             [ElementFactoryMixin]
+  method        create_door                               [ElementFactoryMixin]
+  method        create_element                            [ElementFactoryMixin]
+  method        create_roof                               [ElementFactoryMixin]
+  method        create_slab                               [ElementFactoryMixin]
+  method        create_wall                               [ElementFactoryMixin]
+  method        create_window                             [ElementFactoryMixin]
+  method        export                                    [TreeMixin]
+  method        extract                                   [TreeMixin]
+  method        get_element_by_global_id                  [bim]
+  method        get_elements_by_name                      [bim]
+  method        get_elements_by_type                      [bim]
+  method        get_interactions_by_category              [InteractionMixin]
+  method        get_interactions_by_group                 [InteractionMixin]
+  property      interferences                             [InteractionMixin]
+  method        print_hierarchy                           [TreeMixin]
+  property      project                                   [bim]
+  method        remove_element                            [bim]
+  method        save                                      [bim]
+  property      schema_name                               [bim]
+  method        show                                      [bim]
+  method        show_collision_pairs                      [InteractionMixin]
+  method        show_collisions                           [InteractionMixin]
+  property      sites                                     [bim]
+  property      space_boundaries                          [InteractionMixin]
+  property      storeys                                   [bim]
+  classmethod   template                                  [ElementFactoryMixin]
+  method        trace_connections                         [InteractionMixin]
+  property      unit                                      [bim]
+  method        validate                                  [bim]
+
+--- Novel compas_ifc API on GenericElement (11) ---
+  property      axis
+  method        compute_collisions
+  property      geometry
+  property      global_id
+  property      ifc_entity
+  property      name
+  property      properties
+  method        show
+  property      surface_area
+  property      transformation
+  property      volume
+
+----------------------------------------------------------------
+A.2.1 Stage 1: Synthetic Model
+----------------------------------------------------------------
+======================================================================
+CREATING TEST MODEL
+======================================================================
+  A1  Ext_Polygon       Extrusion (polygon, depth=3.0)
+  A2  Ext_Circle        Extrusion (circle r=0.5, depth=2.0)
+  A3  Ext_Voids         Extrusion (polygon+void, depth=0.3)
+  A4  Rev_Circle        Revolution (circle r=0.1, 360 deg)
+  A5  Rev_Polygon       Revolution (polygon, 180 deg)
+  A6  Pipe_Solid        Pipe (r=0.15, 3-pt directrix)
+  A7  Pipe_Hollow       Pipe (r=0.25, inner=0.10)
+  A8  CSG_Box           Box (1, 2, 3)
+  A9  CSG_Sphere        Sphere (r=1.5)
+  A10 CSG_Cone          Cone (r=1.0, h=2.5)
+  A11 CSG_Cylinder      Cylinder (r=0.4, h=3.0)
+  A12 Clip_Single       ClippedExtrusion (1 clip)
+  A13 Clip_Double       ClippedExtrusion (2 clips)
+  A14 Bool_Diff         BooleanResult DIFFERENCE (ext-ext)
+  A15 Bool_Union        BooleanResult UNION (ext+ext)
+  A16 Bool_Inter        BooleanResult INTERSECTION (ext&ext)
+  A17 Bool_Nested       BooleanResult nested DIFF(UNION, halfspace)
+  A18 Bool_HalfSpace    BooleanResult DIFF (ext-halfspace)
+  A19 Mesh_Quad         Mesh (polyhedron)
+  A20-22 Instance_1..3  Cylinder (shared, instanced)
+
+  Saved to temp/thesis_roundtrip_generated.ifc
+
+======================================================================
+ROUND-TRIP VERIFICATION
+======================================================================
+
+  IFC Entity Counts:
+    IfcExtrudedAreaSolid            14
+    IfcRevolvedAreaSolid             2
+    IfcSweptDiskSolid                2
+    IfcCsgSolid                      5
+    IfcBooleanClippingResult         3
+    IfcBooleanResult                 9
+    IfcPolygonalFaceSet              1
+    IfcRepresentationMap             1
+    IfcMappedItem                    2
+
+  ROUND-TRIP RESULTS:
+  ------------------------------------------------------------------
+  ID    Name                 Expected             Actual               Status
+  ------------------------------------------------------------------
+  A1    Ext_Polygon          Extrusion            Extrusion            PASS
+  A2    Ext_Circle           Extrusion            Extrusion            PASS
+  A3    Ext_Voids            Extrusion            Extrusion            PASS
+  A4    Rev_Circle           Revolution           Revolution           PASS
+  A5    Rev_Polygon          Revolution           Revolution           PASS
+  A6    Pipe_Solid           Pipe                 Pipe                 PASS
+  A7    Pipe_Hollow          Pipe                 Pipe                 PASS
+  A8    CSG_Box              Box                  Box                  PASS
+  A9    CSG_Sphere           Sphere               Sphere               PASS
+  A10   CSG_Cone             Cone                 Cone                 PASS
+  A11   CSG_Cylinder         Cylinder             Cylinder             PASS
+  A12   Clip_Single          ClippedExtrusion     ClippedExtrusion     PASS
+  A13   Clip_Double          ClippedExtrusion     ClippedExtrusion     PASS
+  A14   Bool_Diff            BooleanResult        BooleanResult        PASS
+  A15   Bool_Union           BooleanResult        BooleanResult        PASS
+  A16   Bool_Inter           BooleanResult        BooleanResult        PASS
+  A17   Bool_Nested          BooleanResult        BooleanResult        PASS
+  A18   Bool_HalfSpace       Bool/Clip            ClippedExtrusion     PASS
+  A19   Mesh_Quad            Mesh                 Mesh                 PASS
+  A20   Instance_1           Cylinder             Cylinder             PASS
+  A21   Instance_2           Cylinder             Cylinder             PASS
+  A22   Instance_3           Cylinder             Cylinder             PASS
+  ------------------------------------------------------------------
+
+  IFC ENTITY COUNT CHECKS:
+    IfcExtrudedAreaSolid            14 >=   3  PASS
+    IfcRevolvedAreaSolid             2 ==   2  PASS
+    IfcSweptDiskSolid                2 ==   2  PASS
+    IfcCsgSolid                      5 >=   5  PASS
+    IfcBooleanClippingResult         3 >=   3  PASS
+    IfcBooleanResult                 9 >=   3  PASS
+    IfcPolygonalFaceSet              1 >=   1  PASS
+    IfcRepresentationMap             1 >=   1  PASS
+    IfcMappedItem                    2 >=   2  PASS
+
+  VOLUME & SURFACE AREA:
+  ------------------------------------------------------------------
+  ID    Name                 Volume                         Status
+  ------------------------------------------------------------------
+  V1    Ext_Polygon          5.4000 (exp 5.4000)            PASS
+  V2    Ext_Circle           1.5708 (exp 1.5708)            PASS
+  V3    Ext_Voids            1.0080 (exp 1.0080)            PASS
+  V4    Pipe_Solid           0.3649 (exp 0.3649)            PASS
+  V5    Pipe_Hollow          0.9896 (exp 0.9896)            PASS
+  V6    CSG_Box              6.0000 (exp 6.0000)            PASS
+  V7    CSG_Sphere           14.1372 (exp 14.1372)          PASS
+  V8    CSG_Cone             2.6180 (exp 2.6180)            PASS
+  V9    CSG_Cylinder         1.5080 (exp 1.5080)            PASS
+  V10   Mesh_Quad            12.3168                        PASS
+  V11   Clip_Single          0.6400 (visual_geom)           PASS
+  V12   Clip_Double          0.9000 (visual_geom)           PASS
+  V13   Bool_Diff            4.4400 (visual_geom)           PASS
+  V14   Bool_Union           6.3000 (visual_geom)           PASS
+  V15   Bool_Inter           18.0000 (visual_geom)          PASS
+  V16   Bool_Nested          1.0500 (visual_geom)           PASS
+  V17   Bool_HalfSpace       7.5000 (visual_geom)           PASS
+  V18   Instance_1           0.4398 (exp 0.4398)            PASS
+  V19   Instance_2           0.4398 (exp 0.4398)            PASS
+  V20   Instance_3           0.4398 (exp 0.4398)            PASS
+
+  SURFACE AREA SPOT-CHECKS:
+    Ext_Polygon          SA=41.4000 (exp 41.4000)  PASS
+    CSG_Box              SA=22.0000 (exp 22.0000)  PASS
+    CSG_Sphere           SA=28.2743 (exp 28.2743)  PASS
+  ------------------------------------------------------------------
+
+======================================================================
+SUMMARY
+======================================================================
+
+  PASS   Ext_Polygon type  (Extrusion)
+  PASS   Ext_Polygon depth=3.0  (3.0)
+  PASS   Ext_Polygon profile=Polygon(4)
+  PASS   Ext_Polygon direction Z  (Vector(x=0.000, y=0.000, z=1.000))
+  PASS   Ext_Circle type  (Extrusion)
+  PASS   Ext_Circle depth=2.0  (2.0)
+  PASS   Ext_Circle profile=Circle
+  PASS   Ext_Circle radius=0.5  (0.5)
+  PASS   Ext_Voids type  (Extrusion)
+  PASS   Ext_Voids depth=0.3  (0.3)
+  PASS   Ext_Voids profile is tuple  (tuple)
+  PASS   Ext_Voids has 1 void  (1)
+  PASS   Rev_Circle type  (Revolution)
+  PASS   Rev_Circle angle=360  (360.0)
+  PASS   Rev_Circle profile=Circle
+  PASS   Rev_Circle radius=0.1  (0.1)
+  PASS   Rev_Polygon type  (Revolution)
+  PASS   Rev_Polygon angle=180  (180.0)
+  PASS   Rev_Polygon profile=Polygon
+  PASS   Rev_Polygon profile 4 pts  (4)
+  PASS   Pipe_Solid type  (Pipe)
+  PASS   Pipe_Solid radius=0.15  (0.15)
+  PASS   Pipe_Solid inner=None  (None)
+  PASS   Pipe_Solid directrix 3 pts  (3)
+  PASS   Pipe_Hollow type  (Pipe)
+  PASS   Pipe_Hollow radius=0.25  (0.25)
+  PASS   Pipe_Hollow inner=0.10  (0.1)
+  PASS   CSG_Box type  (Box)
+  PASS   CSG_Box xsize=1.0  (1.0)
+  PASS   CSG_Box ysize=2.0  (2.0)
+  PASS   CSG_Box zsize=3.0  (3.0)
+  PASS   CSG_Sphere type  (Sphere)
+  PASS   CSG_Sphere radius=1.5  (1.5)
+  PASS   CSG_Cone type  (Cone)
+  PASS   CSG_Cone radius=1.0  (1.0)
+  PASS   CSG_Cone height=2.5  (2.5)
+  PASS   CSG_Cylinder type  (Cylinder)
+  PASS   CSG_Cylinder radius=0.4  (0.4)
+  PASS   CSG_Cylinder height=3.0  (3.0)
+  PASS   Clip_Single type  (ClippedExtrusion)
+  PASS   Clip_Single depth=2.8  (2.8)
+  PASS   Clip_Single 1 clip  (1)
+  PASS   Clip_Single agree=True
+  PASS   Clip_Double type  (ClippedExtrusion)
+  PASS   Clip_Double depth=3.0  (3.0)
+  PASS   Clip_Double 2 clips  (2)
+  PASS   Clip_Double clip1 agree=True
+  PASS   Clip_Double clip2 agree=False
+  PASS   Bool_Diff type  (BooleanResult)
+  PASS   Bool_Diff op=DIFFERENCE  (DIFFERENCE)
+  PASS   Bool_Diff first=Extrusion
+  PASS   Bool_Diff second=Extrusion
+  PASS   Bool_Union type  (BooleanResult)
+  PASS   Bool_Union op=UNION  (UNION)
+  PASS   Bool_Union first=Extrusion
+  PASS   Bool_Union second=Extrusion
+  PASS   Bool_Inter type  (BooleanResult)
+  PASS   Bool_Inter op=INTERSECTION  (INTERSECTION)
+  PASS   Bool_Inter first=Extrusion
+  PASS   Bool_Inter second=Extrusion
+  PASS   Bool_Nested type  (BooleanResult)
+  PASS   Bool_Nested op=DIFFERENCE  (DIFFERENCE)
+  PASS   Bool_Nested first=BooleanResult
+  PASS   Bool_Nested second=HalfSpace
+  PASS   Bool_Nested depth>=2  (2)
+  PASS   Bool_Nested 3 leaves  (3)
+  PASS   Bool_HalfSpace type (BooleanResult or ClippedExtrusion)  (ClippedExtrusion)
+  PASS   Bool_HalfSpace (as ClippedExtrusion) depth=0.3  (0.3)
+  PASS   Bool_HalfSpace (as ClippedExtrusion) 1 clip  (1)
+  PASS   Mesh_Quad type  (Mesh)
+  PASS   Mesh_Quad vertices>=8  (8)
+  PASS   Mesh_Quad faces>=6  (6)
+  PASS   Instance_1 type  (Cylinder)
+  PASS   Instance_1 radius=0.2  (0.2)
+  PASS   Instance_1 height=3.5  (3.5)
+  PASS   Instance_2 type  (Cylinder)
+  PASS   Instance_2 radius=0.2  (0.2)
+  PASS   Instance_2 height=3.5  (3.5)
+  PASS   Instance_3 type  (Cylinder)
+  PASS   Instance_3 radius=0.2  (0.2)
+  PASS   Instance_3 height=3.5  (3.5)
+  PASS   Count IfcExtrudedAreaSolid >= 3  (14)
+  PASS   Count IfcRevolvedAreaSolid == 2  (2)
+  PASS   Count IfcSweptDiskSolid == 2  (2)
+  PASS   Count IfcCsgSolid >= 5  (5)
+  PASS   Count IfcBooleanClippingResult >= 3  (3)
+  PASS   Count IfcBooleanResult >= 3  (9)
+  PASS   Count IfcPolygonalFaceSet >= 1  (1)
+  PASS   Count IfcRepresentationMap >= 1  (1)
+  PASS   Count IfcMappedItem >= 2  (2)
+  PASS   Ext_Polygon volume  (5.4000 vs 5.4000)
+  PASS   Ext_Circle volume  (1.5708 vs 1.5708)
+  PASS   Ext_Voids volume  (1.0080 vs 1.0080)
+  PASS   Pipe_Solid volume  (0.3649 vs 0.3649)
+  PASS   Pipe_Hollow volume  (0.9896 vs 0.9896)
+  PASS   CSG_Box volume  (6.0000 vs 6.0000)
+  PASS   CSG_Sphere volume  (14.1372 vs 14.1372)
+  PASS   CSG_Cone volume  (2.6180 vs 2.6180)
+  PASS   CSG_Cylinder volume  (1.5080 vs 1.5080)
+  PASS   Mesh_Quad volume > 0  (12.316805742711962)
+  PASS   Clip_Single elem.volume > 0  (0.6400)
+  PASS   Clip_Double elem.volume > 0  (0.9000)
+  PASS   Bool_Diff elem.volume > 0  (4.4400)
+  PASS   Bool_Union elem.volume > 0  (6.3000)
+  PASS   Bool_Inter elem.volume > 0  (18.0000)
+  PASS   Bool_Nested elem.volume > 0  (1.0500)
+  PASS   Bool_HalfSpace elem.volume > 0  (7.5000)
+  PASS   Instance_1 volume  (0.4398 vs 0.4398)
+  PASS   Instance_2 volume  (0.4398 vs 0.4398)
+  PASS   Instance_3 volume  (0.4398 vs 0.4398)
+  PASS   Ext_Polygon surface_area  (41.4000 vs 41.4000)
+  PASS   CSG_Box surface_area  (22.0000 vs 22.0000)
+  PASS   CSG_Sphere surface_area  (28.2743 vs 28.2743)
+  PASS   All elements: surface_area > 0
+
+  114 PASS / 0 FAIL  (of 114 checks)
+
+SUCCESS: All generated round-trip tests passed.
+
+----------------------------------------------------------------
+A.2.2 Stage 2: BRep from STEP
+----------------------------------------------------------------
+======================================================================
+B-REP ROUND-TRIP TEST
+======================================================================
+
+  STEP directory: D:\Github\compas_ifc\temp\brep_conversion_tests
+  Shapes found:  26/26
+  Strict check:  13 shapes (vol <1%, area <2%)
+  NURBS check:   2 shapes (vol <15%)
+  Known issues:  11 shapes (INFO only)
+
+======================================================================
+PART 1: WRITE (STEP -> OCCBrep -> IfcAdvancedBrep -> IFC)
+======================================================================
+
+  Loaded plane_box                  vol=6.000000  area=22.000000
+  Loaded cube                       vol=1.000000  area=6.000000
+  Loaded cylinder                   vol=9.424778  area=25.132741
+  Loaded sphere                     vol=14.137167  area=28.274334
+  Loaded hemisphere                 vol=7.068583  area=21.205750
+  Loaded torus                      vol=14.212230  area=47.374101
+  Loaded torus_partial              vol=11.545269  area=47.909009
+  Loaded cone                       vol=2.094395  area=10.166407
+  Loaded cone_truncated             vol=6.806784  area=21.903611
+  Loaded wedge                      vol=5.625000  area=22.113961
+  Loaded ellipsoid                  vol=4.396306  area=14.041706
+  Loaded nurbs_pillow               vol=16.000000  area=59.529042
+  Loaded box_filleted               vol=8.875155  area=26.047699
+  Loaded capsule                    vol=10.471976  area=25.132741
+  Loaded hollow_box                 vol=56.761771  area=114.095574
+  Loaded box_with_hole              vol=16.429204  area=46.712389
+  Loaded compound_two_boxes         vol=2.000000  area=12.000000
+  Loaded compound_box_cylinder      vol=4.945796  area=21.353982
+  Loaded tiny_box                   vol=0.000000  area=0.000006
+  Loaded large_box                  vol=1000000000.000000  area=6000000.000000
+  Loaded thin_plate                 vol=1.000000  area=200.400000
+  Loaded box_chamfered              vol=7.910000  area=23.558528
+  Loaded revolved_l_profile         vol=7.461283  area=39.269908
+  Loaded extruded_arc               vol=4.712389  area=18.566371
+  Loaded pipe_sweep                 vol=0.000000  area=11.434286
+  Loaded thick_shell                vol=8.072000  area=83.120000
+
+  Loaded: 26/26  (errors: 0)
+
+  Creating IFC model with use_occ=True...
+  Saved: D:\Github\compas_ifc\temp\thesis_roundtrip_brep.ifc
+  Written: 26/26
+
+  Schema validation...
+
+  Entity type checks...
+
+======================================================================
+PART 2: READ & COMPARE (reload IFC -> compare volume/area)
+======================================================================
+
+  Reloading IFC with use_occ=True...
+  Elements: 26
+
+  Analytic formulas available for 9 shapes: box_with_hole, capsule, cylinder, hemisphere, hollow_box, revolved_l_profile, sphere, torus, torus_partial
+
+  VOLUME COMPARISON:
+  --------------------------------------------------------------------------------------------------------
+  Name                          Original    Evaluator  Ev.Diff     Analytic  An.Diff  Status
+  --------------------------------------------------------------------------------------------------------
+  box_chamfered                 7.910000     7.910000    0.00%         None           PASS
+  box_filleted                  8.875155     8.875155    0.00%         None           PASS
+  box_with_hole                16.429204    18.523599   12.75%    16.429204   0.000%  PASS *
+  capsule                      10.471976     4.188790   60.00%    10.471976   0.000%  PASS *
+  compound_box_cylinder         4.945796     4.945796    0.00%         None           PASS
+  compound_two_boxes            2.000000     2.000000    0.00%         None           PASS
+  cone                          2.094395     2.312539   10.42%         None           PASS
+  cone_truncated                6.806784     7.288682    7.08%         None           PASS
+  cube                          1.000000     1.000000    0.00%         None           PASS
+  cylinder                      9.424778     9.424778    0.00%     9.424778   0.000%  PASS
+  ellipsoid                     4.396306         None                  None           INFO
+  extruded_arc                  4.712389     4.712389    0.00%         None           PASS
+  hemisphere                    7.068583     0.000000  100.00%     7.068583   0.000%  PASS *
+  hollow_box                   56.761771    64.000000   12.75%    56.761771   0.000%  PASS *
+  large_box                 1000000000.000000 1000000000.000000    0.00%         None           PASS
+  nurbs_pillow                 16.000000    12.124488   24.22%         None           INFO
+  pipe_sweep                    0.000000         None                  None           INFO
+  plane_box                     6.000000     6.000000    0.00%         None           PASS
+  revolved_l_profile            7.461283    11.126474   49.12%     7.461283   0.000%  PASS *
+  sphere                       14.137167         None             14.137167   0.000%  PASS *
+  thick_shell                   8.072000     8.072000    0.00%         None           PASS
+  thin_plate                    1.000000     1.000000    0.00%         None           PASS
+  tiny_box                      0.000000     0.000000    0.00%         None           PASS
+  torus                        14.212230         None             14.212230   0.000%  PASS *
+  torus_partial                11.545269     3.380354   70.72%    11.545269   0.000%  PASS *
+  wedge                         5.625000     5.625000    0.00%         None           PASS
+  --------------------------------------------------------------------------------------------------------
+  * Evaluator failed; verified analytically from IFC surface parameters
+
+  SURFACE AREA COMPARISON:
+  --------------------------------------------------------------------------------------------------------
+  Name                          Original    Evaluator  Ev.Diff     Analytic  An.Diff  Status
+  --------------------------------------------------------------------------------------------------------
+  box_chamfered                23.558528    23.558528    0.00%         None           PASS
+  box_filleted                 26.047699    26.047699    0.00%         None           PASS
+  box_with_hole                46.712389    46.712389    0.00%    46.712389   0.000%  PASS
+  capsule                      25.132741    12.566371   50.00%    25.132741   0.000%  PASS *
+  compound_box_cylinder        21.353982    21.353982    0.00%         None           PASS
+  compound_two_boxes           12.000000    12.000000    0.00%         None           PASS
+  cone                         10.166407    10.892620    7.14%         None           PASS
+  cone_truncated               21.903611    23.251904    6.16%         None           PASS
+  cube                          6.000000     6.000000    0.00%         None           PASS
+  cylinder                     25.132741    25.132741    0.00%    25.132741   0.000%  PASS
+  ellipsoid                    14.041706         None                  None           INFO
+  extruded_arc                 18.566371    18.566371    0.00%         None           PASS
+  hemisphere                   21.205750     7.068583   66.67%    21.205750   0.000%  PASS *
+  hollow_box                  114.095574    96.000000   15.86%   114.095574   0.000%  PASS *
+  large_box                 6000000.000000 6000000.000000    0.00%         None           PASS
+  nurbs_pillow                 59.529042    59.529042    0.00%         None           PASS
+  pipe_sweep                   11.434286         None                  None           INFO
+  plane_box                    22.000000    22.000000    0.00%         None           PASS
+  revolved_l_profile           39.269908    39.269908    0.00%    39.269908   0.000%  PASS
+  sphere                       28.274334         None             28.274334   0.000%  PASS *
+  thick_shell                  83.120000    83.120000    0.00%         None           PASS
+  thin_plate                  200.400000   200.400000    0.00%         None           PASS
+  tiny_box                      0.000006     0.000006    0.00%         None           PASS
+  torus                        47.374101         None             47.374101   0.000%  PASS *
+  torus_partial                47.909009    33.803537   29.44%    47.909009   0.000%  PASS *
+  wedge                        22.113961    22.113961    0.00%         None           PASS
+  --------------------------------------------------------------------------------------------------------
+  * Evaluator failed; verified analytically from IFC surface parameters
+
+======================================================================
+SUMMARY
+======================================================================
+
+  KNOWN ISSUES (15 items, not counted as failures):
+    INFO  box_with_hole volume: evaluator 12.75% off but analytic OK
+    INFO  capsule volume: evaluator 60.00% off but analytic OK
+    INFO  ellipsoid volume: evaluator returned None (known issue)
+    INFO  hemisphere volume: evaluator 100.00% off but analytic OK
+    INFO  hollow_box volume: evaluator 12.75% off but analytic OK
+    INFO  nurbs_pillow volume: 16.000000 vs 12.124488 (24.22%)
+    INFO  pipe_sweep volume: evaluator returned None (known issue)
+    INFO  revolved_l_profile volume: evaluator 49.12% off but analytic OK
+    INFO  torus_partial volume: evaluator 70.72% off but analytic OK
+    INFO  capsule surface_area: evaluator 50.00% off but analytic OK
+    INFO  ellipsoid surface_area: evaluator returned None (known issue)
+    INFO  hemisphere surface_area: evaluator 66.67% off but analytic OK
+    INFO  hollow_box surface_area: evaluator 15.86% off but analytic OK
+    INFO  pipe_sweep surface_area: evaluator returned None (known issue)
+    INFO  torus_partial surface_area: evaluator 29.44% off but analytic OK
+
+  ANALYTICALLY VERIFIED (8 shapes where evaluator failed):
+    PASS *  box_with_hole (box+hole)
+    PASS *  capsule (capsule)
+    PASS *  hemisphere (hemisphere)
+    PASS *  hollow_box (hollow box)
+    PASS *  revolved_l_profile (revolved profile)
+    PASS *  sphere (sphere)
+    PASS *  torus (torus)
+    PASS *  torus_partial (partial torus)
+
+  66 PASS / 0 FAIL  (of 66 checks)
+  (15 additional INFO items for known evaluator limitations)
+
+SUCCESS: All B-Rep round-trip tests passed.
+
+----------------------------------------------------------------
+A.2.3 Stage 3a: Duplex A
+----------------------------------------------------------------
+======================================================================
+PART 1: READ — data/Duplex_A_20110907.ifc
+======================================================================
+Rectified 22 IFC placements to align with spatial hierarchy.
+Loaded 319 graph edges: 82 connection, 237 space_boundary.
+
+  Parsing all building elements...
+
+  Elements with geometry: 265
+  Parse errors:           0
+
+  Type                      Count       %
+  ----------------------------------------
+  Extrusion                   196   74.0%
+  Mesh                         65   24.5%
+  ClippedExtrusion              4    1.5%
+  ----------------------------------------
+
+  EXTRUSION PARAMETRIC DATA:
+  --------------------------------------------------
+    Extrusions parsed: 196
+    Depth range: 0.0127 - 7.4213 m
+
+    Profile Type              Count
+    --------------------------------
+    Polygon(4)                  148
+    Polygon(8)                   18
+    Polygon(6)                   16
+    Polygon(16)                  10
+    Polygon(18)                   2
+    Polygon(5)                    2
+
+
+======================================================================
+PART 2: WRITE ROUND-TRIP (sample per type)
+======================================================================
+
+  Samples selected for write round-trip:
+    Extrusion                  20 / 196
+    ClippedExtrusion            4 /   4
+    Mesh                       20 /  65
+
+  Creating new model with 44 elements...
+  Saved to temp/thesis_roundtrip_duplex.ifc
+  Reloading and comparing...
+
+
+  Write round-trip results:
+    Matched:    44
+    Mismatched: 0
+    Missing:    0
+
+======================================================================
+PART 3: VOLUME & SURFACE AREA (element-level, all types)
+======================================================================
+
+  Uses element.volume / element.surface_area which falls back to
+  visual_geometry (tessellated brep) when parametric returns None.
+
+  Extrusion (196 elements):
+    volume > 0:        196
+    volume range:      0.001935 - 61.764078
+    volume mean:       1.985505
+    surface_area > 0:  196
+
+  ClippedExtrusion (4 elements):
+    volume > 0:        4
+    volume range:      1.849329 - 5.788705
+    volume mean:       4.070737
+    surface_area > 0:  4
+
+  Mesh (65 elements):
+    volume > 0:        8
+    volume range:      0.152899 - 0.152899
+    volume mean:       0.152899
+    volume None/zero:  57
+    surface_area > 0:  65
+
+
+======================================================================
+SUMMARY
+======================================================================
+
+  PASS   Read: total geometries >= 260  (265)
+  PASS   Read: parse errors == 0  (0)
+  PASS   Read: Extrusion count >= 190  (196)
+  PASS   Read: Mesh count >= 50  (65)
+  PASS   Read: all extrusion depths > 0
+  PASS   Read: all extrusion profiles valid
+  PASS   Read: Polygon(4) dominant (>= 140)  (148)
+  PASS   RT_ClippedExtrusion_000.ext depth  (2.795000000000196 vs 2.7950000000002)
+  PASS   RT_ClippedExtrusion_000.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_000.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_000.ext volume  (1.849329 vs 1.849329)
+  PASS   RT_ClippedExtrusion_000.ext surface_area  (26.506262 vs 26.506262)
+  PASS   RT_ClippedExtrusion_000 clip count  (1 vs 1)
+  PASS   RT_ClippedExtrusion_000 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_000 elem.volume  (1.8493 vs 1.8493)
+  PASS   RT_ClippedExtrusion_000 elem.surface_area  (26.5063 vs 26.5063)
+  PASS   RT_ClippedExtrusion_001.ext depth  (2.795000000000196 vs 2.7950000000002)
+  PASS   RT_ClippedExtrusion_001.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_001.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_001.ext volume  (3.381950 vs 3.381950)
+  PASS   RT_ClippedExtrusion_001.ext surface_area  (17.792500 vs 17.792500)
+  PASS   RT_ClippedExtrusion_001 clip count  (2 vs 2)
+  PASS   RT_ClippedExtrusion_001 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_001 clip[1] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_001 elem.volume  (2.8562 vs 2.6810)
+  PASS   RT_ClippedExtrusion_001 elem.surface_area  (18.0536 vs 16.6536)
+  PASS   RT_ClippedExtrusion_002.ext depth  (2.795000000000196 vs 2.7950000000002)
+  PASS   RT_ClippedExtrusion_002.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_002.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_002.ext volume  (6.457987 vs 6.457987)
+  PASS   RT_ClippedExtrusion_002.ext surface_area  (31.179190 vs 31.179190)
+  PASS   RT_ClippedExtrusion_002 clip count  (2 vs 2)
+  PASS   RT_ClippedExtrusion_002 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_002 clip[1] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_002 elem.volume  (5.7887 vs 5.7887)
+  PASS   RT_ClippedExtrusion_002 elem.surface_area  (30.3816 vs 30.3816)
+  PASS   RT_ClippedExtrusion_003.ext depth  (2.795000000000196 vs 2.7950000000002)
+  PASS   RT_ClippedExtrusion_003.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_003.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_003.ext volume  (6.457987 vs 6.457987)
+  PASS   RT_ClippedExtrusion_003.ext surface_area  (31.179190 vs 31.179190)
+  PASS   RT_ClippedExtrusion_003 clip count  (2 vs 2)
+  PASS   RT_ClippedExtrusion_003 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_003 clip[1] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_003 elem.volume  (5.7887 vs 5.7887)
+  PASS   RT_ClippedExtrusion_003 elem.surface_area  (30.3816 vs 30.3816)
+  PASS   RT_Extrusion_000 depth  (2.900000000000012 vs 2.90000000000001)
+  PASS   RT_Extrusion_000 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_000 profile pts  (6 vs 6)
+  PASS   RT_Extrusion_000 volume  (21.021262 vs 21.021262)
+  PASS   RT_Extrusion_000 surface_area  (118.739239 vs 118.739239)
+  PASS   RT_Extrusion_000 elem.volume  (21.0213 vs 21.0213)
+  PASS   RT_Extrusion_000 elem.surface_area  (118.7392 vs 118.7392)
+  PASS   RT_Extrusion_001 depth  (0.4170000000000001 vs 0.417)
+  PASS   RT_Extrusion_001 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_001 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_001 volume  (2.813916 vs 2.813916)
+  PASS   RT_Extrusion_001 surface_area  (17.841140 vs 17.841140)
+  PASS   RT_Extrusion_001 elem.volume  (2.8139 vs 2.8139)
+  PASS   RT_Extrusion_001 elem.surface_area  (17.8411 vs 17.8411)
+  PASS   RT_Extrusion_002 depth  (2.284000000000005 vs 2.28400000000001)
+  PASS   RT_Extrusion_002 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_002 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_002 volume  (0.073289 vs 0.073289)
+  PASS   RT_Extrusion_002 surface_area  (12.333824 vs 12.333824)
+  PASS   RT_Extrusion_002 elem.volume  (0.0733 vs 0.0733)
+  PASS   RT_Extrusion_002 elem.surface_area  (12.3338 vs 12.3338)
+  PASS   RT_Extrusion_003 depth  (0.4170000000000001 vs 0.417)
+  PASS   RT_Extrusion_003 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_003 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_003 volume  (0.259216 vs 0.259216)
+  PASS   RT_Extrusion_003 surface_area  (2.559294 vs 2.559294)
+  PASS   RT_Extrusion_003 elem.volume  (0.2592 vs 0.2592)
+  PASS   RT_Extrusion_003 elem.surface_area  (2.5593 vs 2.5593)
+  PASS   RT_Extrusion_004 depth  (0.6330000000000073 vs 0.633000000000007)
+  PASS   RT_Extrusion_004 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_004 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_004 volume  (0.005264 vs 0.005264)
+  PASS   RT_Extrusion_004 surface_area  (0.909162 vs 0.909162)
+  PASS   RT_Extrusion_004 elem.volume  (0.0053 vs 0.0053)
+  PASS   RT_Extrusion_004 elem.surface_area  (0.9092 vs 0.9092)
+  PASS   RT_Extrusion_005 depth  (0.4170000000000001 vs 0.417)
+  PASS   RT_Extrusion_005 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_005 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_005 volume  (0.259216 vs 0.259216)
+  PASS   RT_Extrusion_005 surface_area  (2.559294 vs 2.559294)
+  PASS   RT_Extrusion_005 elem.volume  (0.2592 vs 0.2592)
+  PASS   RT_Extrusion_005 elem.surface_area  (2.5593 vs 2.5593)
+  PASS   RT_Extrusion_006 depth  (0.6320000000000041 vs 0.632000000000004)
+  PASS   RT_Extrusion_006 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_006 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_006 volume  (0.005554 vs 0.005554)
+  PASS   RT_Extrusion_006 surface_area  (0.908318 vs 0.908318)
+  PASS   RT_Extrusion_006 elem.volume  (0.0056 vs 0.0056)
+  PASS   RT_Extrusion_006 elem.surface_area  (0.9083 vs 0.9083)
+  PASS   RT_Extrusion_007 depth  (0.4170000000000001 vs 0.417)
+  PASS   RT_Extrusion_007 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_007 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_007 volume  (0.259216 vs 0.259216)
+  PASS   RT_Extrusion_007 surface_area  (2.559294 vs 2.559294)
+  PASS   RT_Extrusion_007 elem.volume  (0.2592 vs 0.2592)
+  PASS   RT_Extrusion_007 elem.surface_area  (2.5593 vs 2.5593)
+  PASS   RT_Extrusion_008 depth  (0.6330000000000073 vs 0.633000000000007)
+  PASS   RT_Extrusion_008 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_008 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_008 volume  (0.005264 vs 0.005264)
+  PASS   RT_Extrusion_008 surface_area  (0.909162 vs 0.909162)
+  PASS   RT_Extrusion_008 elem.volume  (0.0053 vs 0.0053)
+  PASS   RT_Extrusion_008 elem.surface_area  (0.9092 vs 0.9092)
+  PASS   RT_Extrusion_009 depth  (0.4170000000000001 vs 0.417)
+  PASS   RT_Extrusion_009 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_009 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_009 volume  (0.688050 vs 0.688050)
+  PASS   RT_Extrusion_009 surface_area  (5.760300 vs 5.760300)
+  PASS   RT_Extrusion_009 elem.volume  (0.6880 vs 0.6880)
+  PASS   RT_Extrusion_009 elem.surface_area  (5.7603 vs 5.7603)
+  PASS   RT_Extrusion_010 depth  (2.074000000000006 vs 2.07400000000001)
+  PASS   RT_Extrusion_010 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_010 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_010 volume  (0.015530 vs 0.015530)
+  PASS   RT_Extrusion_010 surface_area  (2.653104 vs 2.653104)
+  PASS   RT_Extrusion_010 elem.volume  (0.0155 vs 0.0155)
+  PASS   RT_Extrusion_010 elem.surface_area  (2.6531 vs 2.6531)
+  PASS   RT_Extrusion_011 depth  (2.900000000000012 vs 2.90000000000001)
+  PASS   RT_Extrusion_011 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_011 profile pts  (6 vs 6)
+  PASS   RT_Extrusion_011 volume  (10.137562 vs 10.137562)
+  PASS   RT_Extrusion_011 surface_area  (59.033239 vs 59.033239)
+  PASS   RT_Extrusion_011 elem.volume  (10.1376 vs 10.1376)
+  PASS   RT_Extrusion_011 elem.surface_area  (59.0332 vs 59.0332)
+  PASS   RT_Extrusion_012 depth  (0.4170000000000001 vs 0.417)
+  PASS   RT_Extrusion_012 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_012 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_012 volume  (2.813916 vs 2.813916)
+  PASS   RT_Extrusion_012 surface_area  (17.841140 vs 17.841140)
+  PASS   RT_Extrusion_012 elem.volume  (2.8139 vs 2.8139)
+  PASS   RT_Extrusion_012 elem.surface_area  (17.8411 vs 17.8411)
+  PASS   RT_Extrusion_013 depth  (2.284000000000005 vs 2.28400000000001)
+  PASS   RT_Extrusion_013 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_013 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_013 volume  (0.073289 vs 0.073289)
+  PASS   RT_Extrusion_013 surface_area  (12.333824 vs 12.333824)
+  PASS   RT_Extrusion_013 elem.volume  (0.0733 vs 0.0733)
+  PASS   RT_Extrusion_013 elem.surface_area  (12.3338 vs 12.3338)
+  PASS   RT_Extrusion_014 depth  (0.4170000000000001 vs 0.417)
+  PASS   RT_Extrusion_014 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_014 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_014 volume  (0.259216 vs 0.259216)
+  PASS   RT_Extrusion_014 surface_area  (2.559294 vs 2.559294)
+  PASS   RT_Extrusion_014 elem.volume  (0.2592 vs 0.2592)
+  PASS   RT_Extrusion_014 elem.surface_area  (2.5593 vs 2.5593)
+  PASS   RT_Extrusion_015 depth  (0.6330000000000073 vs 0.633000000000007)
+  PASS   RT_Extrusion_015 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_015 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_015 volume  (0.005264 vs 0.005264)
+  PASS   RT_Extrusion_015 surface_area  (0.909162 vs 0.909162)
+  PASS   RT_Extrusion_015 elem.volume  (0.0053 vs 0.0053)
+  PASS   RT_Extrusion_015 elem.surface_area  (0.9092 vs 0.9092)
+  PASS   RT_Extrusion_016 depth  (0.4170000000000001 vs 0.417)
+  PASS   RT_Extrusion_016 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_016 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_016 volume  (0.259216 vs 0.259216)
+  PASS   RT_Extrusion_016 surface_area  (2.559294 vs 2.559294)
+  PASS   RT_Extrusion_016 elem.volume  (0.2592 vs 0.2592)
+  PASS   RT_Extrusion_016 elem.surface_area  (2.5593 vs 2.5593)
+  PASS   RT_Extrusion_017 depth  (0.6320000000000041 vs 0.632000000000004)
+  PASS   RT_Extrusion_017 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_017 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_017 volume  (0.005554 vs 0.005554)
+  PASS   RT_Extrusion_017 surface_area  (0.908318 vs 0.908318)
+  PASS   RT_Extrusion_017 elem.volume  (0.0056 vs 0.0056)
+  PASS   RT_Extrusion_017 elem.surface_area  (0.9083 vs 0.9083)
+  PASS   RT_Extrusion_018 depth  (0.4170000000000001 vs 0.417)
+  PASS   RT_Extrusion_018 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_018 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_018 volume  (0.259216 vs 0.259216)
+  PASS   RT_Extrusion_018 surface_area  (2.559294 vs 2.559294)
+  PASS   RT_Extrusion_018 elem.volume  (0.2592 vs 0.2592)
+  PASS   RT_Extrusion_018 elem.surface_area  (2.5593 vs 2.5593)
+  PASS   RT_Extrusion_019 depth  (0.6330000000000073 vs 0.633000000000007)
+  PASS   RT_Extrusion_019 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_019 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_019 volume  (0.005264 vs 0.005264)
+  PASS   RT_Extrusion_019 surface_area  (0.909162 vs 0.909162)
+  PASS   RT_Extrusion_019 elem.volume  (0.0053 vs 0.0053)
+  PASS   RT_Extrusion_019 elem.surface_area  (0.9092 vs 0.9092)
+  PASS   RT_Mesh_000 vertices  (40 vs 40)
+  PASS   RT_Mesh_000 faces  (14 vs 14)
+  PASS   RT_Mesh_000 area  (120.847060 vs 120.847060)
+  PASS   RT_Mesh_000 elem.surface_area  (120.8471 vs 120.8471)
+  PASS   RT_Mesh_001 vertices  (12 vs 12)
+  PASS   RT_Mesh_001 faces  (8 vs 8)
+  PASS   RT_Mesh_001 area  (45.221562 vs 45.221562)
+  PASS   RT_Mesh_001 elem.surface_area  (45.2216 vs 45.2216)
+  PASS   RT_Mesh_002 vertices  (12 vs 12)
+  PASS   RT_Mesh_002 faces  (8 vs 8)
+  PASS   RT_Mesh_002 area  (45.221562 vs 45.221562)
+  PASS   RT_Mesh_002 elem.surface_area  (45.2216 vs 45.2216)
+  PASS   RT_Mesh_003 vertices  (8 vs 8)
+  PASS   RT_Mesh_003 faces  (6 vs 6)
+  PASS   RT_Mesh_003 area  (14.128886 vs 14.128886)
+  PASS   RT_Mesh_003 elem.surface_area  (14.1289 vs 14.1289)
+  PASS   RT_Mesh_004 vertices  (16 vs 16)
+  PASS   RT_Mesh_004 faces  (10 vs 10)
+  PASS   RT_Mesh_004 area  (18.499097 vs 18.499097)
+  PASS   RT_Mesh_004 elem.surface_area  (18.4991 vs 18.4991)
+  PASS   RT_Mesh_005 vertices  (352 vs 352)
+  PASS   RT_Mesh_005 faces  (283 vs 283)
+  PASS   RT_Mesh_005 area  (16.265171 vs 16.265171)
+  PASS   RT_Mesh_005 elem.surface_area  (16.2652 vs 16.2652)
+  PASS   RT_Mesh_006 vertices  (76 vs 76)
+  PASS   RT_Mesh_006 faces  (62 vs 62)
+  PASS   RT_Mesh_006 area  (11.559873 vs 11.559873)
+  PASS   RT_Mesh_006 elem.surface_area  (11.5599 vs 11.5599)
+  PASS   RT_Mesh_007 vertices  (76 vs 76)
+  PASS   RT_Mesh_007 faces  (62 vs 62)
+  PASS   RT_Mesh_007 area  (11.622969 vs 11.622969)
+  PASS   RT_Mesh_007 elem.surface_area  (11.6230 vs 11.6230)
+  PASS   RT_Mesh_008 vertices  (8 vs 8)
+  PASS   RT_Mesh_008 faces  (6 vs 6)
+  PASS   RT_Mesh_008 area  (14.128886 vs 14.128886)
+  PASS   RT_Mesh_008 elem.surface_area  (14.1289 vs 14.1289)
+  PASS   RT_Mesh_009 vertices  (66 vs 66)
+  PASS   RT_Mesh_009 faces  (54 vs 54)
+  PASS   RT_Mesh_009 area  (5.244665 vs 5.244665)
+  PASS   RT_Mesh_009 elem.surface_area  (5.2447 vs 5.2447)
+  PASS   RT_Mesh_010 vertices  (66 vs 66)
+  PASS   RT_Mesh_010 faces  (54 vs 54)
+  PASS   RT_Mesh_010 area  (5.244665 vs 5.244665)
+  PASS   RT_Mesh_010 elem.surface_area  (5.2447 vs 5.2447)
+  PASS   RT_Mesh_011 vertices  (76 vs 76)
+  PASS   RT_Mesh_011 faces  (62 vs 62)
+  PASS   RT_Mesh_011 area  (11.559873 vs 11.559873)
+  PASS   RT_Mesh_011 elem.surface_area  (11.5599 vs 11.5599)
+  PASS   RT_Mesh_012 vertices  (76 vs 76)
+  PASS   RT_Mesh_012 faces  (62 vs 62)
+  PASS   RT_Mesh_012 area  (11.622969 vs 11.622969)
+  PASS   RT_Mesh_012 elem.surface_area  (11.6230 vs 11.6230)
+  PASS   RT_Mesh_013 vertices  (348 vs 348)
+  PASS   RT_Mesh_013 faces  (275 vs 275)
+  PASS   RT_Mesh_013 area  (20.852111 vs 20.852111)
+  PASS   RT_Mesh_013 elem.surface_area  (20.8521 vs 20.8521)
+  PASS   RT_Mesh_014 vertices  (16 vs 16)
+  PASS   RT_Mesh_014 faces  (10 vs 10)
+  PASS   RT_Mesh_014 area  (18.464502 vs 18.464502)
+  PASS   RT_Mesh_014 elem.surface_area  (18.4645 vs 18.4645)
+  PASS   RT_Mesh_015 vertices  (76 vs 76)
+  PASS   RT_Mesh_015 faces  (62 vs 62)
+  PASS   RT_Mesh_015 area  (11.622969 vs 11.622969)
+  PASS   RT_Mesh_015 elem.surface_area  (11.6230 vs 11.6230)
+  PASS   RT_Mesh_016 vertices  (348 vs 348)
+  PASS   RT_Mesh_016 faces  (275 vs 275)
+  PASS   RT_Mesh_016 area  (20.852111 vs 20.852111)
+  PASS   RT_Mesh_016 elem.surface_area  (20.8521 vs 20.8521)
+  PASS   RT_Mesh_017 vertices  (76 vs 76)
+  PASS   RT_Mesh_017 faces  (62 vs 62)
+  PASS   RT_Mesh_017 area  (11.559873 vs 11.559873)
+  PASS   RT_Mesh_017 elem.surface_area  (11.5599 vs 11.5599)
+  PASS   RT_Mesh_018 vertices  (12 vs 12)
+  PASS   RT_Mesh_018 faces  (8 vs 8)
+  PASS   RT_Mesh_018 area  (45.221562 vs 45.221562)
+  PASS   RT_Mesh_018 elem.surface_area  (45.2216 vs 45.2216)
+  PASS   RT_Mesh_019 vertices  (12 vs 12)
+  PASS   RT_Mesh_019 faces  (8 vs 8)
+  PASS   RT_Mesh_019 area  (45.221562 vs 45.221562)
+  PASS   RT_Mesh_019 elem.surface_area  (45.2216 vs 45.2216)
+  PASS   Write RT: no missing elements  (0)
+  PASS   Write RT: no mismatches  (0)
+  PASS   Vol/SA: all Extrusion elem.volume > 0  (196/196)
+  PASS   Vol/SA: all Extrusion elem.surface_area > 0  (196/196)
+  PASS   Vol/SA: all ClippedExtrusion elem.volume > 0  (4/4)
+  PASS   Vol/SA: all ClippedExtrusion elem.surface_area > 0  (4/4)
+  PASS   Vol/SA: Mesh some elem.volume > 0  (8/65)
+  PASS   Vol/SA: all Mesh elem.surface_area > 0  (65/65)
+
+  274 PASS / 0 FAIL  (of 274 checks)
+
+SUCCESS: All Duplex round-trip tests passed.
+
+----------------------------------------------------------------
+A.2.4 Stage 3b: HiLo
+----------------------------------------------------------------
+======================================================================
+PART 1: READ — temp/HiLo_Model-Architecture.ifc
+======================================================================
+Rectified 566 IFC placements to align with spatial hierarchy.
+Loaded 806 graph edges: 94 connection, 229 port_connection, 479 port_element, 4 services.
+
+  Loaded in 72.5s
+
+  Parsing all building elements...
+
+  Elements with geometry: 1424
+  Parse errors:           0
+
+  Type                      Count       %
+  ----------------------------------------
+  Extrusion                  1085   76.2%
+  TessellatedBrep             208   14.6%
+  ClippedExtrusion            125    8.8%
+  Mesh                          5    0.4%
+  BooleanResult                 1    0.1%
+  ----------------------------------------
+
+  IFC Boolean Entities:
+    IfcBooleanClippingResult: 190
+    IfcBooleanResult:         192
+
+  CLIPPED EXTRUSION DATA QUALITY:
+  --------------------------------------------------
+    Valid: 125/125
+    Max clips on one element: 5
+
+  BOOLEAN RESULT DATA QUALITY:
+  --------------------------------------------------
+    Valid: 1/1
+
+  EXTRUSION PARAMETRIC DATA:
+  --------------------------------------------------
+    Extrusions parsed: 1085
+    Depth range: 1.0029 - 7755.0000 m
+
+    Profile Type              Count
+    --------------------------------
+    Circle                      466
+    Polygon(4)                  393
+    Polygon(12)                 173
+    Polygon(6)                   13
+    Polygon(5)                    9
+    ProfileWithVoids              9
+    Polygon(7)                    6
+    Polygon(8)                    6
+    Polygon(28)                   2
+    Polygon(10)                   2
+    Polygon(3)                    1
+    Polygon(13)                   1
+    Polygon(11)                   1
+    Polygon(14)                   1
+    Polygon(40)                   1
+    Polygon(24)                   1
+
+
+======================================================================
+PART 2: WRITE ROUND-TRIP (sample per type)
+======================================================================
+
+  Samples selected for write round-trip:
+    Extrusion                  20 / 1085
+    ClippedExtrusion           20 / 125
+    BooleanResult               1 /   1
+    Mesh                        5 /   5
+
+  Skipped (no writer): TessellatedBrep
+
+  Creating new model with 46 elements...
+  Saved to temp/thesis_roundtrip_hilo.ifc
+  Reloading and comparing...
+
+
+  Write round-trip results:
+    Matched:    46
+    Mismatched: 0
+    Missing:    0
+
+======================================================================
+PART 3: VOLUME & SURFACE AREA (element-level, all types)
+======================================================================
+
+  Uses element.volume / element.surface_area which falls back to
+  visual_geometry (tessellated brep) when parametric returns None.
+
+  Extrusion (1085 elements):
+    volume > 0:        1085
+    volume range:      257.359270 - 8079312685.187493
+    volume mean:       51463908.163067
+    surface_area > 0:  1085
+
+  ClippedExtrusion (125 elements):
+    volume > 0:        120
+    volume range:      138652.331298 - 1906546418.356468
+    volume mean:       88521886.544391
+    volume None/zero:  5
+    surface_area > 0:  125
+
+  BooleanResult (1 elements):
+    volume > 0:        1
+    volume range:      183395120.938512 - 183395120.938512
+    volume mean:       183395120.938512
+    surface_area > 0:  1
+
+  Mesh (5 elements):
+    volume > 0:        0
+    volume None/zero:  5
+    surface_area > 0:  5
+
+  TessellatedBrep (208 elements):
+    volume > 0:        205
+    volume range:      312.810574 - 27972954608.404343
+    volume mean:       529128554.872993
+    volume None/zero:  3
+    surface_area > 0:  208
+
+
+======================================================================
+SUMMARY
+======================================================================
+
+  PASS   Read: total geometries >= 1400  (1424)
+  PASS   Read: parse errors == 0  (0)
+  PASS   Read: Extrusion >= 1000  (1085)
+  PASS   Read: ClippedExtrusion >= 120  (125)
+  PASS   Read: BooleanResult >= 0  (1)
+  PASS   Read: TessellatedBrep >= 200  (208)
+  PASS   Read: all ClippedExtrusions valid  (125/125)
+  PASS   Read: all BooleanResults valid  (1/1)
+  PASS   Read: all extrusion depths > 0
+  PASS   Read: all extrusion profiles valid
+  PASS   RT_BooleanResult_000 operator  (DIFFERENCE vs DIFFERENCE)
+  PASS   RT_BooleanResult_000 first type  (BooleanResult vs BooleanResult)
+  PASS   RT_BooleanResult_000 second type  (Extrusion vs Extrusion)
+  PASS   RT_BooleanResult_000 elem.volume  (183395120.9385 vs 183392497.5204)
+  PASS   RT_BooleanResult_000 elem.surface_area  (4249165.8974 vs 4249202.9898)
+  PASS   RT_ClippedExtrusion_000.ext depth  (601.637147955896 vs 601.637147955896)
+  PASS   RT_ClippedExtrusion_000.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_000.ext profile pts  (12 vs 12)
+  PASS   RT_ClippedExtrusion_000.ext volume  (4716835.239974 vs 4716835.239974)
+  PASS   RT_ClippedExtrusion_000.ext surface_area  (357409.900039 vs 357409.900039)
+  PASS   RT_ClippedExtrusion_000 clip count  (1 vs 1)
+  PASS   RT_ClippedExtrusion_000 clip[0] agree  (False vs False)
+  PASS   RT_ClippedExtrusion_000 elem.volume  (4481635.2400 vs 4481635.2400)
+  PASS   RT_ClippedExtrusion_000 elem.surface_area  (343617.3344 vs 343617.3344)
+  PASS   RT_ClippedExtrusion_001.ext depth  (1736.48422968392 vs 1736.48422968392)
+  PASS   RT_ClippedExtrusion_001.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_001.ext profile pts  (12 vs 12)
+  PASS   RT_ClippedExtrusion_001.ext volume  (13614036.360722 vs 13614036.360722)
+  PASS   RT_ClippedExtrusion_001.ext surface_area  (1002003.042460 vs 1002003.042460)
+  PASS   RT_ClippedExtrusion_001 clip count  (1 vs 1)
+  PASS   RT_ClippedExtrusion_001 clip[0] agree  (False vs False)
+  PASS   RT_ClippedExtrusion_001 elem.volume  (13366651.1172 vs 13366651.1172)
+  PASS   RT_ClippedExtrusion_001 elem.surface_area  (987618.5027 vs 987618.5027)
+  PASS   RT_ClippedExtrusion_002.ext depth  (1389.99999999991 vs 1389.99999999991)
+  PASS   RT_ClippedExtrusion_002.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_002.ext profile pts  (6 vs 6)
+  PASS   RT_ClippedExtrusion_002.ext volume  (1414251495.954986 vs 1414251495.954986)
+  PASS   RT_ClippedExtrusion_002.ext surface_area  (16739951.282159 vs 16739951.282159)
+  PASS   RT_ClippedExtrusion_002 clip count  (1 vs 1)
+  PASS   RT_ClippedExtrusion_002 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_002 elem.volume  (1414251495.9550 vs 1414251495.9550)
+  PASS   RT_ClippedExtrusion_002 elem.surface_area  (16739951.2822 vs 16739951.2822)
+  PASS   RT_ClippedExtrusion_003.ext depth  (989.766514757594 vs 989.766514757594)
+  PASS   RT_ClippedExtrusion_003.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_003.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_003.ext volume  (57010551.250038 vs 57010551.250037)
+  PASS   RT_ClippedExtrusion_003.ext surface_area  (1065375.854167 vs 1065375.854167)
+  PASS   RT_ClippedExtrusion_003 clip count  (2 vs 2)
+  PASS   RT_ClippedExtrusion_003 clip[0] agree  (False vs False)
+  PASS   RT_ClippedExtrusion_003 clip[1] agree  (False vs False)
+  INFO   RT_ClippedExtrusion_003 elem.volume  (293790092.1944 vs 54893348.1564)
+  INFO   RT_ClippedExtrusion_003 elem.surface_area  (5127561.6669 vs 1029393.7778)
+  PASS   RT_ClippedExtrusion_004.ext depth  (1298.00000000003 vs 1298.00000000003)
+  PASS   RT_ClippedExtrusion_004.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_004.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_004.ext volume  (144376539.999959 vs 144376539.999959)
+  PASS   RT_ClippedExtrusion_004.ext surface_area  (2648421.999999 vs 2648421.999999)
+  PASS   RT_ClippedExtrusion_004 clip count  (1 vs 1)
+  PASS   RT_ClippedExtrusion_004 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_004 elem.volume  (144376540.0000 vs 144376540.0000)
+  PASS   RT_ClippedExtrusion_004 elem.surface_area  (2648422.0000 vs 2648422.0000)
+  PASS   RT_ClippedExtrusion_005.ext depth  (512.999999999996 vs 512.999999999996)
+  PASS   RT_ClippedExtrusion_005.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_005.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_005.ext volume  (53146800.000000 vs 53146800.000000)
+  PASS   RT_ClippedExtrusion_005.ext surface_area  (4032128.000000 vs 4032128.000000)
+  PASS   RT_ClippedExtrusion_005 clip count  (2 vs 2)
+  PASS   RT_ClippedExtrusion_005 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_005 clip[1] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_005 elem.volume  (53146800.0000 vs 53146800.0000)
+  PASS   RT_ClippedExtrusion_005 elem.surface_area  (4032128.0000 vs 4032128.0000)
+  PASS   RT_ClippedExtrusion_006.ext depth  (1835.0 vs 1835.0)
+  PASS   RT_ClippedExtrusion_006.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_006.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_006.ext volume  (243471480.191163 vs 243471480.191163)
+  PASS   RT_ClippedExtrusion_006.ext surface_area  (3697235.402816 vs 3697235.402816)
+  PASS   RT_ClippedExtrusion_006 clip count  (4 vs 4)
+  PASS   RT_ClippedExtrusion_006 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_006 clip[1] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_006 clip[2] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_006 clip[3] agree  (True vs True)
+  INFO   RT_ClippedExtrusion_006 elem.volume  (207633712.1598 vs 38993385.9324)
+  INFO   RT_ClippedExtrusion_006 elem.surface_area  (3469037.9589 vs 993968.5813)
+  PASS   RT_ClippedExtrusion_007.ext depth  (1298.00000000003 vs 1298.00000000003)
+  PASS   RT_ClippedExtrusion_007.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_007.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_007.ext volume  (144376539.999959 vs 144376539.999959)
+  PASS   RT_ClippedExtrusion_007.ext surface_area  (2648421.999999 vs 2648421.999999)
+  PASS   RT_ClippedExtrusion_007 clip count  (1 vs 1)
+  PASS   RT_ClippedExtrusion_007 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_007 elem.volume  (144376540.0000 vs 144376540.0000)
+  PASS   RT_ClippedExtrusion_007 elem.surface_area  (2648422.0000 vs 2648422.0000)
+  PASS   RT_ClippedExtrusion_008.ext depth  (194.14225765984 vs 194.14225765984)
+  PASS   RT_ClippedExtrusion_008.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_008.ext profile pts  (7 vs 7)
+  PASS   RT_ClippedExtrusion_008.ext volume  (140905164.627193 vs 140905164.627193)
+  PASS   RT_ClippedExtrusion_008.ext surface_area  (3847127.943421 vs 3847127.943421)
+  PASS   RT_ClippedExtrusion_008 clip count  (1 vs 1)
+  PASS   RT_ClippedExtrusion_008 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_008 elem.volume  (139383373.0912 vs 139383373.0912)
+  PASS   RT_ClippedExtrusion_008 elem.surface_area  (3821661.7945 vs 3821661.7945)
+  PASS   RT_ClippedExtrusion_009.ext depth  (201.188252904635 vs 201.188252904635)
+  PASS   RT_ClippedExtrusion_009.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_009.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_009.ext volume  (13132506.727843 vs 13132506.727843)
+  PASS   RT_ClippedExtrusion_009.ext surface_area  (397709.731359 vs 397709.731359)
+  PASS   RT_ClippedExtrusion_009 clip count  (3 vs 3)
+  PASS   RT_ClippedExtrusion_009 clip[0] agree  (False vs False)
+  PASS   RT_ClippedExtrusion_009 clip[1] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_009 clip[2] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_009 elem.volume  (13043683.0693 vs 12721781.7043)
+  PASS   RT_ClippedExtrusion_009 elem.surface_area  (396085.4140 vs 389121.0519)
+  PASS   RT_ClippedExtrusion_010.ext depth  (178.000000000002 vs 178.000000000002)
+  PASS   RT_ClippedExtrusion_010.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_010.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_010.ext volume  (10444556.958374 vs 10444556.958374)
+  PASS   RT_ClippedExtrusion_010.ext surface_area  (334150.521872 vs 334150.521872)
+  PASS   RT_ClippedExtrusion_010 clip count  (4 vs 4)
+  PASS   RT_ClippedExtrusion_010 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_010 clip[1] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_010 clip[2] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_010 clip[3] agree  (True vs True)
+  INFO   RT_ClippedExtrusion_010 elem.volume  (10094308.3087 vs 3994149.8471)
+  INFO   RT_ClippedExtrusion_010 elem.surface_area  (329938.1577 vs 200092.5384)
+  PASS   RT_ClippedExtrusion_011.ext depth  (174.563670855033 vs 174.563670855033)
+  PASS   RT_ClippedExtrusion_011.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_011.ext profile pts  (6 vs 6)
+  PASS   RT_ClippedExtrusion_011.ext volume  (107157516.019888 vs 107157516.019888)
+  PASS   RT_ClippedExtrusion_011.ext surface_area  (3056065.243881 vs 3056065.243881)
+  PASS   RT_ClippedExtrusion_011 clip count  (2 vs 2)
+  PASS   RT_ClippedExtrusion_011 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_011 clip[1] agree  (True vs True)
+  INFO   RT_ClippedExtrusion_011 elem.volume  (105866620.5768 vs 50384486.4593)
+  INFO   RT_ClippedExtrusion_011 elem.surface_area  (3034390.8601 vs 2037537.2068)
+  PASS   RT_ClippedExtrusion_012.ext depth  (1903.0 vs 1903.0)
+  PASS   RT_ClippedExtrusion_012.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_012.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_012.ext volume  (3127429.333682 vs 3127429.333682)
+  PASS   RT_ClippedExtrusion_012.ext surface_area  (570734.455589 vs 570734.455589)
+  PASS   RT_ClippedExtrusion_012 clip count  (1 vs 1)
+  PASS   RT_ClippedExtrusion_012 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_012 elem.volume  (3127429.3337 vs 3127429.3337)
+  PASS   RT_ClippedExtrusion_012 elem.surface_area  (570734.4556 vs 570734.4556)
+  PASS   RT_ClippedExtrusion_013.ext depth  (185.000000000092 vs 185.000000000092)
+  PASS   RT_ClippedExtrusion_013.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_013.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_013.ext volume  (11340787.758498 vs 11340787.758498)
+  PASS   RT_ClippedExtrusion_013.ext surface_area  (357061.091780 vs 357061.091780)
+  PASS   RT_ClippedExtrusion_013 clip count  (1 vs 1)
+  PASS   RT_ClippedExtrusion_013 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_013 elem.volume  (11340787.7585 vs 11340787.7585)
+  PASS   RT_ClippedExtrusion_013 elem.surface_area  (357061.0918 vs 357061.0918)
+  PASS   RT_ClippedExtrusion_014.ext depth  (251.728819281508 vs 251.728819281508)
+  PASS   RT_ClippedExtrusion_014.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_014.ext profile pts  (6 vs 6)
+  PASS   RT_ClippedExtrusion_014.ext volume  (31423710.836335 vs 31423710.836335)
+  PASS   RT_ClippedExtrusion_014.ext surface_area  (842123.016354 vs 842123.016354)
+  PASS   RT_ClippedExtrusion_014 clip count  (4 vs 4)
+  PASS   RT_ClippedExtrusion_014 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_014 clip[1] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_014 clip[2] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_014 clip[3] agree  (True vs True)
+  INFO   RT_ClippedExtrusion_014 elem.volume  (28342547.8425 vs 915402.6664)
+  INFO   RT_ClippedExtrusion_014 elem.surface_area  (828916.3906 vs 372110.8739)
+  PASS   RT_ClippedExtrusion_015.ext depth  (228.967653812379 vs 228.967653812379)
+  PASS   RT_ClippedExtrusion_015.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_015.ext profile pts  (5 vs 5)
+  PASS   RT_ClippedExtrusion_015.ext volume  (163554095.894597 vs 163554095.894597)
+  PASS   RT_ClippedExtrusion_015.ext surface_area  (4211078.318518 vs 4211078.318518)
+  PASS   RT_ClippedExtrusion_015 clip count  (2 vs 2)
+  PASS   RT_ClippedExtrusion_015 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_015 clip[1] agree  (True vs True)
+  INFO   RT_ClippedExtrusion_015 elem.volume  (162069338.6801 vs 93347527.6725)
+  INFO   RT_ClippedExtrusion_015 elem.surface_area  (4186654.8885 vs 3017462.6609)
+  PASS   RT_ClippedExtrusion_016.ext depth  (251.728819281697 vs 251.728819281697)
+  PASS   RT_ClippedExtrusion_016.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_016.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_016.ext volume  (25440564.314726 vs 25440564.314726)
+  PASS   RT_ClippedExtrusion_016.ext surface_area  (688313.028142 vs 688313.028142)
+  PASS   RT_ClippedExtrusion_016 clip count  (5 vs 5)
+  PASS   RT_ClippedExtrusion_016 clip[0] agree  (False vs False)
+  PASS   RT_ClippedExtrusion_016 clip[1] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_016 clip[2] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_016 clip[3] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_016 clip[4] agree  (True vs True)
+  INFO   RT_ClippedExtrusion_016 elem.volume  (22985037.6329 vs 885508.4564)
+  INFO   RT_ClippedExtrusion_016 elem.surface_area  (682507.9504 vs 358058.9208)
+  PASS   RT_ClippedExtrusion_017.ext depth  (1689.99999999991 vs 1689.99999999991)
+  PASS   RT_ClippedExtrusion_017.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_017.ext profile pts  (6 vs 6)
+  PASS   RT_ClippedExtrusion_017.ext volume  (1906546418.356468 vs 1906546418.356468)
+  PASS   RT_ClippedExtrusion_017.ext surface_area  (22005686.178645 vs 22005686.178645)
+  PASS   RT_ClippedExtrusion_017 clip count  (1 vs 1)
+  PASS   RT_ClippedExtrusion_017 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_017 elem.volume  (1906546418.3565 vs 1840466271.8225)
+  PASS   RT_ClippedExtrusion_017 elem.surface_area  (22005686.1786 vs 21266683.3565)
+  PASS   RT_ClippedExtrusion_018.ext depth  (1297.99999999994 vs 1297.99999999994)
+  PASS   RT_ClippedExtrusion_018.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_018.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_018.ext volume  (148101799.999969 vs 148101799.999969)
+  PASS   RT_ClippedExtrusion_018.ext surface_area  (2707380.000000 vs 2707380.000000)
+  PASS   RT_ClippedExtrusion_018 clip count  (1 vs 1)
+  PASS   RT_ClippedExtrusion_018 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_018 elem.surface_area  (2547595.1113 vs 2707380.0000)
+  PASS   RT_ClippedExtrusion_019.ext depth  (1865.0 vs 1865.0)
+  PASS   RT_ClippedExtrusion_019.ext profile type  (Polygon vs Polygon)
+  PASS   RT_ClippedExtrusion_019.ext profile pts  (4 vs 4)
+  PASS   RT_ClippedExtrusion_019.ext volume  (353976999.999918 vs 353976999.999918)
+  PASS   RT_ClippedExtrusion_019.ext surface_area  (4665369.999999 vs 4665369.999999)
+  PASS   RT_ClippedExtrusion_019 clip count  (5 vs 5)
+  PASS   RT_ClippedExtrusion_019 clip[0] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_019 clip[1] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_019 clip[2] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_019 clip[3] agree  (True vs True)
+  PASS   RT_ClippedExtrusion_019 clip[4] agree  (True vs True)
+  INFO   RT_ClippedExtrusion_019 elem.volume  (296867280.2723 vs 32830000.0000)
+  INFO   RT_ClippedExtrusion_019 elem.surface_area  (4362271.3309 vs 893200.0000)
+  PASS   RT_Extrusion_000 depth  (1895.99999999991 vs 1895.99999999991)
+  PASS   RT_Extrusion_000 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_000 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_000 volume  (26847360.000000 vs 26847360.000000)
+  PASS   RT_Extrusion_000 surface_area  (2356608.000000 vs 2356608.000000)
+  PASS   RT_Extrusion_000 elem.volume  (26847360.0000 vs 26847360.0000)
+  PASS   RT_Extrusion_000 elem.surface_area  (2356608.0000 vs 2356608.0000)
+  PASS   RT_Extrusion_001 depth  (58.9999999999996 vs 58.9999999999996)
+  PASS   RT_Extrusion_001 profile type  (Circle vs Circle)
+  PASS   RT_Extrusion_001 circle radius  (32.5 vs 32.5)
+  PASS   RT_Extrusion_001 volume  (195780.127181 vs 195780.127181)
+  PASS   RT_Extrusion_001 surface_area  (18684.622307 vs 18684.622307)
+  PASS   RT_Extrusion_001 elem.volume  (195780.1272 vs 195780.1272)
+  PASS   RT_Extrusion_001 elem.surface_area  (18684.6223 vs 18684.6223)
+  PASS   RT_Extrusion_002 depth  (1895.99999999991 vs 1895.99999999991)
+  PASS   RT_Extrusion_002 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_002 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_002 volume  (4686912.000000 vs 4686912.000000)
+  PASS   RT_Extrusion_002 surface_area  (831600.000000 vs 831600.000000)
+  PASS   RT_Extrusion_002 elem.volume  (4686912.0000 vs 4686912.0000)
+  PASS   RT_Extrusion_002 elem.surface_area  (831600.0000 vs 831600.0000)
+  PASS   RT_Extrusion_003 depth  (1840.0 vs 1840.0)
+  PASS   RT_Extrusion_003 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_003 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_003 volume  (40203806.887091 vs 40203806.887091)
+  PASS   RT_Extrusion_003 surface_area  (3952147.452182 vs 3952147.452182)
+  PASS   RT_Extrusion_003 elem.volume  (40203806.8871 vs 40203806.8871)
+  PASS   RT_Extrusion_003 elem.surface_area  (3952147.4522 vs 3952147.4522)
+  PASS   RT_Extrusion_004 depth  (1800.09597702263 vs 1800.09597702263)
+  PASS   RT_Extrusion_004 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_004 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_004 volume  (10904981.574330 vs 10904981.574330)
+  PASS   RT_Extrusion_004 surface_area  (618748.350016 vs 618748.350016)
+  PASS   RT_Extrusion_004 elem.volume  (10904981.5743 vs 10904981.5743)
+  PASS   RT_Extrusion_004 elem.surface_area  (618748.3500 vs 618748.3500)
+  PASS   RT_Extrusion_005 depth  (505.0 vs 505.0)
+  PASS   RT_Extrusion_005 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_005 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_005 volume  (11817000.000000 vs 11817000.000000)
+  PASS   RT_Extrusion_005 surface_area  (1248700.000000 vs 1248700.000000)
+  PASS   RT_Extrusion_005 elem.volume  (11817000.0000 vs 11817000.0000)
+  PASS   RT_Extrusion_005 elem.surface_area  (1248700.0000 vs 1248700.0000)
+  PASS   RT_Extrusion_006 depth  (505.0 vs 505.0)
+  PASS   RT_Extrusion_006 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_006 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_006 volume  (6076535.194355 vs 6076535.194355)
+  PASS   RT_Extrusion_006 surface_area  (651919.005354 vs 651919.005354)
+  PASS   RT_Extrusion_006 elem.volume  (6076535.1944 vs 6076535.1944)
+  PASS   RT_Extrusion_006 elem.surface_area  (651919.0054 vs 651919.0054)
+  PASS   RT_Extrusion_007 depth  (52.0 vs 52.0)
+  PASS   RT_Extrusion_007 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_007 profile pts  (7 vs 7)
+  PASS   RT_Extrusion_007 volume  (87013086.821338 vs 87013086.821338)
+  PASS   RT_Extrusion_007 surface_area  (3620858.738552 vs 3620858.738552)
+  PASS   RT_Extrusion_007 elem.volume  (87013086.8213 vs 87013086.8213)
+  PASS   RT_Extrusion_007 elem.surface_area  (3620858.7386 vs 3620858.7386)
+  PASS   RT_Extrusion_008 depth  (52.0 vs 52.0)
+  PASS   RT_Extrusion_008 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_008 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_008 volume  (16533669.844453 vs 16533669.844453)
+  PASS   RT_Extrusion_008 surface_area  (794587.971256 vs 794587.971256)
+  PASS   RT_Extrusion_008 elem.volume  (16533669.8445 vs 16533669.8445)
+  PASS   RT_Extrusion_008 elem.surface_area  (794587.9713 vs 794587.9713)
+  PASS   RT_Extrusion_009 depth  (1110.0 vs 1110.0)
+  PASS   RT_Extrusion_009 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_009 profile pts  (12 vs 12)
+  PASS   RT_Extrusion_009 volume  (8702400.000000 vs 8702400.000000)
+  PASS   RT_Extrusion_009 surface_area  (646160.000000 vs 646160.000000)
+  PASS   RT_Extrusion_009 elem.volume  (8702400.0000 vs 8702400.0000)
+  PASS   RT_Extrusion_009 elem.surface_area  (646160.0000 vs 646160.0000)
+  PASS   RT_Extrusion_010 depth  (864.579773990884 vs 864.579773990884)
+  PASS   RT_Extrusion_010 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_010 profile pts  (12 vs 12)
+  PASS   RT_Extrusion_010 volume  (6778305.428089 vs 6778305.428089)
+  PASS   RT_Extrusion_010 surface_area  (506761.311627 vs 506761.311627)
+  PASS   RT_Extrusion_010 elem.volume  (6778305.4281 vs 6778305.4281)
+  PASS   RT_Extrusion_010 elem.surface_area  (506761.3116 vs 506761.3116)
+  PASS   RT_Extrusion_011 depth  (510.000000000088 vs 510.000000000088)
+  PASS   RT_Extrusion_011 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_011 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_011 volume  (2754000.000000 vs 2754000.000000)
+  PASS   RT_Extrusion_011 surface_area  (163800.000000 vs 163800.000000)
+  PASS   RT_Extrusion_011 elem.volume  (2754000.0000 vs 2754000.0000)
+  PASS   RT_Extrusion_011 elem.surface_area  (163800.0000 vs 163800.0000)
+  PASS   RT_Extrusion_012 depth  (864.557373965012 vs 864.557373965012)
+  PASS   RT_Extrusion_012 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_012 profile pts  (12 vs 12)
+  PASS   RT_Extrusion_012 volume  (6778129.811886 vs 6778129.811886)
+  PASS   RT_Extrusion_012 surface_area  (506748.588412 vs 506748.588412)
+  PASS   RT_Extrusion_012 elem.volume  (6778129.8119 vs 6778129.8119)
+  PASS   RT_Extrusion_012 elem.surface_area  (506748.5884 vs 506748.5884)
+  PASS   RT_Extrusion_013 depth  (864.557373965012 vs 864.557373965012)
+  PASS   RT_Extrusion_013 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_013 profile pts  (12 vs 12)
+  PASS   RT_Extrusion_013 volume  (6778129.811886 vs 6778129.811886)
+  PASS   RT_Extrusion_013 surface_area  (506748.588412 vs 506748.588412)
+  PASS   RT_Extrusion_013 elem.volume  (6778129.8119 vs 6778129.8119)
+  PASS   RT_Extrusion_013 elem.surface_area  (506748.5884 vs 506748.5884)
+  PASS   RT_Extrusion_014 depth  (510.000000000088 vs 510.000000000088)
+  PASS   RT_Extrusion_014 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_014 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_014 volume  (2754000.000000 vs 2754000.000000)
+  PASS   RT_Extrusion_014 surface_area  (163800.000000 vs 163800.000000)
+  PASS   RT_Extrusion_014 elem.volume  (2754000.0000 vs 2754000.0000)
+  PASS   RT_Extrusion_014 elem.surface_area  (163800.0000 vs 163800.0000)
+  PASS   RT_Extrusion_015 depth  (12.4999999999982 vs 12.4999999999982)
+  PASS   RT_Extrusion_015 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_015 profile pts  (12 vs 12)
+  PASS   RT_Extrusion_015 volume  (46250.000000 vs 46250.000000)
+  PASS   RT_Extrusion_015 surface_area  (10650.000000 vs 10650.000000)
+  PASS   RT_Extrusion_015 elem.volume  (46250.0000 vs 46250.0000)
+  PASS   RT_Extrusion_015 elem.surface_area  (10650.0000 vs 10650.0000)
+  PASS   RT_Extrusion_016 depth  (1723.53614247294 vs 1723.53614247294)
+  PASS   RT_Extrusion_016 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_016 profile pts  (5 vs 5)
+  PASS   RT_Extrusion_016 volume  (9244447.683907 vs 9244447.683907)
+  PASS   RT_Extrusion_016 surface_area  (547639.832193 vs 547639.832193)
+  PASS   RT_Extrusion_016 elem.volume  (9244447.6839 vs 9244447.6839)
+  PASS   RT_Extrusion_016 elem.surface_area  (547639.8322 vs 547639.8322)
+  PASS   RT_Extrusion_017 depth  (1723.53614247294 vs 1723.53614247294)
+  PASS   RT_Extrusion_017 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_017 profile pts  (4 vs 4)
+  PASS   RT_Extrusion_017 volume  (7611138.465714 vs 7611138.465714)
+  PASS   RT_Extrusion_017 surface_area  (482924.946654 vs 482924.946654)
+  PASS   RT_Extrusion_017 elem.volume  (7611138.4657 vs 7611138.4657)
+  PASS   RT_Extrusion_017 elem.surface_area  (482924.9467 vs 482924.9467)
+  PASS   RT_Extrusion_018 depth  (1865.0 vs 1865.0)
+  PASS   RT_Extrusion_018 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_018 profile pts  (7 vs 7)
+  PASS   RT_Extrusion_018 volume  (84923037.422159 vs 84923037.422159)
+  PASS   RT_Extrusion_018 surface_area  (6262670.402179 vs 6262670.402179)
+  PASS   RT_Extrusion_018 elem.volume  (84923037.4222 vs 84923037.4222)
+  PASS   RT_Extrusion_018 elem.surface_area  (6262670.4022 vs 6262670.4022)
+  PASS   RT_Extrusion_019 depth  (1865.0 vs 1865.0)
+  PASS   RT_Extrusion_019 profile type  (Polygon vs Polygon)
+  PASS   RT_Extrusion_019 profile pts  (5 vs 5)
+  PASS   RT_Extrusion_019 volume  (84923040.175623 vs 84923040.175623)
+  PASS   RT_Extrusion_019 surface_area  (6262670.601808 vs 6262670.601808)
+  PASS   RT_Extrusion_019 elem.volume  (84923040.1756 vs 84923040.1756)
+  PASS   RT_Extrusion_019 elem.surface_area  (6262670.6018 vs 6262670.6018)
+  PASS   RT_Mesh_000 vertices  (1828 vs 1828)
+  PASS   RT_Mesh_000 faces  (16 vs 16)
+  PASS   RT_Mesh_000 area  (15623488.530978 vs 15623488.530978)
+  PASS   RT_Mesh_000 elem.surface_area  (15623488.5310 vs 15623488.5310)
+  PASS   RT_Mesh_001 vertices  (1828 vs 1828)
+  PASS   RT_Mesh_001 faces  (16 vs 16)
+  PASS   RT_Mesh_001 area  (15623488.530978 vs 15623488.530978)
+  PASS   RT_Mesh_001 elem.surface_area  (15623488.5310 vs 15623488.5310)
+  PASS   RT_Mesh_002 vertices  (4 vs 4)
+  PASS   RT_Mesh_002 faces  (1 vs 1)
+  PASS   RT_Mesh_002 area  (100.000000 vs 100.000000)
+  PASS   RT_Mesh_002 elem.surface_area  (100.0000 vs 100.0000)
+  PASS   RT_Mesh_003 vertices  (12129 vs 12129)
+  PASS   RT_Mesh_003 faces  (16800 vs 16800)
+  PASS   RT_Mesh_003 area  (155413383.535888 vs 155413383.535888)
+  PASS   RT_Mesh_003 elem.surface_area  (155413383.5359 vs 155413383.5359)
+  PASS   RT_Mesh_004 vertices  (39673 vs 39673)
+  PASS   RT_Mesh_004 faces  (58222 vs 58222)
+  PASS   RT_Mesh_004 area  (29162308.544004 vs 29162308.544004)
+  PASS   RT_Mesh_004 elem.surface_area  (29162308.5440 vs 29162308.5440)
+  PASS   Write RT: no missing elements  (0)
+  PASS   Write RT: no mismatches  (0)
+  PASS   Vol/SA: all Extrusion elem.volume > 0  (1085/1085)
+  PASS   Vol/SA: all Extrusion elem.surface_area > 0  (1085/1085)
+  PASS   Vol/SA: ClippedExtrusion most elem.volume > 0  (120/125)
+  PASS   Vol/SA: all ClippedExtrusion elem.surface_area > 0  (125/125)
+  PASS   Vol/SA: BooleanResult most elem.volume > 0  (1/1)
+  PASS   Vol/SA: all BooleanResult elem.surface_area > 0  (1/1)
+  PASS   Vol/SA: Mesh most elem.volume > 0  (0/5)
+  PASS   Vol/SA: all Mesh elem.surface_area > 0  (5/5)
+  PASS   Vol/SA: TessellatedBrep most elem.volume > 0  (205/208)
+  PASS   Vol/SA: all TessellatedBrep elem.surface_area > 0  (208/208)
+
+  373 PASS / 0 FAIL  (of 373 checks)
+
+SUCCESS: All HiLo round-trip tests passed.
+
+----------------------------------------------------------------
+A.3.1.1 Hierarchy: Duplex A
+----------------------------------------------------------------
+======================================================================
+PART 1: TREE STRUCTURE — data/Duplex_A_20110907.ifc
+======================================================================
+Rectified 22 IFC placements to align with spatial hierarchy.
+Loaded 319 graph edges: 82 connection, 237 space_boundary.
+
+  Total elements: 295
+  Building elements: 268
+  Storeys: 4
+
+  IFC Type                       Count       %
+  ---------------------------------------------
+  IfcFurnishingElement              61   20.7%
+  IfcWallStandardCase               56   19.0%
+  IfcOpeningElement                 50   16.9%
+  IfcWindow                         24    8.1%
+  IfcSpace                          21    7.1%
+  IfcSlab                           21    7.1%
+  IfcDoor                           14    4.7%
+  IfcCovering                       13    4.4%
+  IfcBeam                            8    2.7%
+  IfcFooting                         7    2.4%
+  IfcBuildingStorey                  4    1.4%
+  IfcMember                          4    1.4%
+  IfcRailing                         4    1.4%
+  IfcStair                           2    0.7%
+  IfcStairFlight                     2    0.7%
+  IfcSite                            1    0.3%
+  IfcBuilding                        1    0.3%
+  IfcWall                            1    0.3%
+  IfcRoof                            1    0.3%
+
+  Void/Fill Chain Summary:
+    Openings in tree:                50
+    Chains with fillers (host->opening->filler): 38
+    Void-only chains (host->opening):            12
+    Fillers nested under openings:               38
+    Fillers flat (not under opening):            0
+
+  Sample chains with fillers:
+    IfcWallStandardCase 'Basic Wall:Interior - Partition (92mm Stud):143960'
+      -> IfcOpeningElement 'M_Single-Flush:0864 x 2032mm:0864 x 2032mm:159734:1'
+        -> IfcDoor 'M_Single-Flush:0864 x 2032mm:0864 x 2032mm:159734'
+    IfcWallStandardCase 'Basic Wall:Exterior - Brick on Block:143534'
+      -> IfcOpeningElement 'M_Fixed:2800mm x 2410mm:2800mm x 2410mm:149278:1'
+        -> IfcWindow 'M_Fixed:2800mm x 2410mm:2800mm x 2410mm:149278'
+    IfcWallStandardCase 'Basic Wall:Exterior - Brick on Block:143534'
+      -> IfcOpeningElement 'M_Fixed:819mm x 759mm:819mm x 759mm:149537:1'
+        -> IfcWindow 'M_Fixed:819mm x 759mm:819mm x 759mm:149537'
+    IfcWallStandardCase 'Basic Wall:Exterior - Brick on Block:143534'
+      -> IfcOpeningElement 'M_Casement:819mm x 759mm:819mm x 759mm:149736:1'
+        -> IfcWindow 'M_Casement:819mm x 759mm:819mm x 759mm:149736'
+    IfcWallStandardCase 'Basic Wall:Exterior - Brick on Block:143534'
+      -> IfcOpeningElement 'M_Fixed:819mm x 759mm:819mm x 759mm:149924:1'
+        -> IfcWindow 'M_Fixed:819mm x 759mm:819mm x 759mm:149924'
+
+  Sample void-only chains:
+    IfcFurnishingElement 'M_Tall Cabinet-Single Door(2):800 mm:800 mm:158081' -> IfcOpeningElement 'M_Tall Cabinet-Single Door(2):800 mm:800 mm:158081:1'
+    IfcFurnishingElement 'M_Tall Cabinet-Single Door(2):800 mm:800 mm:158080' -> IfcOpeningElement 'M_Tall Cabinet-Single Door(2):800 mm:800 mm:158080:1'
+    IfcFurnishingElement 'M_Tall Cabinet-Single Door(2):800 mm:800 mm:157983' -> IfcOpeningElement 'M_Tall Cabinet-Single Door(2):800 mm:800 mm:157983:1'
+
+  Placement Rectification: 22 total, 5 distinct patterns
+
+    Element Type              From Parent               To Parent                 Count
+    -----------------------------------------------------------------------------------
+    IfcOpeningElement         IfcSpace                  IfcFurnishingElement         10
+    IfcMember                 IfcBuildingStorey         IfcStair                      4
+    IfcRailing                IfcBuildingStorey         IfcStair                      4
+    IfcOpeningElement         IfcRoof                   IfcSlab                       2
+    IfcStairFlight            IfcBuildingStorey         IfcStair                      2
+
+  Examples (one per pattern):
+
+    IfcOpeningElement 'M_Tall Cabinet-Single Door(2):800 mm:800 mm:158081:1': IfcSpace -> IfcFurnishingElement
+    IfcMember 'Stair:Residential - 200mm Max Riser 250mm Tread:198878:1': IfcBuildingStorey -> IfcStair
+    IfcRailing 'Railing:900mm Handrail Only:198880': IfcBuildingStorey -> IfcStair
+    IfcOpeningElement 'Basic Roof:Live Roof over Wood Joist Flat Roof:184483:2': IfcRoof -> IfcSlab
+    IfcStairFlight 'Stair:Residential - 200mm Max Riser 250mm Tread:198878:1': IfcBuildingStorey -> IfcStair
+
+
+======================================================================
+PART 2: TRANSFORM ACCURACY
+======================================================================
+
+  Elements checked: 295
+  Misaligned (>0.001m): 0
+
+
+======================================================================
+PART 3: SAVE / RELOAD STABILITY
+======================================================================
+
+  Saved to temp/thesis_hierarchy_duplex.ifc
+Loaded 319 graph edges: 82 connection, 237 space_boundary.
+  Reloaded elements: 295 (original: 295)
+  Reloaded openings: 50 (original: 50)
+  Reloaded fillers under openings: 38 (original: 38)
+  Reloaded graph edges: 270
+  Reloaded transform check: 0 misaligned of 295
+
+
+======================================================================
+SUMMARY
+======================================================================
+
+  PASS   Tree: total elements >= 290  (295)
+  PASS   Tree: storeys == 4  (4)
+  PASS   Tree: openings in tree >= 48  (50)
+  PASS   Tree: fillers nested >= 36  (38)
+  PASS   Tree: no fillers flat under storey  (0)
+  PASS   Tree: void/fill chains >= 48  (50)
+  PASS   Tree: no openings directly under spatial elements  (0)
+  PASS   Transform: all placements aligned  (0 misaligned of 295)
+  PASS   Reload: element count preserved  (295 vs 295)
+  PASS   Reload: openings preserved  (50 vs 50)
+  PASS   Reload: fillers nested preserved  (38 vs 38)
+  PASS   Reload: transforms aligned  (0 misaligned of 295)
+
+  12 PASS / 0 FAIL  (of 12 checks)
+
+SUCCESS: All Duplex hierarchy rectification tests passed.
+
+----------------------------------------------------------------
+A.3.1.2 Hierarchy: HiLo
+----------------------------------------------------------------
+======================================================================
+PART 1: TREE STRUCTURE — HiLo_Model-Architecture.ifc
+======================================================================
+Rectified 566 IFC placements to align with spatial hierarchy.
+Loaded 806 graph edges: 94 connection, 229 port_connection, 479 port_element, 4 services.
+
+  Total elements:    1925
+  Building elements: 1920
+  Storeys:           3
+
+  IFC Type                       Count       %
+  ---------------------------------------------
+  IfcDistributionPort              479   24.9%
+  IfcOpeningElement                384   19.9%
+  IfcMember                        291   15.1%
+  IfcWallStandardCase              186    9.7%
+  IfcFlowFitting                   116    6.0%
+  IfcFlowSegment                   101    5.2%
+  IfcColumn                         74    3.8%
+  IfcPlate                          74    3.8%
+  IfcSlab                           49    2.5%
+  IfcWall                           47    2.4%
+  IfcBuildingElementProxy           38    2.0%
+  IfcFlowTerminal                   23    1.2%
+  IfcBeam                           16    0.8%
+  IfcWindow                         14    0.7%
+  IfcFurnishingElement              10    0.5%
+  (other types)                     23    1.2%
+  ---------------------------------------------
+  Total                           1925
+
+  Void/Fill Chain Summary:
+    Total openings in tree:  384
+    Chains with fillers:     3
+    Void-only chains:        381
+    Fillers nested:          3
+    Fillers flat:            14
+
+    Host Type                       With Filler  Void Only
+    -------------------------------------------------------
+    IfcBuildingElementProxy                   0        270
+    IfcWallStandardCase                       0         91
+    IfcSlab                                   0         20
+    IfcWall                                   3          0
+
+  Placement Rectification: 566 total, 4 distinct patterns
+
+    Element Type              From Parent               To Parent                 Count
+    -----------------------------------------------------------------------------------
+    IfcMember                 IfcBuildingStorey         IfcCurtainWall              291
+    IfcOpeningElement         IfcBuildingStorey         IfcBuildingElementProxy     270
+    IfcOpeningElement         IfcBuildingStorey         IfcWallStandardCase           4
+    IfcOpeningElement         IfcBuildingStorey         IfcSlab                       1
+
+  Examples (one per pattern):
+
+    IfcMember 'Pfosten rechteckig:Forster 60 x 130 - Nur Pfosten:2668469': IfcBuildingStorey -> IfcCurtainWall
+    IfcOpeningElement '2021-Hilo_ASF_Construction v9_003:2021-Hilo_ASF_Construction v9_003:6549949:1': IfcBuildingStorey -> IfcBuildingElementProxy
+    IfcOpeningElement 'Basic Wall:3-Schichtplatte 27mm B/C:5306650:1': IfcBuildingStorey -> IfcWallStandardCase
+    IfcOpeningElement 'GenericElement': IfcBuildingStorey -> IfcSlab
+
+
+======================================================================
+PART 2: TRANSFORM ACCURACY
+======================================================================
+
+  Elements checked: 1442
+  Misaligned (>0.001m): 0
+
+
+======================================================================
+PART 3: SAVE / RELOAD STABILITY
+======================================================================
+
+  Saved to temp/thesis_hierarchy_hilo.ifc
+Loaded 806 graph edges: 94 connection, 229 port_connection, 479 port_element, 4 services.
+
+  Metric                                Original   Reloaded  Match
+  -----------------------------------------------------------------
+  Total elements                            1925       1925     OK
+  Openings in tree                           384        384     OK
+  Fillers under openings                       3          3     OK
+  Graph edges                                806        806     OK
+
+  Reloaded transform check: 0 misaligned of 1442
+
+
+======================================================================
+SUMMARY
+======================================================================
+
+  PASS   Tree: total elements >= 1900  (1925)
+  PASS   Tree: storeys >= 3  (3)
+  PASS   Tree: openings in tree >= 380  (384)
+  PASS   Tree: fillers nested >= 3  (3)
+  PASS   Tree: fillers flat <= 15  (14)
+  PASS   Tree: no openings directly under spatial  (0)
+  PASS   Transform: all placements aligned  (0 misaligned of 1442)
+  PASS   Reload: element count preserved  (1925 vs 1925)
+  PASS   Reload: openings preserved  (384 vs 384)
+  PASS   Reload: fillers nested preserved  (3 vs 3)
+  PASS   Reload: transforms aligned  (0 misaligned of 1442)
+
+  11 PASS / 0 FAIL  (of 11 checks)
+
+SUCCESS: All HiLo hierarchy rectification tests passed.
+
+----------------------------------------------------------------
+A.3.2  Granular Export
+----------------------------------------------------------------
+======================================================================
+GRANULAR EXPORT EVALUATION — data/Duplex_A_20110907.ifc
+======================================================================
+Rectified 22 IFC placements to align with spatial hierarchy.
+Loaded 319 graph edges: 82 connection, 237 space_boundary.
+
+  Full model: 295 elements, 4 storeys
+  Elements with positions: 295
+
+======================================================================
+PART 1: SINGLE STOREY EXTRACTION
+======================================================================
+
+  Storey                    Children  Descendants
+  --------------------------------------------------
+  Level 1                         52          129
+  T/FDN                           14           14
+  Level 2                         57          133
+  Roof                             6           13
+
+  Storey                    Extracted  Sites  Bldgs  Storeys  Rectified
+  ----------------------------------------------------------------------
+IFC file created in schema: IFC2X3
+Rectified 1 IFC placements to align with spatial hierarchy.
+Loaded 120 graph edges: 31 connection, 89 space_boundary.
+  Level 1                         133      1      1        2          1
+IFC file created in schema: IFC2X3
+Rectified 1 IFC placements to align with spatial hierarchy.
+Loaded 8 graph edges: 8 connection.
+  T/FDN                            17      1      1        1          1
+IFC file created in schema: IFC2X3
+Rectified 1 IFC placements to align with spatial hierarchy.
+Loaded 163 graph edges: 35 connection, 128 space_boundary.
+  Level 2                         136      1      1        1          1
+IFC file created in schema: IFC2X3
+Rectified 1 IFC placements to align with spatial hierarchy.
+Loaded 8 graph edges: 4 connection, 4 space_boundary.
+  Roof                             16      1      1        1          1
+
+
+======================================================================
+PART 2: POSITION PRESERVATION
+======================================================================
+
+  Storey                     Checked Misaligned    Max Error
+  ------------------------------------------------------------
+  Level 1                        130          0     4.11e-14
+  T/FDN                           15          0     1.12e-14
+  Level 2                        134          0     4.12e-14
+  Roof                            14          0     2.84e-14
+
+  Total: 293 checked, 0 misaligned
+
+
+======================================================================
+PART 3: DISCIPLINE SUBSET — walls only
+======================================================================
+
+  Walls in full model: 56
+IFC file created in schema: IFC2X3
+Rectified 56 IFC placements to align with spatial hierarchy.
+Loaded 76 graph edges: 76 connection.
+  Extracted model: 134 elements
+  Walls in extract: 56
+  Other types (scaffolding):
+    IfcOpeningElement: 36
+    IfcWindow: 22
+    IfcDoor: 14
+    IfcBuildingStorey: 4
+    IfcSite: 1
+    IfcBuilding: 1
+
+  Position check: 128 checked, 0 misaligned
+  Max error: 4.12e-14
+
+
+======================================================================
+PART 4: CODE CONCISENESS — compas_ifc vs direct IfcOpenShell
+======================================================================
+
+  Code comparison (single storey extraction):
+    Approach                        Lines
+    ----------------------------------------
+    compas_ifc (model.extract)          3
+    Direct IfcOpenShell                75
+    Reduction                          72 (96%)
+
+  compas_ifc additionally handles:
+    - Void/fill chain descendants (automatic)
+    - Material associations and property sets
+    - Visual styles and type definitions
+    - Placement chain rewriting (no 'exploding model')
+    - Graph edge preservation (connections, space boundaries)
+
+
+======================================================================
+SUMMARY
+======================================================================
+
+  PASS   Extract: all storeys produce valid IFC
+  PASS   Extract: each has >= 1 storey  (Level 1:2, T/FDN:1, Level 2:1, Roof:1)
+  PASS   Extract: each has IfcProject in file
+  PASS   Position: all extracts aligned  (0 misaligned of 293)
+  PASS   Discipline: walls preserved  (56 vs 56)
+  PASS   Discipline: has hierarchy scaffolding
+  PASS   Discipline: positions aligned  (0 misaligned of 128)
+  PASS   Code: compas_ifc < IfcOpenShell lines  (3 vs 75)
+  PASS   Code: >= 90% reduction  (96%)
+
+  9 PASS / 0 FAIL  (of 9 checks)
+
+SUCCESS: All granular export evaluation tests passed.
+
+----------------------------------------------------------------
+A.4   Custom Validation
+----------------------------------------------------------------
+======================================================================
+PART 1: STANDARD PSET VALIDATION — data/Duplex_A_20110907.ifc
+======================================================================
+Rectified 22 IFC placements to align with spatial hierarchy.
+Loaded 319 graph edges: 82 connection, 237 space_boundary.
+
+  Total elements: 295
+  Specifications defined: 7
+
+  Total element-spec checks: 146
+  Passed: 145
+  Failed: 1
+
+  Specification                  Elements   Pass   Fail
+  -------------------------------------------------------
+  Beam common properties                8      8      0
+  Door common properties               14     14      0
+  Roof common properties                1      1      0
+  Slab common properties               21     20      1
+  Space common properties              21     21      0
+  Wall common properties               57     57      0
+  Window common properties             24     24      0
+
+  Failure breakdown:
+    Missing required psets:  1
+    Property value errors:   0
+
+  Failure details:
+    [Slab common properties] IfcSlab 'Basic Roof:Live Roof over Wood Joist Flat Roof:184483':
+      missing psets: ['Pset_SlabCommon']
+
+
+======================================================================
+PART 2: CUSTOM PROJECT SCHEMA
+======================================================================
+
+  Custom specifications defined: 2
+    Fire-rated walls: ['IfcWall', 'IfcWallStandardCase']
+      All walls must have an explicit FireRating value.
+    Fire-rated doors: ['IfcDoor']
+      All doors must have an explicit FireRating value.
+
+  Total checks: 71
+  Passed: 14
+  Failed: 57
+
+  Specification                  Elements   Pass   Fail
+  -------------------------------------------------------
+  Fire-rated walls                     57      0     57
+  Fire-rated doors                     14     14      0
+
+  Custom failure breakdown:
+    Elements with missing psets:    0
+    Elements with property errors:  57
+    Total property errors:          57
+    Error types:
+      missing: 57
+
+  Sample failure details (first 5):
+    IfcWallStandardCase 'Basic Wall:Exterior - Brick on Block:185101': Pset_WallCommon.FireRating - Field required
+    IfcWallStandardCase 'Basic Wall:Exterior - Brick on Block:184944': Pset_WallCommon.FireRating - Field required
+    IfcWallStandardCase 'Basic Wall:Exterior - Brick on Block:185064': Pset_WallCommon.FireRating - Field required
+    IfcWallStandardCase 'Basic Wall:Exterior - Brick on Block:185014': Pset_WallCommon.FireRating - Field required
+    IfcWallStandardCase 'Basic Wall:Exterior - Brick on Block:138062': Pset_WallCommon.FireRating - Field required
+    ... and 52 more
+
+
+======================================================================
+PART 3: ENFORCEMENT — add_element rejects non-conforming elements
+======================================================================
+
+  Test 1: Add wall without Pset_WallCommon
+    Rejected: True
+    Message:  Element 'Non-Conforming Wall' (IfcWall) failed validation: [Wall common properties] missing psets: ['Pset_WallCommon']
+
+  Test 2: Add wall with valid Pset_WallCommon
+    Accepted: True
+
+  Test 3: Add slab (no spec applies)
+    Accepted: True
+
+
+======================================================================
+PART 4: SCHEMA EXPORT & IDS COMPARISON
+======================================================================
+
+  JSON Schema for Pset_WallCommon: 73 lines
+  Required fields: ['IsExternal']
+  Properties: 7 (Reference, IsExternal, LoadBearing, ExtendToStructure, ThermalTransmittance, FireRating, AcousticRating)
+
+  JSON Schema for FireSafetyWallSchema: 38 lines
+  Required fields: ['IsExternal', 'FireRating']
+
+  Conciseness comparison (Pset_WallCommon, 7 properties):
+    Approach                   Lines
+    -----------------------------------
+    Pydantic + Specification      14
+    IDS XML equivalent            68
+    Reduction                     54 (79%)
+
+  Additional Pydantic capabilities (not available in IDS):
+    - Runtime type checking (not just existence)
+    - Value constraints (ge=0 for ThermalTransmittance)
+    - Default values for optional fields
+    - JSON Schema export via model_json_schema()
+    - Python IDE autocompletion and type hints
+    - Enforcement on add_element (reject non-conforming)
+
+
+======================================================================
+SUMMARY
+======================================================================
+
+  PASS   Std: total checks >= 140  (146)
+  PASS   Std: pass rate >= 95%  (99.3%)
+  PASS   Std: all 7 specs tested  (7)
+  PASS   Custom: elements checked >= 60  (71)
+  PASS   Custom: stricter schema finds more failures  (57 vs 1 standard)
+  PASS   Custom: pass + fail == total  (14 + 57 = 71)
+  PASS   Enforce: non-conforming wall rejected
+  PASS   Enforce: conforming wall accepted
+  PASS   Enforce: non-applicable type accepted
+  PASS   Export: JSON Schema has required fields  (['IsExternal'])
+  PASS   Export: JSON Schema has all properties  (7)
+  PASS   Export: Pydantic < IDS line count  (14 vs 68)
+  PASS   Export: >= 70% reduction  (79%)
+
+  13 PASS / 0 FAIL  (of 13 checks)
+
+SUCCESS: All custom validation evaluation tests passed.
+
+----------------------------------------------------------------
+A.5   Integrated Workflow
+----------------------------------------------------------------
+======================================================================
+INTEGRATED WORKFLOW TEST
+======================================================================
+Loaded 32 graph edges: 32 connection.
+IFC file created in schema: IFC4
+Loaded 32 graph edges: 32 connection.
+
+======================================================================
+PART 1: CUSTOM ELEMENT CLASS
+======================================================================
+
+  Geometry: thesis/data/slab.stp
+  Volume:  14.0882 m3
+  Area:    190.7916 m2
+  Footprint: 6.65 x 7.52 m
+  Property sets: ['Pset_SlabCommon', 'Pset_EnvironmentalImpactIndicators', 'ConcreteRecipeProperties']
+
+======================================================================
+PART 2: MODEL CREATION WITH SPECIFICATION ENFORCEMENT
+======================================================================
+
+  Specification: FunicularSlabUnit
+  Applies to: ['IfcSlab']
+
+======================================================================
+PART 3: ARRAY CREATION (3x3 slabs + columns + beams)
+======================================================================
+
+  Slabs:   3x3 = 9, spacing 6.65 x 7.52 m
+  Columns: 4x4 = 16, section 0.3 m, height 3.0 m
+  Beams:   12 along Y axis
+  Total building elements: 37
+
+======================================================================
+PART 4: GRAPH EDGES (compute_connections)
+======================================================================
+
+  Computed connections: 32  (slab-slab 6, slab-beam 18, beam-beam 8)
+  Graph edges: 32
+
+======================================================================
+PART 5: SAVE / RELOAD / VERIFY
+======================================================================
+
+  Saved to: temp/thesis_integrated_workflow.ifc
+  Reloaded: 9 slabs, 16 columns, 12 beams
+  Graph edges: 32
+  Misaligned: 0
+
+======================================================================
+PART 6: GRANULAR EXTRACT
+======================================================================
+
+  Extracted to: temp/thesis_integrated_extract.ifc
+  Slabs: 9, Columns: 16, Beams: 12
+  Graph edges: 32
+
+======================================================================
+SUMMARY
+======================================================================
+  PASS  Schema: all psets valid (combined)
+  PASS  Schema: rejects invalid across psets  (3 errors)
+  PASS  Class: correct ifc_type
+  PASS  Class: has embedded geometry
+  PASS  Class: has 3 property sets  (['Pset_SlabCommon', 'Pset_EnvironmentalImpactIndicators', 'ConcreteRecipeProperties'])
+  PASS  Class: geometry volume > 0  (14.0882)
+  PASS  Class: geometry area > 0  (190.7916)
+  PASS  Enforce: non-conforming detected  (negative GWP)
+  PASS  Enforce: conforming accepted
+  PASS  Array: slab count  (9)
+  PASS  Array: slabs under storey  (9)
+  PASS  Array: all slabs pass validation  (9/9)
+  PASS  Array: column count  (16)
+  PASS  Array: beam count  (12)
+  PASS  Graph: total connections  (32 == 32)
+  PASS  Graph: slab-slab connections  (6 == 6)
+  PASS  Graph: slab-beam connections  (18 == 18)
+  PASS  Graph: beam-beam connections  (8 == 8)
+  PASS  Graph: stored in model  (32)
+  PASS  Reload: slab count  (9 vs 9)
+  PASS  Reload: column count  (16 vs 16)
+  PASS  Reload: beam count  (12 vs 12)
+  PASS  Reload: Pset_SlabCommon survives  (['Reference', 'Status', 'LoadBearing', 'IsExternal'])
+  PASS  Reload: EnvironmentalImpact survives  (['ExpectedServiceLife', 'ClimateChangePerUnit', 'TotalPrimaryEnergyConsumptionPerUnit', 'WaterConsumptionPerUnit'])
+  PASS  Reload: ConcreteRecipe survives  (['RecipeName', 'CementType', 'AggregateType', 'AggregateSize_mm'])
+  PASS  Reload: graph edges  (32 == 32)
+  PASS  Reload: transforms aligned  (0 of 37)
+  PASS  Extract: spatial scaffolding
+  PASS  Extract: slab count  (9 vs 9)
+  PASS  Extract: column count  (16 vs 16)
+  PASS  Extract: beam count  (12 vs 12)
+  PASS  Extract: graph edges  (32 == 32)
+
+  32 PASS / 0 FAIL  (of 32 checks)
+
+  Workflow code (thesis/appendix/A/integrated_workflow_code.py): 275 lines total, 224 non-blank, 194 code-only
+
+SUCCESS: All integrated workflow tests passed.
+
+================================================================
+TOTAL
+================================================================
+
+  A.1  API Surface Measurement               (no pass/fail)  rc=0
+  A.2.1 Stage 1: Synthetic Model              114 PASS / 0 FAIL
+  A.2.2 Stage 2: BRep from STEP                66 PASS / 0 FAIL
+  A.2.3 Stage 3a: Duplex A                    274 PASS / 0 FAIL
+  A.2.4 Stage 3b: HiLo                        373 PASS / 0 FAIL
+  A.3.1.1 Hierarchy: Duplex A                  12 PASS / 0 FAIL
+  A.3.1.2 Hierarchy: HiLo                      11 PASS / 0 FAIL
+  A.3.2  Granular Export                        9 PASS / 0 FAIL
+  A.4   Custom Validation                      13 PASS / 0 FAIL
+  A.5   Integrated Workflow                    32 PASS / 0 FAIL
+----------------------------------------------------------------
+  Overall                                     904 PASS / 0 FAIL

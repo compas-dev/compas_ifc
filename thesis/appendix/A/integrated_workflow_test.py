@@ -60,7 +60,10 @@ SPACING_Y = w["SPACING_Y"]
 expected_slabs = GRID_SIZE**2
 expected_cols = (GRID_SIZE + 1) ** 2
 expected_beams = (GRID_SIZE + 1) * GRID_SIZE
-expected_slab_edges = GRID_SIZE * (GRID_SIZE - 1)  # slabs touch along one axis only
+expected_slab_edges = GRID_SIZE * (GRID_SIZE - 1)  # 6: slabs touch along one axis only
+expected_beam_beam = (GRID_SIZE + 1) * (GRID_SIZE - 1)  # 8: beams meet end-to-end within each column
+expected_slab_beam = 2 * GRID_SIZE**2  # 18: each slab rests on the two beams along its long edges
+expected_total_edges = expected_slab_edges + expected_slab_beam + expected_beam_beam  # 32
 
 # ===========================================================================
 # PART 1: Custom Element Class
@@ -147,10 +150,25 @@ print("\n" + "=" * 70)
 print("PART 4: GRAPH EDGES (compute_connections)")
 print("=" * 70)
 
-check("Graph: slab-slab edges", w["edge_count"] >= expected_slab_edges, f"{w['edge_count']} >= {expected_slab_edges}")
+# Break the detected connections down by element-type pair. The 3x3 slab grid
+# on a 4x4 column grid with Y-spanning beams is arranged to produce a known set
+# of geometric contacts: 6 slab-slab, 18 slab-beam, 8 beam-beam (32 total).
+_bd = {}
+for _edge in model.connections:
+    _na, _nb = _edge
+    _key = tuple(sorted((model.graph.node_element(_na).ifc_type, model.graph.node_element(_nb).ifc_type)))
+    _bd[_key] = _bd.get(_key, 0) + 1
+n_slab_slab = _bd.get(("IfcSlab", "IfcSlab"), 0)
+n_slab_beam = _bd.get(("IfcBeam", "IfcSlab"), 0)
+n_beam_beam = _bd.get(("IfcBeam", "IfcBeam"), 0)
+
+check("Graph: total connections", w["edge_count"] == expected_total_edges, f"{w['edge_count']} == {expected_total_edges}")
+check("Graph: slab-slab connections", n_slab_slab == expected_slab_edges, f"{n_slab_slab} == {expected_slab_edges}")
+check("Graph: slab-beam connections", n_slab_beam == expected_slab_beam, f"{n_slab_beam} == {expected_slab_beam}")
+check("Graph: beam-beam connections", n_beam_beam == expected_beam_beam, f"{n_beam_beam} == {expected_beam_beam}")
 check("Graph: stored in model", model.graph.number_of_edges() == w["edge_count"], f"{model.graph.number_of_edges()}")
 
-print(f"\n  Computed connections: {w['edge_count']}")
+print(f"\n  Computed connections: {w['edge_count']}  (slab-slab {n_slab_slab}, slab-beam {n_slab_beam}, beam-beam {n_beam_beam})")
 print(f"  Graph edges: {model.graph.number_of_edges()}")
 
 # ===========================================================================
@@ -177,7 +195,7 @@ check("Reload: EnvironmentalImpact survives", "ClimateChangePerUnit" in env_rt, 
 check("Reload: ConcreteRecipe survives", "RecipeName" in recipe_rt, str(list(recipe_rt.keys())[:4]))
 
 # Graph edges
-check("Reload: graph edges", model2.graph.number_of_edges() >= expected_slab_edges, f"{model2.graph.number_of_edges()}")
+check("Reload: graph edges", model2.graph.number_of_edges() == expected_total_edges, f"{model2.graph.number_of_edges()} == {expected_total_edges}")
 
 # Transform alignment
 misaligned = 0
@@ -216,7 +234,7 @@ extract_beams = [e for e in sub.building_elements if e.ifc_type == "IfcBeam"]
 check("Extract: slab count", len(extract_slabs) == expected_slabs, f"{len(extract_slabs)} vs {expected_slabs}")
 check("Extract: column count", len(extract_cols) == expected_cols, f"{len(extract_cols)} vs {expected_cols}")
 check("Extract: beam count", len(extract_beams) == expected_beams, f"{len(extract_beams)} vs {expected_beams}")
-check("Extract: graph edges", sub.graph.number_of_edges() >= expected_slab_edges, f"{sub.graph.number_of_edges()}")
+check("Extract: graph edges", sub.graph.number_of_edges() == expected_total_edges, f"{sub.graph.number_of_edges()} == {expected_total_edges}")
 
 print(f"\n  Extracted to: {w['extract_path']}")
 print(f"  Slabs: {len(extract_slabs)}, Columns: {len(extract_cols)}, Beams: {len(extract_beams)}")

@@ -1,0 +1,30 @@
+# Frozen dependency versions for the COMPAS IFC 2.0.0 archival release.
+#
+# This file pins the exact package versions used to produce the Chapter 4
+# evaluation results (thesis/appendix/A). It documents a reproducible
+# reference environment rather than the abstract dependency ranges in
+# requirements.txt. Reference environment: Python 3.11, Windows 11.
+#
+# Note: the reference environment was assembled with conda-forge; several
+# packages below are also distributed as conda packages. Installing these
+# exact versions via pip or conda reproduces the pinned evaluation numbers.
+
+# --- core runtime dependencies -------------------------------------------
+compas==2.15.0
+compas_model==0.9.3
+ifcopenshell==0.8.4.post1
+lark==1.3.1
+numpy==2.4.2
+pydantic==2.12.5
+pydantic_core==2.41.5
+shapely==2.1.2
+typer==0.25.1
+
+# --- transitive numerical / graph stack ----------------------------------
+networkx==3.6.1
+scipy==1.17.0
+
+# --- optional: high-fidelity B-Rep / NURBS geometry kernel ----------------
+# Required for the geometry-fidelity evaluation (STEP import, IfcAdvancedBrep
+# round-trip). Installed from conda-forge in the reference environment.
+compas_occ==1.5.0

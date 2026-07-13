@@ -20,7 +20,6 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parents[2]
 OUTPUT_DIR = HERE / "outputs"
@@ -55,11 +54,16 @@ def _extract_counts(output: str) -> tuple[int, int]:
 
 
 def _run_script(name: str) -> subprocess.CompletedProcess:
+    # Pin single-worker geometry evaluation so the suite is deterministic and
+    # reproduces identical check counts run-to-run (parallel geometry workers
+    # otherwise cause small variation in tessellated volume/area counts).
+    env = {**os.environ, "COMPAS_IFC_GEOM_WORKERS": "1", "PYTHONHASHSEED": "0"}
     return subprocess.run(
         [sys.executable, str(HERE / name)],
         cwd=str(REPO_ROOT),
         capture_output=True,
         text=True,
+        env=env,
     )
 
 
@@ -91,10 +95,17 @@ def main() -> int:
             any_error = True
 
         if kind == "PASS":
-            p, f = _extract_counts(result.stdout)
-            section_results.append((label, p, f, result.returncode))
-            overall_pass += p
-            overall_fail += f
+            matched = PASS_PATTERN.findall(result.stdout)
+            if result.returncode != 0 or not matched:
+                # Stage crashed or produced no pass/fail line: surface it as an
+                # error rather than silently recording "0 PASS / 0 FAIL".
+                any_error = True
+                section_results.append((label, "ERROR", None, result.returncode))
+            else:
+                p, f = _extract_counts(result.stdout)
+                section_results.append((label, p, f, result.returncode))
+                overall_pass += p
+                overall_fail += f
         else:
             section_results.append((label, None, None, result.returncode))
 
@@ -110,12 +121,15 @@ def main() -> int:
 
     summary_lines = ["", "=" * width, "TOTAL", "=" * width, ""]
     for label, p, f, rc in section_results:
-        if p is None:
+        if p == "ERROR":
+            summary_lines.append(f"  {label:40s}   *** ERROR / CRASHED  rc={rc} ***")
+        elif p is None:
             summary_lines.append(f"  {label:40s}   (no pass/fail)  rc={rc}")
         else:
             summary_lines.append(f"  {label:40s}   {p:4d} PASS / {f} FAIL")
     summary_lines.append("-" * width)
-    summary_lines.append(f"  {'Overall':40s}   {overall_pass:4d} PASS / {overall_fail} FAIL")
+    status = "  (SOME STAGES ERRORED)" if any_error else ""
+    summary_lines.append(f"  {'Overall':40s}   {overall_pass:4d} PASS / {overall_fail} FAIL{status}")
     summary = "\n".join(summary_lines) + "\n"
 
     SUMMARY_PATH.write_text(header + body + summary, encoding="utf-8")

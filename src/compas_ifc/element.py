@@ -29,6 +29,19 @@ from compas_ifc.conversions.frame import IfcLocalPlacement_to_transformation
 T = TypeVar("T")
 
 
+def _inflate_box(box: Box, inflate: float) -> Box:
+    """Scale a bounding ``Box`` about its centre by ``inflate`` (1.0 = unchanged).
+
+    ``compas_model`` broadphase (e.g. ``ElementBVH.nearest_neighbors``) inflates
+    element AABBs to catch touching/near neighbours; honouring ``inflate`` here
+    ensures elements that merely touch (e.g. beams meeting end-to-end) are still
+    surfaced as candidate pairs.
+    """
+    if not inflate or inflate == 1.0:
+        return box
+    return Box(xsize=box.xsize * inflate, ysize=box.ysize * inflate, zsize=box.zsize * inflate, frame=box.frame)
+
+
 class GenericElement(Generic[T], Element):
     """A unified element representing any building component in an IFC model.
 
@@ -315,7 +328,7 @@ class GenericElement(Generic[T], Element):
         verts, _ = self._world_triangles()
         if verts is None or len(verts) == 0:
             return None
-        return Box.from_bounding_box(bounding_box(verts))
+        return _inflate_box(Box.from_bounding_box(bounding_box(verts)), inflate)
 
     def compute_obb(self, inflate: float = 1.0) -> Optional[Box]:
         from compas.geometry import oriented_bounding_box_numpy
@@ -323,7 +336,7 @@ class GenericElement(Generic[T], Element):
         verts, _ = self._world_triangles()
         if verts is None or len(verts) == 0:
             return None
-        return Box.from_bounding_box(oriented_bounding_box_numpy(verts))
+        return _inflate_box(Box.from_bounding_box(oriented_bounding_box_numpy(verts)), inflate)
 
     def compute_collision_mesh(self, inflate: float = 1.0) -> Optional[Mesh]:
         geom = self.elementgeometry
@@ -377,17 +390,36 @@ class GenericElement(Generic[T], Element):
 
         vg = self._visual_geometry
         if vg is None:
-            self._world_triangles_cache = (xform, None, None)
-            return None, None
+            # Fall back to the parametric geometry. The tessellated
+            # ``visual_geometry`` is only populated by ``load_geometries()`` (the
+            # ifcopenshell iterator), so freshly created, not-yet-saved elements
+            # have none. Without this fallback ``aabb``/contacts return None,
+            # which crashes callers such as ``compute_connections`` (the BVH in
+            # ``compas_model`` assumes every element has a valid ``aabb``).
+            vg = self.geometry
 
+        verts_local = None
+        tris = None
         if isinstance(vg, TessellatedBrep):
             verts_local = np.asarray(vg.vertices, dtype=np.float64)
             tris = np.asarray(vg.faces, dtype=np.int64)
-        elif hasattr(vg, "to_mesh"):
+        elif vg is not None:
             from compas_ifc.algorithms.collisions import _mesh_to_numpy
 
-            verts_local, tris = _mesh_to_numpy(vg.to_mesh())
-        else:
+            mesh = None
+            if hasattr(vg, "to_tesselation"):
+                # Brep/OCCBrep.to_tesselation() returns a ``(Mesh, boundaries)`` tuple.
+                result = vg.to_tesselation()
+                mesh = result[0] if isinstance(result, tuple) else result
+            elif hasattr(vg, "to_mesh"):
+                # Parametric representations (Extrusion, Pipe, ...) return a Mesh;
+                # a few return a ``(vertices, faces)`` tuple instead.
+                result = vg.to_mesh()
+                mesh = result if isinstance(result, Mesh) else Mesh.from_vertices_and_faces(*result)
+            if mesh is not None:
+                verts_local, tris = _mesh_to_numpy(mesh)
+
+        if verts_local is None or len(verts_local) == 0:
             self._world_triangles_cache = (xform, None, None)
             return None, None
 
@@ -416,24 +448,46 @@ class GenericElement(Generic[T], Element):
         self._world_mesh_cache = mesh
         return mesh
 
+    def _world_brep(self):
+        """Return a world-coord :class:`~compas.geometry.Brep` for exact contact
+        detection, or ``None`` when the element has no B-Rep geometry.
+
+        Prefers the tessellated ``visual_geometry`` (an ``OCCBrep`` when the
+        model is opened with ``use_occ=True``); falls back to the parametric
+        ``geometry`` if it is itself a B-Rep.
+        """
+        geo = self._visual_geometry
+        if not isinstance(geo, Brep):
+            geo = self.geometry
+        if not isinstance(geo, Brep):
+            return None
+        brep = geo.copy()
+        xform = self.modeltransformation
+        if xform is not None:
+            brep.transform(xform)
+        return brep
+
     def compute_contacts(
         self,
         other: "GenericElement",
-        tolerance: float = 1e-6,
+        tolerance: float = 1e-3,
         minimum_area: float = 1e-2,
         contacttype: Type[Contact] = Contact,
     ) -> list:
         """Compute contacts between this element and another element.
 
-        Operates on world-coord meshes derived from the tessellated
-        ``visual_geometry`` (see :meth:`_world_mesh`).
+        When both elements expose B-Rep geometry, exact face-to-face contact
+        detection is used (``compas_model.algorithms.contacts.brep_brep_contacts``),
+        which reliably resolves coplanar "just-touching" faces. Otherwise the
+        computation falls back to a mesh-mesh approximation on the world-coord
+        meshes derived from the tessellated ``visual_geometry``.
 
         Parameters
         ----------
         other : GenericElement
             The other element.
         tolerance : float, optional
-            Distance tolerance for coplanarity check.
+            Distance tolerance for the coplanarity check.
         minimum_area : float, optional
             Minimum area of a valid contact polygon.
         contacttype : type, optional
@@ -444,6 +498,16 @@ class GenericElement(Generic[T], Element):
         list[Contact]
 
         """
+        brep_a = self._world_brep()
+        brep_b = other._world_brep()
+        if brep_a is not None and brep_b is not None:
+            try:
+                from compas_model.algorithms.contacts import brep_brep_contacts
+
+                return brep_brep_contacts(brep_a, brep_b, tolerance=tolerance, minimum_area=minimum_area, contacttype=contacttype)
+            except ImportError:
+                pass
+
         from compas_ifc.algorithms.contacts import fast_mesh_mesh_contacts
 
         a = self._world_mesh()

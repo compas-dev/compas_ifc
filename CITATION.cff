@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "COMPAS IFC: A front-end data model for IFC"
+abstract: >-
+  COMPAS IFC is an open-source Python toolkit that provides a small,
+  intentional front-end data model over the Industry Foundation Classes
+  (IFC). It couples geometric representations to executable geometry
+  kernels, materialises the IFC spatial hierarchy as an explicit tree with
+  integrated placement, exposes non-hierarchical relationships as a separate
+  interaction graph, and validates custom element metadata against Pydantic
+  schemas. It is the software artefact accompanying Chapter 4 of the doctoral
+  thesis "Future Data Models for AEC: From Simplicity for Humans to
+  Interoperability by AI".
+type: software
+authors:
+  - given-names: Li
+    family-names: Chen
+    email: li.chen@arch.ethz.ch
+    affiliation: "ETH Zürich"
+  - given-names: Tom
+    family-names: Van Mele
+    email: van.mele@arch.ethz.ch
+    affiliation: "ETH Zürich"
+version: "2.0.0"
+date-released: "2026-07-06"
+license: MIT
+repository-code: "https://github.com/compas-dev/compas_ifc"
+url: "https://compas.dev/compas_ifc/"
+keywords:
+  - compas
+  - ifc
+  - bim
+  - interoperability
+  - openBIM
+preferred-citation:
+  type: thesis
+  title: "Future Data Models for AEC: From Simplicity for Humans to Interoperability by AI"
+  authors:
+    - given-names: Li
+      family-names: Chen
+      affiliation: "ETH Zürich"
+  year: 2026
+  institution:
+    name: "ETH Zürich"
+  thesis-type: "PhD thesis"

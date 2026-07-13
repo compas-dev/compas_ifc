@@ -7,11 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+Archival release accompanying the DOI citation for chapter 4 of the PhD
+thesis. Restores correct geometric connection detection (regressed by the
+`2.0.0` clash-detection refactor), makes the evaluation suite deterministically
+reproducible, and completes packaging/citation metadata.
+
 ### Added
+
+* `BuildingInformationModel.trace_connections(start, category, max_depth)` —
+  breadth-first traversal of the interaction graph from a starting element,
+  filtered by relationship category or group, returning the reachable
+  elements. Useful for tracing connectivity networks such as MEP flow
+  systems or chains of structurally connected members.
+* `BuildingInformationModel.save` now accepts `schema` and
+  `tessellation_tolerance` arguments for future cross-schema export. Passing
+  a `schema` different from the model's current schema currently raises
+  `NotImplementedError`; saving in the current schema is unchanged.
+* `CITATION.cff` — citation metadata for the archival (DOI) release.
+* `requirements-freeze.txt` — exact dependency versions pinning the
+  reference environment used to produce the chapter 4 evaluation results.
+* `COMPAS_IFC_GEOM_WORKERS` environment variable to control the number of
+  workers used by the geometry iterator in `IFCFile.load_geometries`. Set it
+  to `1` for deterministic, reproducible geometry evaluation. The chapter 4
+  evaluation suite (`thesis/appendix/A/run_all.py`) now pins this to `1`.
+
+### Fixed
+
+* Geometric connection detection (`compute_connections`) now reproduces the
+  designed contact counts again. The `2.0.0` refactor that routed clash
+  detection through cached world-coord meshes for speed had regressed it;
+  several independent defects are addressed:
+  * `GenericElement.compute_contacts` now uses exact B-Rep face-to-face
+    contact detection (`brep_brep_contacts`) when both elements expose B-Rep
+    geometry, falling back to the mesh approximation otherwise. The
+    mesh-only path could not resolve coplanar "just-touching" faces (e.g.
+    beams meeting end-to-end).
+  * `GenericElement.compute_aabb` / `compute_obb` now honour the `inflate`
+    scaling factor. It was previously ignored, so the `compas_model` BVH
+    broadphase (which inflates AABBs to catch touching neighbours) missed
+    element pairs that only touch.
+  * `IFCFile.load_geometries` now fills in the definition-holder products of
+    instanced geometry (`IfcRepresentationMap` / `IfcMappedItem`), which the
+    ifcopenshell geometry iterator does not yield. Previously the shared
+    definition holder of every instanced group received no `visual_geometry`.
+  * `compute_connections` / `compute_collisions` load tessellated geometry
+    for freshly created (not-yet-saved) elements before contact detection,
+    so a model built in-memory yields correct contacts without a save/reload.
+* `GenericElement._world_triangles` now falls back to the parametric
+  `geometry` when the tessellated `visual_geometry` is unavailable, so `aabb`
+  no longer returns `None` for such elements (which crashed the BVH).
+* `thesis/appendix/A/run_all.py` now reports a crashed evaluation stage as
+  an explicit error in the summary instead of silently recording it as
+  `0 PASS / 0 FAIL`.
+* `thesis/appendix/A/integrated_workflow_test.py` now asserts the exact
+  designed connection breakdown (6 slab-slab, 18 slab-beam, 8 beam-beam = 32)
+  and its preservation through reload and granular export, rather than a loose
+  lower-bound check that had masked the connection-detection regression.
 
 ### Changed
 
-### Removed
+* `requirements.txt` now declares the previously-undeclared runtime
+  dependencies `shapely` (used by contact/collision detection) and `numpy`.
+* README: corrected the geometry-kernel description — contact/collision
+  detection uses a NumPy + Shapely pipeline; CGAL is not currently a
+  dependency.
 
 
 ## [2.0.0] 2026-05-18

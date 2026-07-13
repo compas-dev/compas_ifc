@@ -33,7 +33,7 @@ How it differs
 * **Integrated geometry kernel.** Geometric definitions are not just stored;
   they are *computed*. Volumes, surface areas, bounding boxes, and contact
   detection work uniformly across primitives, swept solids, B-Reps, and
-  meshes — backed by COMPAS core, OpenCascade, and CGAL.
+  meshes — backed by COMPAS core and OpenCascade.
 
 * **Explicit spatial hierarchy.** Containment is materialised as a tree with
   direct ``parent`` / ``children`` pointers. Placement chains that diverge
@@ -120,8 +120,8 @@ COMPAS IFC builds on:
   parsing and writing.
 * `compas_occ <https://github.com/compas-dev/compas_occ>`_ — OpenCascade
   bindings for B-Rep and NURBS.
-* `compas_cgal <https://github.com/compas-dev/compas_cgal>`_ — CGAL
-  bindings for boolean operations and predicates.
+* `Shapely <https://shapely.readthedocs.io/>`_ — 2D geometry for the
+  contact/collision narrowphase.
 * `Pydantic <https://docs.pydantic.dev/>`_ — declarative schema validation.
 
 

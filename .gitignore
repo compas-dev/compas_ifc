@@ -131,6 +131,8 @@ src/compas_ifc/entities/generated/*/
 !src/compas_ifc/entities/generated/*.pyi
 !src/compas_ifc/entities/generated/*.py
 
-thesis/appendix/A/outputs/
+thesis/appendix/A/outputs/*
+# Keep one reference run as the archival record of the pinned evaluation numbers.
+!thesis/appendix/A/outputs/A-summary.txt
 thesis/figures/
 thesis/data/
