@@ -375,6 +375,72 @@ class InteractionMixin:
         """All interference/collision edges (from ``IfcRelInterferesElements`` or computed)."""
         return self.get_interactions_by_category("interference")
 
+    def trace_connections(self, start, category: str = None, max_depth: int = None) -> list:
+        """Trace elements reachable from ``start`` through interaction edges.
+
+        Performs a breadth-first walk over the interaction graph starting at
+        ``start``, following edges whose relationships match ``category``
+        (or, if ``category`` names a group in :attr:`RELATIONSHIP_GROUPS`, any
+        relationship in that group). Useful for tracing connectivity networks
+        such as MEP flow systems or chains of structurally connected members.
+
+        Parameters
+        ----------
+        start : :class:`GenericElement`
+            The element to start the traversal from.
+        category : str, optional
+            A relationship category (e.g. ``"connection"``, ``"structural"``)
+            or a group name (``"topology"``, ``"structural"``, ``"mep"``).
+            If ``None``, follows edges of any category.
+        max_depth : int, optional
+            Maximum number of edges to traverse from ``start``. If ``None``,
+            the whole connected component is returned.
+
+        Returns
+        -------
+        list[:class:`GenericElement`]
+            The reachable elements, excluding ``start`` itself, in
+            breadth-first order.
+
+        """
+        group_categories = self.RELATIONSHIP_GROUPS.get(category) if category is not None else None
+
+        def _matches(edge) -> bool:
+            if category is None:
+                return True
+            for r in self._edge_relationships(edge):
+                cat = r.get("category")
+                if cat == category or (group_categories is not None and cat in group_categories):
+                    return True
+            return False
+
+        # Build an undirected adjacency map over matching edges.
+        adjacency = {}
+        for edge in self.graph.edges():
+            if not _matches(edge):
+                continue
+            u, v = edge
+            adjacency.setdefault(u, set()).add(v)
+            adjacency.setdefault(v, set()).add(u)
+
+        start_node = start.graphnode
+        visited = {start_node}
+        frontier = [start_node]
+        order = []
+        depth = 0
+        while frontier and (max_depth is None or depth < max_depth):
+            next_frontier = []
+            for node in frontier:
+                for neighbour in adjacency.get(node, ()):
+                    if neighbour not in visited:
+                        visited.add(neighbour)
+                        next_frontier.append(neighbour)
+                        order.append(neighbour)
+            frontier = next_frontier
+            depth += 1
+
+        return [self.graph.node_element(n) for n in order]
+
     def _edge_elements(self, edge) -> tuple:
         """Return the two GenericElements connected by a graph edge.
 

@@ -698,13 +698,44 @@ class BuildingInformationModel(ElementFactoryMixin, InteractionMixin, TreeMixin,
     # IFC Export
     # ==========================================================================
 
-    def save(self, path: str):
-        """Save the IFC file to disk.
+    def save(self, path: str, schema: str = None, tessellation_tolerance: float = 0.001):
+        """Save the IFC file to disk, optionally converting to another schema.
 
         Since the model is a bi-directional front-end, the IFC file is always
-        in sync with the model tree. This simply writes the file.
+        in sync with the model tree. When ``schema`` is ``None`` or matches the
+        current schema, this simply writes the file.
+
+        Cross-schema export — converting the model to a different IFC schema
+        (``"IFC2X3"``, ``"IFC4"``, or ``"IFC4X3"``) on save, tessellating
+        advanced B-Reps at ``tessellation_tolerance`` where the target schema
+        cannot represent them — is not yet implemented.
+
+        Parameters
+        ----------
+        path : str
+            Output file path.
+        schema : str, optional
+            Target IFC schema. If ``None`` (default) or equal to the current
+            schema, the model is written as-is. Any other value currently
+            raises :class:`NotImplementedError`.
+        tessellation_tolerance : float, optional
+            Chord deviation (in metres) intended for tessellating advanced
+            B-Reps during a downgrade export. Reserved for the not-yet-
+            implemented cross-schema export path. Default ``0.001``.
+
+        Raises
+        ------
+        NotImplementedError
+            If ``schema`` names a different schema than the current one.
+
         """
-        self._file.save(path)
+        if schema is None or schema == self.schema_name:
+            self._file.save(path)
+            return
+        raise NotImplementedError(
+            f"Cross-schema export ({self.schema_name} -> {schema}) is not yet implemented. "
+            "Save without the 'schema' argument to write the model in its current schema."
+        )
 
     # ==========================================================================
     # Display

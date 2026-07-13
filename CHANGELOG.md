@@ -14,6 +14,15 @@ reproducible, and completes packaging/citation metadata.
 
 ### Added
 
+* `BuildingInformationModel.trace_connections(start, category, max_depth)` —
+  breadth-first traversal of the interaction graph from a starting element,
+  filtered by relationship category or group, returning the reachable
+  elements. Useful for tracing connectivity networks such as MEP flow
+  systems or chains of structurally connected members.
+* `BuildingInformationModel.save` now accepts `schema` and
+  `tessellation_tolerance` arguments for future cross-schema export. Passing
+  a `schema` different from the model's current schema currently raises
+  `NotImplementedError`; saving in the current schema is unchanged.
 * `CITATION.cff` — citation metadata for the archival (DOI) release.
 * `requirements-freeze.txt` — exact dependency versions pinning the
   reference environment used to produce the chapter 4 evaluation results.

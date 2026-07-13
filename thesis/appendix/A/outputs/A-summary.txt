@@ -23,10 +23,10 @@ compas_model.Element abstract stubs (9):
 API Surface: BuildingInformationModel
 ======================================================================
 
-Total public API surface: 91 members
+Total public API surface: 92 members
   Defined on BuildingInformationModel:  15
   From ElementFactoryMixin:             9
-  From InteractionMixin:                10
+  From InteractionMixin:                11
   From TreeMixin:                       3
   Inherited from compas_model.Model:    32
 
@@ -58,7 +58,7 @@ Total public API surface: 91 members
   method        create_window
   classmethod   template
 
---- InteractionMixin (10) ---
+--- InteractionMixin (11) ---
   attribute     RELATIONSHIP_GROUPS
   method        compute_collisions
   method        compute_connections
@@ -69,6 +69,7 @@ Total public API surface: 91 members
   method        show_collision_pairs
   method        show_collisions
   property      space_boundaries
+  method        trace_connections
 
 --- TreeMixin (3) ---
   method        export
@@ -114,12 +115,12 @@ SUMMARY TABLE
 
 Class                                Novel API   Abstract  Inherited    Total
 ---------------------------------------------------------------------------
-BuildingInformationModel                    37          0         54       91
+BuildingInformationModel                    38          0         54       92
 GenericElement                              11          8         33       52
 ---------------------------------------------------------------------------
-TOTAL                                       48          8
+TOTAL                                       49          8
 
---- Novel compas_ifc API on BuildingInformationModel (37) ---
+--- Novel compas_ifc API on BuildingInformationModel (38) ---
   attribute     RELATIONSHIP_GROUPS                       [InteractionMixin]
   method        add_element                               [bim]
   property      building_elements                         [bim]
@@ -155,6 +156,7 @@ TOTAL                                       48          8
   property      space_boundaries                          [InteractionMixin]
   property      storeys                                   [bim]
   classmethod   template                                  [ElementFactoryMixin]
+  method        trace_connections                         [InteractionMixin]
   property      unit                                      [bim]
   method        validate                                  [bim]
 

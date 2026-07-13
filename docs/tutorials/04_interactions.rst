@@ -48,6 +48,32 @@ Querying interactions
 Each result is a list of graph edges; the underlying ``GenericElement``
 objects are recovered via the graph's ``node_element`` accessor.
 
+Tracing connectivity
+====================
+
+To follow a connectivity network — for example an MEP flow system or a
+chain of structurally connected members — ``trace_connections`` performs a
+breadth-first walk over the interaction graph from a starting element,
+following only edges that match a category (or a whole group), and returns
+the reachable elements:
+
+.. code-block:: python
+
+    start = model.get_elements_by_name("AHU-01")[0]
+
+    # all elements reachable through MEP flow edges, up to 5 hops away
+    downstream = model.trace_connections(
+        start,
+        category="mep",
+        max_depth=5,
+    )
+    for element in downstream:
+        print(element.name)
+
+``category`` accepts either a single relationship category
+(e.g. ``"connection"``) or a group name (``"topology"``, ``"structural"``,
+``"mep"``); ``max_depth=None`` returns the whole connected component.
+
 Computing connections from geometry
 ===================================
 
