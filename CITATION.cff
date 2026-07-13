@@ -22,7 +22,7 @@ authors:
     email: van.mele@arch.ethz.ch
     affiliation: "ETH Zürich"
 version: "2.1.0"
-date-released: "2026-07-06"
+date-released: "2026-07-13"
 license: MIT
 repository-code: "https://github.com/compas-dev/compas_ifc"
 url: "https://compas.dev/compas_ifc/"
