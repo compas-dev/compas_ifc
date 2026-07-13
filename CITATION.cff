@@ -26,6 +26,13 @@ date-released: "2026-07-13"
 license: MIT
 repository-code: "https://github.com/compas-dev/compas_ifc"
 url: "https://compas.dev/compas_ifc/"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.21335443"
+    description: "Versioned DOI for v2.1.0 — the exact release archived for the thesis."
+  - type: doi
+    value: "10.5281/zenodo.21335442"
+    description: "Concept DOI representing all versions of COMPAS IFC."
 keywords:
   - compas
   - ifc

@@ -2,6 +2,8 @@
 
 ![compas_ifc](compas_ifc.png)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21335442.svg)](https://doi.org/10.5281/zenodo.21335442)
+
 A front-end data model for the [Industry Foundation Classes (IFC)](https://www.buildingsmart.org/standards/bsi-standards/industry-foundation-classes/),
 the open BIM exchange standard maintained by buildingSMART International.
 COMPAS IFC sits between IFC's full schema and the people who need to work with
