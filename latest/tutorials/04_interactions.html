@@ -649,6 +649,29 @@ grouped into three families:</p>
 <p>Each result is a list of graph edges; the underlying <code class="docutils literal notranslate"><span class="pre">GenericElement</span></code>
 objects are recovered via the graph’s <code class="docutils literal notranslate"><span class="pre">node_element</span></code> accessor.</p>
 </section>
+<section id="tracing-connectivity">
+<h2>Tracing connectivity</h2>
+<p>To follow a connectivity network — for example an MEP flow system or a
+chain of structurally connected members — <code class="docutils literal notranslate"><span class="pre">trace_connections</span></code> performs a
+breadth-first walk over the interaction graph from a starting element,
+following only edges that match a category (or a whole group), and returns
+the reachable elements:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">start</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_elements_by_name</span><span class="p">(</span><span class="s2">&quot;AHU-01&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="c1"># all elements reachable through MEP flow edges, up to 5 hops away</span>
+<span class="n">downstream</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">trace_connections</span><span class="p">(</span>
+    <span class="n">start</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;mep&quot;</span><span class="p">,</span>
+    <span class="n">max_depth</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">downstream</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">category</span></code> accepts either a single relationship category
+(e.g. <code class="docutils literal notranslate"><span class="pre">&quot;connection&quot;</span></code>) or a group name (<code class="docutils literal notranslate"><span class="pre">&quot;topology&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;structural&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;mep&quot;</span></code>); <code class="docutils literal notranslate"><span class="pre">max_depth=None</span></code> returns the whole connected component.</p>
+</section>
 <section id="computing-connections-from-geometry">
 <h2>Computing connections from geometry</h2>
 <p>When the source IFC file does not declare the connections you need, the
@@ -705,6 +728,7 @@ volumetric overlap. Penetrating points are stored on graph edges in the
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#importing-existing-relationships">Importing existing relationships</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#querying-interactions">Querying interactions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tracing-connectivity">Tracing connectivity</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#computing-connections-from-geometry">Computing connections from geometry</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#detecting-clashes">Detecting clashes</a></li>
 </ul>

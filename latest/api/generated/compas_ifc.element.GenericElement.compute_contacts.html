@@ -607,16 +607,19 @@ document.write(`
 <h1>GenericElement.compute_contacts</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_ifc.element.GenericElement.compute_contacts">
-<span class="sig-prename descclassname"><span class="pre">GenericElement.</span></span><span class="sig-name descname"><span class="pre">compute_contacts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_area=0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contacttype=&lt;class</span> <span class="pre">'compas_model.interactions.contact.Contact'&gt;</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-prename descclassname"><span class="pre">GenericElement.</span></span><span class="sig-name descname"><span class="pre">compute_contacts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance=0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_area=0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contacttype=&lt;class</span> <span class="pre">'compas_model.interactions.contact.Contact'&gt;</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Compute contacts between this element and another element.</p>
-<p>Operates on world-coord meshes derived from the tessellated
-<code class="docutils literal notranslate"><span class="pre">visual_geometry</span></code> (see <code class="xref py py-meth docutils literal notranslate"><span class="pre">_world_mesh()</span></code>).</p>
+<p>When both elements expose B-Rep geometry, exact face-to-face contact
+detection is used (<code class="docutils literal notranslate"><span class="pre">compas_model.algorithms.contacts.brep_brep_contacts</span></code>),
+which reliably resolves coplanar “just-touching” faces. Otherwise the
+computation falls back to a mesh-mesh approximation on the world-coord
+meshes derived from the tessellated <code class="docutils literal notranslate"><span class="pre">visual_geometry</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>other</strong><span class="classifier">GenericElement</span></dt><dd><p>The other element.</p>
 </dd>
-<dt><strong>tolerance</strong><span class="classifier">float, optional</span></dt><dd><p>Distance tolerance for coplanarity check.</p>
+<dt><strong>tolerance</strong><span class="classifier">float, optional</span></dt><dd><p>Distance tolerance for the coplanarity check.</p>
 </dd>
 <dt><strong>minimum_area</strong><span class="classifier">float, optional</span></dt><dd><p>Minimum area of a valid contact polygon.</p>
 </dd>

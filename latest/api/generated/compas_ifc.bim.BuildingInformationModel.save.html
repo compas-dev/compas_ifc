@@ -607,11 +607,36 @@ document.write(`
 <h1>BuildingInformationModel.save</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_ifc.bim.BuildingInformationModel.save">
-<span class="sig-prename descclassname"><span class="pre">BuildingInformationModel.</span></span><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Save the IFC file to disk.</p>
+<span class="sig-prename descclassname"><span class="pre">BuildingInformationModel.</span></span><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tessellation_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Save the IFC file to disk, optionally converting to another schema.</p>
 <p>Since the model is a bi-directional front-end, the IFC file is always
-in sync with the model tree. This simply writes the file.</p>
+in sync with the model tree. When <code class="docutils literal notranslate"><span class="pre">schema</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> or matches the
+current schema, this simply writes the file.</p>
+<p>Cross-schema export — converting the model to a different IFC schema
+(<code class="docutils literal notranslate"><span class="pre">&quot;IFC2X3&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;IFC4&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;IFC4X3&quot;</span></code>) on save, tessellating
+advanced B-Reps at <code class="docutils literal notranslate"><span class="pre">tessellation_tolerance</span></code> where the target schema
+cannot represent them — is not yet implemented.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>path</strong><span class="classifier">str</span></dt><dd><p>Output file path.</p>
+</dd>
+<dt><strong>schema</strong><span class="classifier">str, optional</span></dt><dd><p>Target IFC schema. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (default) or equal to the current
+schema, the model is written as-is. Any other value currently
+raises <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NotImplementedError</span></code></a>.</p>
+</dd>
+<dt><strong>tessellation_tolerance</strong><span class="classifier">float, optional</span></dt><dd><p>Chord deviation (in metres) intended for tessellating advanced
+B-Reps during a downgrade export. Reserved for the not-yet-
+implemented cross-schema export path. Default <code class="docutils literal notranslate"><span class="pre">0.001</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>NotImplementedError</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">schema</span></code> names a different schema than the current one.</p>
+</dd>
+</dl>
+</dd>
 </dl>
 </dd></dl>
 

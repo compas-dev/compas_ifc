@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
     <link rel="icon" href="../../_static/compas.ico" type="image/x-icon">
-    <title>InteractionMixin.__init__ &#8212; COMPAS IFC</title>
+    <title>BuildingInformationModel.trace_connections &#8212; COMPAS IFC</title>
   
   
   
@@ -52,15 +52,15 @@
     <script src="../../_static/togglebutton.js"></script>
     <script src="../../_static/design-tabs.js"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api/generated/compas_ifc.interactions.InteractionMixin.__init__';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/generated/compas_ifc.bim.BuildingInformationModel.trace_connections';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/compas-dev/compas_ifc/gh-pages/versions.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'latest';
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="compas_ifc.validation" href="../compas_ifc.validation.html" />
-    <link rel="prev" title="InteractionMixin.trace_connections" href="compas_ifc.interactions.InteractionMixin.trace_connections.html" />
+    <link rel="next" title="BuildingInformationModel.transform" href="compas_ifc.bim.BuildingInformationModel.transform.html" />
+    <link rel="prev" title="BuildingInformationModel.to_jsonstring" href="compas_ifc.bim.BuildingInformationModel.to_jsonstring.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -520,11 +520,11 @@ document.write(`
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../../api.html">API</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../compas_ifc.bim.html">compas_ifc.bim</a></li>
+<li class="toctree-l2 current active"><a class="reference internal" href="../compas_ifc.bim.html">compas_ifc.bim</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_ifc.element.html">compas_ifc.element</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_ifc.factory.html">compas_ifc.factory</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_ifc.tree.html">compas_ifc.tree</a></li>
-<li class="toctree-l2 current active"><a class="reference internal" href="../compas_ifc.interactions.html">compas_ifc.interactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_ifc.interactions.html">compas_ifc.interactions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_ifc.validation.html">compas_ifc.validation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_ifc.representations.html">compas_ifc.representations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_ifc.brep.html">compas_ifc.brep</a></li>
@@ -584,9 +584,9 @@ document.write(`
     <li class="breadcrumb-item"><i class="fa-solid fa-ellipsis"></i></li>
     
     
-    <li class="breadcrumb-item"><a href="compas_ifc.interactions.InteractionMixin.html" class="nav-link">InteractionMixin</a></li>
+    <li class="breadcrumb-item"><a href="compas_ifc.bim.BuildingInformationModel.html" class="nav-link">BuildingInformationModel</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">InteractionMixin.__init__</li>
+    <li class="breadcrumb-item active" aria-current="page">BuildingInformationModel.trace_connections</li>
   </ul>
 </nav>
 </div>
@@ -603,12 +603,40 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="interactionmixin-init">
-<h1>InteractionMixin.__init__</h1>
+  <section id="buildinginformationmodel-trace-connections">
+<h1>BuildingInformationModel.trace_connections</h1>
 <dl class="py method">
-<dt class="sig sig-object py" id="compas_ifc.interactions.InteractionMixin.__init__">
-<span class="sig-prename descclassname"><span class="pre">InteractionMixin.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="compas_ifc.bim.BuildingInformationModel.trace_connections">
+<span class="sig-prename descclassname"><span class="pre">BuildingInformationModel.</span></span><span class="sig-name descname"><span class="pre">trace_connections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Trace elements reachable from <code class="docutils literal notranslate"><span class="pre">start</span></code> through interaction edges.</p>
+<p>Performs a breadth-first walk over the interaction graph starting at
+<code class="docutils literal notranslate"><span class="pre">start</span></code>, following edges whose relationships match <code class="docutils literal notranslate"><span class="pre">category</span></code>
+(or, if <code class="docutils literal notranslate"><span class="pre">category</span></code> names a group in <code class="xref py py-attr docutils literal notranslate"><span class="pre">RELATIONSHIP_GROUPS</span></code>, any
+relationship in that group). Useful for tracing connectivity networks
+such as MEP flow systems or chains of structurally connected members.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>start</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericElement</span></code></span></dt><dd><p>The element to start the traversal from.</p>
+</dd>
+<dt><strong>category</strong><span class="classifier">str, optional</span></dt><dd><p>A relationship category (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;connection&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;structural&quot;</span></code>)
+or a group name (<code class="docutils literal notranslate"><span class="pre">&quot;topology&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;structural&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;mep&quot;</span></code>).
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, follows edges of any category.</p>
+</dd>
+<dt><strong>max_depth</strong><span class="classifier">int, optional</span></dt><dd><p>Maximum number of edges to traverse from <code class="docutils literal notranslate"><span class="pre">start</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+the whole connected component is returned.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>list[<code class="xref py py-class docutils literal notranslate"><span class="pre">GenericElement</span></code>]</dt><dd><p>The reachable elements, excluding <code class="docutils literal notranslate"><span class="pre">start</span></code> itself, in
+breadth-first order.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 
@@ -633,7 +661,7 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compas_ifc.interactions.InteractionMixin.__init__"><code class="docutils literal notranslate"><span class="pre">InteractionMixin.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compas_ifc.bim.BuildingInformationModel.trace_connections"><code class="docutils literal notranslate"><span class="pre">BuildingInformationModel.trace_connections()</span></code></a></li>
 </ul>
   </nav></div>
 

@@ -662,7 +662,7 @@ and to (e.g. “IfcWall ‘Wall A’: PlacementRelTo IfcBuilding ‘B1’
 <td><p>Remove a GenericElement from the model and the IFC file.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.save.html#compas_ifc.bim.BuildingInformationModel.save" title="compas_ifc.bim.BuildingInformationModel.save"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save</span></code></a></p></td>
-<td><p>Save the IFC file to disk.</p></td>
+<td><p>Save the IFC file to disk, optionally converting to another schema.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.show.html#compas_ifc.bim.BuildingInformationModel.show" title="compas_ifc.bim.BuildingInformationModel.show"><code class="xref py py-obj docutils literal notranslate"><span class="pre">show</span></code></a></p></td>
 <td><p>Show the model (or specific elements and their children) in compas_viewer.</p></td>
@@ -840,25 +840,28 @@ and to (e.g. “IfcWall ‘Wall A’: PlacementRelTo IfcBuilding ‘B1’
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.to_jsonstring.html#compas_ifc.bim.BuildingInformationModel.to_jsonstring" title="compas_ifc.bim.BuildingInformationModel.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.transform.html#compas_ifc.bim.BuildingInformationModel.transform" title="compas_ifc.bim.BuildingInformationModel.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.trace_connections.html#compas_ifc.bim.BuildingInformationModel.trace_connections" title="compas_ifc.bim.BuildingInformationModel.trace_connections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">trace_connections</span></code></a></p></td>
+<td><p>Trace elements reachable from <code class="docutils literal notranslate"><span class="pre">start</span></code> through interaction edges.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.transform.html#compas_ifc.bim.BuildingInformationModel.transform" title="compas_ifc.bim.BuildingInformationModel.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a></p></td>
 <td><p>Transform the model and all that it contains.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.transform_numpy.html#compas_ifc.bim.BuildingInformationModel.transform_numpy" title="compas_ifc.bim.BuildingInformationModel.transform_numpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_numpy</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.transform_numpy.html#compas_ifc.bim.BuildingInformationModel.transform_numpy" title="compas_ifc.bim.BuildingInformationModel.transform_numpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_numpy</span></code></a></p></td>
 <td><p>Transforms the data structure.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.transformed.html#compas_ifc.bim.BuildingInformationModel.transformed" title="compas_ifc.bim.BuildingInformationModel.transformed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.transformed.html#compas_ifc.bim.BuildingInformationModel.transformed" title="compas_ifc.bim.BuildingInformationModel.transformed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed</span></code></a></p></td>
 <td><p>Returns a transformed copy of this data structure.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.transformed_numpy.html#compas_ifc.bim.BuildingInformationModel.transformed_numpy" title="compas_ifc.bim.BuildingInformationModel.transformed_numpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed_numpy</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.transformed_numpy.html#compas_ifc.bim.BuildingInformationModel.transformed_numpy" title="compas_ifc.bim.BuildingInformationModel.transformed_numpy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed_numpy</span></code></a></p></td>
 <td><p>Returns a transformed copy of this data structure.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.translate.html#compas_ifc.bim.BuildingInformationModel.translate" title="compas_ifc.bim.BuildingInformationModel.translate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">translate</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.translate.html#compas_ifc.bim.BuildingInformationModel.translate" title="compas_ifc.bim.BuildingInformationModel.translate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">translate</span></code></a></p></td>
 <td><p>Translate the datastructure.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.translated.html#compas_ifc.bim.BuildingInformationModel.translated" title="compas_ifc.bim.BuildingInformationModel.translated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">translated</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.translated.html#compas_ifc.bim.BuildingInformationModel.translated" title="compas_ifc.bim.BuildingInformationModel.translated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">translated</span></code></a></p></td>
 <td><p>Returns a translated copy of this geometry.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.validate_data.html#compas_ifc.bim.BuildingInformationModel.validate_data" title="compas_ifc.bim.BuildingInformationModel.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_ifc.bim.BuildingInformationModel.validate_data.html#compas_ifc.bim.BuildingInformationModel.validate_data" title="compas_ifc.bim.BuildingInformationModel.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
 <td><p>Validate the data against the object's data schema.</p></td>
 </tr>
 </tbody>

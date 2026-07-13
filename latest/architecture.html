@@ -649,11 +649,12 @@ position is preserved while the relative transform conforms to the
 hierarchy.</p></li>
 <li><p><strong>Representation conversion.</strong> Each IFC geometric representation type is
 routed to the appropriate computational kernel: simple primitives and
-meshes use the COMPAS core library, swept solids and freeform B-Reps go
-through OpenCascade (via <code class="docutils literal notranslate"><span class="pre">compas_occ</span></code>), and boolean operations dispatch
-to CGAL (<code class="docutils literal notranslate"><span class="pre">compas_cgal</span></code>) or OpenCascade as appropriate. The mapping is
-bidirectional: parametric definitions are preserved on round-trip rather
-than collapsing to tessellated meshes.</p></li>
+meshes use the COMPAS core library, while swept solids and freeform B-Reps
+go through OpenCascade (via <code class="docutils literal notranslate"><span class="pre">compas_occ</span></code>). Boolean operations are
+currently evaluated through OpenCascade and the COMPAS core/Shapely path;
+routing to CGAL (<code class="docutils literal notranslate"><span class="pre">compas_cgal</span></code>) is planned. The mapping is bidirectional:
+parametric definitions are preserved on round-trip rather than collapsing
+to tessellated meshes.</p></li>
 <li><p><strong>Type normalisation.</strong> <code class="docutils literal notranslate"><span class="pre">model.create_element(ifc_type=...)</span></code> accepts
 <code class="docutils literal notranslate"><span class="pre">&quot;IfcWall&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;Wall&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;wall&quot;</span></code>, or any custom string; the value is
 resolved against the active schema and either mapped to its canonical
@@ -737,9 +738,15 @@ without degradation:</p>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>CGAL routing (via <code class="docutils literal notranslate"><span class="pre">compas_cgal</span></code>) is part of the intended architecture
+but is not yet wired in: the <code class="docutils literal notranslate"><span class="pre">CGAL</span></code> cells above are currently served by
+OpenCascade and the COMPAS core mesh path. CGAL integration is planned.</p>
+</div>
 <p>The user-facing API is uniform across kernels: <code class="docutils literal notranslate"><span class="pre">element.volume</span></code>,
-<code class="docutils literal notranslate"><span class="pre">element.surface_area</span></code>, <code class="docutils literal notranslate"><span class="pre">element.geometry.bounding_box</span></code> work identically
-regardless of the underlying representation type.</p>
+<code class="docutils literal notranslate"><span class="pre">element.surface_area</span></code>, and <code class="docutils literal notranslate"><span class="pre">element.aabb</span></code> work identically regardless
+of the underlying representation type.</p>
 </section>
 <section id="validation-engine">
 <h2>Validation engine</h2>
