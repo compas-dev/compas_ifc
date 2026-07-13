@@ -733,8 +733,7 @@ class BuildingInformationModel(ElementFactoryMixin, InteractionMixin, TreeMixin,
             self._file.save(path)
             return
         raise NotImplementedError(
-            f"Cross-schema export ({self.schema_name} -> {schema}) is not yet implemented. "
-            "Save without the 'schema' argument to write the model in its current schema."
+            f"Cross-schema export ({self.schema_name} -> {schema}) is not yet implemented. Save without the 'schema' argument to write the model in its current schema."
         )
 
     # ==========================================================================
