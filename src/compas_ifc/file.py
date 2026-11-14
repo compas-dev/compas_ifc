@@ -110,7 +110,7 @@ class IFCFile(object):
         self.use_occ = use_occ
         if filepath is None:
             self._file = ifcopenshell.file(schema=schema)
-            file_name = self._file.wrapped_data.header().file_name_py()
+            file_name = self._file.header.file_name
             file_name.author = ["Unknown Author"]
             file_name.organization = ["Unknown Organization"]
             if self.verbose:

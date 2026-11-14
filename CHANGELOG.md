@@ -11,7 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* `requirements.txt` now accepts `ifcopenshell >= 0.8.4.post1, < 0.10` instead of pinning `0.8.4.post1`.
+  `requirements-freeze.txt` still pins the reference environment of the archival release.
+
 ### Removed
+
+### Fixed
+
+* Creating a new model, for example with `BuildingInformationModel.template()`, failed with IfcOpenShell 0.9
+  because `ifcopenshell.file.wrapped_data` was removed. `IFCFile` now sets the file header through the public
+  `file.header` API, which works with IfcOpenShell 0.8 and 0.9.
 
 
 ## [2.1.0] 2026-07-13
